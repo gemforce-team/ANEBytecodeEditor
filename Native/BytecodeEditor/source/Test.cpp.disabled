@@ -1,0 +1,120 @@
+#if defined(WIN32) && !defined(NDEBUG)
+#include "ABC/ABCReader.hpp"
+#include "ABC/ABCWriter.hpp"
+#include "ASASM/ASProgram.hpp"
+#include "Assembler.hpp"
+#include "BytecodeEditor.hpp"
+#include "Disassembler.hpp"
+#include "SWF/SWFFile.hpp"
+#include <exception>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <string>
+#include <vector>
+#include <windows.h>
+
+void testdisassemble()
+{
+    FILE* file = fopen("test.swf", "rb");
+    fseek(file, 0, SEEK_END);
+    const size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    std::vector<uint8_t> data(size, 0);
+    fread(data.data(), 1, size, file);
+    fclose(file);
+
+    std::unordered_map<std::string, std::string> disassembled;
+
+    {
+        SWF::SWFFile swf{std::move(data)};
+
+        auto abcData = swf.abcData();
+
+        ABC::ABCReader reader(abcData.first, abcData.second);
+        const auto& abc          = reader.abc();
+        ASASM::ASProgram program = ASASM::ASProgram::fromABC(abc);
+        disassembled             = Disassembler(program).disassemble();
+    }
+
+    file = fopen("out.basasm", "wb");
+    for (const auto& pair : disassembled)
+    {
+        fwrite(pair.first.c_str(), 1, pair.first.size(), file);
+        fputc('\0', file);
+        fwrite(pair.second.c_str(), 1, pair.second.size(), file);
+        fputc('\0', file);
+    }
+    fclose(file);
+}
+
+void testreassemble()
+{
+    std::unordered_map<std::string, std::string> asasmFiles;
+    FILE* file = fopen("out.basasm", "rb");
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    std::vector<char> stringData(size);
+    fread(stringData.data(), 1, stringData.size(), file);
+    fclose(file);
+
+    size_t currOffset = 0;
+
+    static auto readNTString = [&stringData, &currOffset] {
+        std::string ret(stringData.data() + currOffset);
+        currOffset += ret.size() + 1;
+        return ret;
+    };
+
+    while (currOffset != stringData.size())
+    {
+        std::string key   = readNTString();
+        std::string value = readNTString();
+
+        asasmFiles.emplace(key, value);
+    }
+
+    std::vector<uint8_t> abcData =
+        std::move(ABC::ABCWriter(Assembler::assemble(asasmFiles).toABC()).data());
+
+    file = fopen("test.swf", "rb");
+    fseek(file, 0, SEEK_END);
+    size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    std::vector<uint8_t> data(size, 0);
+    fread(data.data(), 1, size, file);
+    fclose(file);
+
+    std::vector<uint8_t> outData;
+
+    {
+        SWF::SWFFile swf{std::move(data)};
+        swf.replaceABCData(abcData.data(), abcData.size());
+
+        outData.resize(swf.getFullSize());
+        swf.writeTo(outData.data());
+    }
+
+    file = fopen("out.swf", "wb");
+    fwrite(outData.data(), 1, outData.size(), file);
+    fclose(file);
+}
+
+extern "C" __declspec(dllexport) void WINAPI
+    HelperFunc(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+    try
+    {
+        // testdisassemble();
+        testreassemble();
+    }
+    catch (std::exception& e)
+    {
+        MessageBoxA(NULL, e.what(), "", MB_OK);
+    }
+}
+#endif

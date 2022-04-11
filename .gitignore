@@ -1,0 +1,12 @@
+Native/BytecodeEditor/Release
+Native/BytecodeEditor/Debug
+Native/BytecodeEditor/AdobeAIRSDK
+Native/BytecodeEditor/.vs
+Native/BytecodeEditor/.vscode
+Native/BytecodeEditor/BytecodeEditor.vcxproj.filters
+Native/BytecodeEditor/BytecodeEditor.vcxproj.user
+*.swc
+*.swf
+*.dll
+AS3/bin
+AS3/obj

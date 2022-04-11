@@ -1,0 +1,13 @@
+<extension xmlns="http://ns.adobe.com/air/extension/2.5">
+	<id>com.cff.anebe.ANEBytecodeEditor</id>
+	<versionNumber>0.5</versionNumber>
+	<platforms>
+		<platform name="Windows-x86">
+			<applicationDeployment>
+				<nativeLibrary>ANEBytecodeEditor.dll</nativeLibrary>
+				<initializer>ExtInitializerANEBytecodeEditor</initializer>
+				<finalizer>ExtFinalizerANEBytecodeEditor</finalizer>
+			</applicationDeployment>
+		</platform>
+    </platforms>
+</extension>

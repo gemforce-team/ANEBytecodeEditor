@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{76827AD2-1616-45C5-8FE5-58E26AF91B3D}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>FRESteamWorks</RootNamespace>
+    <ProjectName>BytecodeEditor</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>USE_BREAKPAD_HANDLER;VERSION_SAFE_STEAM_API_INTERFACES;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\AdobeAIRSDK\include;$(SolutionDir)SteamSDK\public;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DisableSpecificWarnings>4068</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)AdobeAIRSDK\lib\win;$(SolutionDir)SteamSDK\redistributable_bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>steam_api.lib;FlashRuntimeExtensions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>USE_BREAKPAD_HANDLER;VERSION_SAFE_STEAM_API_INTERFACES;WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\AdobeAIRSDK\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DisableSpecificWarnings>4068</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)AdobeAIRSDK\lib\win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FlashRuntimeExtensions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpp20</LanguageStandard>
+    </ClCompile>
+    <ClCompile>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp20</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\ASASM\ASProgram.cpp" />
+    <ClCompile Include="source\ANEBytecodeEditor.cpp" />
+    <ClCompile Include="source\BytecodeEditor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\ABC\ABCFile.hpp" />
+    <ClInclude Include="include\ABC\ABCReader.hpp" />
+    <ClInclude Include="include\ABC\ABCWriter.hpp" />
+    <ClInclude Include="include\ABC\Class.hpp" />
+    <ClInclude Include="include\ABC\Error.hpp" />
+    <ClInclude Include="include\ABC\ExceptionInfo.hpp" />
+    <ClInclude Include="include\ABC\Instance.hpp" />
+    <ClInclude Include="include\ABC\Instruction.hpp" />
+    <ClInclude Include="include\ABC\Label.hpp" />
+    <ClInclude Include="include\ABC\Metadata.hpp" />
+    <ClInclude Include="include\ABC\MethodBody.hpp" />
+    <ClInclude Include="include\ABC\MethodInfo.hpp" />
+    <ClInclude Include="include\ABC\Multiname.hpp" />
+    <ClInclude Include="include\ABC\Namespace.hpp" />
+    <ClInclude Include="include\ABC\OptionDetail.hpp" />
+    <ClInclude Include="include\ABC\Script.hpp" />
+    <ClInclude Include="include\ABC\TraitsInfo.hpp" />
+    <ClInclude Include="include\ANEBytecodeEditor.hpp" />
+    <ClInclude Include="include\ASASM\ASProgram.hpp" />
+    <ClInclude Include="include\ASASM\AStoABC.hpp" />
+    <ClInclude Include="include\ASASM\ASTraitsVisitor.hpp" />
+    <ClInclude Include="include\ASASM\Class.hpp" />
+    <ClInclude Include="include\ASASM\Exception.hpp" />
+    <ClInclude Include="include\ASASM\Instance.hpp" />
+    <ClInclude Include="include\ASASM\Instruction.hpp" />
+    <ClInclude Include="include\ASASM\Metadata.hpp" />
+    <ClInclude Include="include\ASASM\Method.hpp" />
+    <ClInclude Include="include\ASASM\MethodBody.hpp" />
+    <ClInclude Include="include\ASASM\Multiname.hpp" />
+    <ClInclude Include="include\ASASM\Namespace.hpp" />
+    <ClInclude Include="include\ASASM\Script.hpp" />
+    <ClInclude Include="include\ASASM\Trait.hpp" />
+    <ClInclude Include="include\ASASM\Value.hpp" />
+    <ClInclude Include="include\Assembler.hpp" />
+    <ClInclude Include="include\BytecodeEditor.hpp" />
+    <ClInclude Include="include\Disassembler.hpp" />
+    <ClInclude Include="include\enums\ABCType.hpp" />
+    <ClInclude Include="include\enums\InstanceFlags.hpp" />
+    <ClInclude Include="include\enums\MethodFlags.hpp" />
+    <ClInclude Include="include\enums\OPCode.hpp" />
+    <ClInclude Include="include\enums\OPCodeArgumentType.hpp" />
+    <ClInclude Include="include\enums\TagType.hpp" />
+    <ClInclude Include="include\enums\TraitAttribute.hpp" />
+    <ClInclude Include="include\enums\TraitKind.hpp" />
+    <ClInclude Include="include\SWF\SWFFile.hpp" />
+    <ClInclude Include="include\utils\ANEUtils.hpp" />
+    <ClInclude Include="include\utils\BidirectionalMap.hpp" />
+    <ClInclude Include="include\utils\RefBuilder.hpp" />
+    <ClInclude Include="include\utils\SmallTrivialVector.hpp" />
+    <ClInclude Include="include\utils\StringBuilder.hpp" />
+    <ClInclude Include="include\utils\StringException.hpp" />
+    <ClInclude Include="include\utils\StringUtils.hpp" />
+    <ClInclude Include="include\utils\ValuePool.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
