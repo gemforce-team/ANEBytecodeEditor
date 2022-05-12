@@ -8,6 +8,7 @@
 #include <thread>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 class BytecodeEditor
 {
@@ -28,8 +29,8 @@ public:
     FREObject disassemble();
     FREObject disassembleAsync();
 
-    FREObject assemble(std::unordered_map<std::string, std::string>&& data);
-    FREObject assembleAsync(std::unordered_map<std::string, std::string>&& data);
+    FREObject assemble(std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+    FREObject assembleAsync(std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
 
     void setSWF(SWF::SWFFile&& file) { currentSWF = std::move(file); }
 
@@ -39,7 +40,7 @@ public:
         {
             runningTask.join();
         }
-        currentSWF = std::nullopt;
+        currentSWF   = std::nullopt;
         m_taskResult = std::monostate{};
     }
 

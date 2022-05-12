@@ -51,7 +51,8 @@ FREObject BytecodeEditor::disassemble()
     }
 }
 
-FREObject BytecodeEditor::assemble(std::unordered_map<std::string, std::string>&& strings)
+FREObject BytecodeEditor::assemble(
+    std::unordered_map<std::string, std::string>&& strings, bool includeDebugInstructions)
 {
     if (runningTask.joinable())
     {
@@ -62,8 +63,8 @@ FREObject BytecodeEditor::assemble(std::unordered_map<std::string, std::string>&
     {
         FAIL("No SWF data specified to reassemble");
     }
-    std::vector<uint8_t> data =
-        std::move(ABC::ABCWriter(Assembler::assemble(strings).toABC()).data());
+    std::vector<uint8_t> data = std::move(
+        ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC()).data());
 
     currentSWF->replaceABCData(data.data(), data.size());
 
@@ -117,22 +118,24 @@ FREObject BytecodeEditor::disassembleAsync()
     return ret;
 }
 
-FREObject BytecodeEditor::assembleAsync(std::unordered_map<std::string, std::string>&& strings)
+FREObject BytecodeEditor::assembleAsync(
+    std::unordered_map<std::string, std::string>&& strings, bool includeDebugInstructions)
 {
     if (runningTask.joinable())
     {
         FAIL("Already running a task");
     }
 
-    runningTask = std::jthread([this, strings = std::move(strings)] {
+    runningTask = std::jthread([this, strings = std::move(strings), includeDebugInstructions] {
         if (!currentSWF)
         {
             FAIL_ASYNC("No SWF data specified to reassemble");
         }
         try
         {
-            std::vector<uint8_t> data =
-                std::move(ABC::ABCWriter(Assembler::assemble(strings).toABC()).data());
+            std::vector<uint8_t> data = std::move(
+                ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
+                    .data());
 
             currentSWF->replaceABCData(data.data(), data.size());
 

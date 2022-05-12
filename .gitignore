@@ -10,3 +10,4 @@ Native/BytecodeEditor/BytecodeEditor.vcxproj.user
 *.dll
 AS3/bin
 AS3/obj
+*.ane

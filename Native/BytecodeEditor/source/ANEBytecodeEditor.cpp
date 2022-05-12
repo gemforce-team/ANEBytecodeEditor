@@ -31,9 +31,9 @@ FREObject Disassemble(FREContext ctx, void* funcData, uint32_t argc, FREObject a
 
 FREObject Assemble(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
     {
-        FAIL("argc should be 2");
+        FAIL("argc should be 3");
     }
 
     GET_EDITOR(ctx);
@@ -48,6 +48,11 @@ FREObject Assemble(FREContext ctx, void* funcData, uint32_t argc, FREObject argv
     if (type != FRE_TYPE_VECTOR)
     {
         FAIL("argv[1] is not a vector");
+    }
+    DO_OR_FAIL("Failed to get argv[2] type", FREGetObjectType(argv[2], &type));
+    if (type != FRE_TYPE_BOOLEAN)
+    {
+        FAIL("argv[2] is not a boolean");
     }
 
     uint32_t vecSize;
@@ -72,7 +77,11 @@ FREObject Assemble(FREContext ctx, void* funcData, uint32_t argc, FREObject argv
         strings.emplace(key, val);
     }
 
-    return editor->assemble(std::move(strings));
+    uint32_t includeDebugInstructions;
+    DO_OR_FAIL("Failed to get argv[2]'s boolean value",
+        FREGetObjectAsBool(argv[2], &includeDebugInstructions));
+
+    return editor->assemble(std::move(strings), includeDebugInstructions != 0);
 }
 
 FREObject DisassembleAsync(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
@@ -89,9 +98,9 @@ FREObject DisassembleAsync(FREContext ctx, void* funcData, uint32_t argc, FREObj
 
 FREObject AssembleAsync(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
     {
-        FAIL("argc should be 2");
+        FAIL("argc should be 3");
     }
 
     GET_EDITOR(ctx);
@@ -106,6 +115,11 @@ FREObject AssembleAsync(FREContext ctx, void* funcData, uint32_t argc, FREObject
     if (type != FRE_TYPE_VECTOR)
     {
         FAIL("argv[1] is not a vector");
+    }
+    DO_OR_FAIL("Failed to get argv[2] type", FREGetObjectType(argv[2], &type));
+    if (type != FRE_TYPE_BOOLEAN)
+    {
+        FAIL("argv[2] is not a boolean");
     }
 
     uint32_t vecSize;
@@ -130,7 +144,11 @@ FREObject AssembleAsync(FREContext ctx, void* funcData, uint32_t argc, FREObject
         strings.emplace(key, val);
     }
 
-    return editor->assembleAsync(std::move(strings));
+    uint32_t includeDebugInstructions;
+    DO_OR_FAIL("Failed to get argv[2]'s boolean value",
+        FREGetObjectAsBool(argv[2], &includeDebugInstructions));
+
+    return editor->assembleAsync(std::move(strings), includeDebugInstructions != 0);
 }
 
 FREObject AsyncTaskResult(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])

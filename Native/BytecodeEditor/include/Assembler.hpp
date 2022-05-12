@@ -28,6 +28,7 @@ class Assembler
 {
 private:
     const std::unordered_map<std::string, std::string>& strings;
+    bool includeDebugInstructions;
 
     static constexpr char addUniqueMethod[] = "method";
     static constexpr char addUniqueClass[]  = "class";
@@ -1379,7 +1380,12 @@ private:
                     OPCode(uint8_t(OPCode::OP_setlocal0) + instruction.arguments[0].uintv());
             }
 
-            ret.emplace_back(std::move(instruction));
+            if (includeDebugInstructions || (instruction.opcode != OPCode::OP_debug &&
+                                                instruction.opcode != OPCode::OP_debugfile &&
+                                                instruction.opcode != OPCode::OP_debugline))
+            {
+                ret.emplace_back(std::move(instruction));
+            }
         }
 
         for (const auto& f : jumpFixups)
@@ -1471,7 +1477,11 @@ private:
         }
     }
 
-    Assembler(const std::unordered_map<std::string, std::string>& strings) : strings(strings) {}
+    Assembler(
+        const std::unordered_map<std::string, std::string>& strings, bool includeDebugInstructions)
+        : strings(strings), includeDebugInstructions(includeDebugInstructions)
+    {
+    }
 
     ASASM::ASProgram readProgram()
     {
@@ -1565,14 +1575,15 @@ private:
     }
 
 public:
-    static ASASM::ASProgram assemble(const std::unordered_map<std::string, std::string>& strings)
+    static ASASM::ASProgram assemble(
+        const std::unordered_map<std::string, std::string>& strings, bool includeDebugInstructions)
     {
         if (!strings.contains("main.asasm"))
         {
             throw StringException("Assembly start (main.asasm) not found");
         }
 
-        Assembler assembler(strings);
+        Assembler assembler(strings, includeDebugInstructions);
 
         std::shared_ptr<SourceFile> mainFile =
             std::make_shared<SourceFile>("main.asasm", strings.at("main.asasm"));

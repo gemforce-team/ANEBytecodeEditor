@@ -93,7 +93,7 @@ package com.cff.anebe
 		
 		// Assembles an SWF from a map of file name to file contents. If replaceSWF is unspecified, and Disassemble was called, uses
 		// the last SWF's data for the rest of the SWF.
-		public function Assemble(strings:Object, replaceSWF:ByteArray = null):ByteArray
+		public function Assemble(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):ByteArray
 		{
 			if (replaceSWF != null)
 			{
@@ -155,7 +155,7 @@ package com.cff.anebe
 				vec[vec.length] = str;
 			}
 			
-			ret = extContext.call("Assemble", strings, vec);
+			ret = extContext.call("Assemble", strings, vec, includeDebugInstructions);
 			
 			if (ret == null)
 			{
@@ -248,7 +248,7 @@ package com.cff.anebe
 		
 		// Assembles an SWF from a map of file name to file contents, asynchronously. If replaceSWF is unspecified, and Disassemble was called, uses
 		// the last SWF's data for the rest of the SWF.
-		public function AssembleAsync(strings:Object, replaceSWF:ByteArray = null):void
+		public function AssembleAsync(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):void
 		{
 			if (replaceSWF != null)
 			{
@@ -310,7 +310,7 @@ package com.cff.anebe
 				vec[vec.length] = str;
 			}
 			
-			ret = extContext.call("AssembleAsync", strings, vec);
+			ret = extContext.call("AssembleAsync", strings, vec, includeDebugInstructions);
 			
 			if (ret == null)
 			{
