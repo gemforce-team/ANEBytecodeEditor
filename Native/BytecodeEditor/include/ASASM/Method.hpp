@@ -26,60 +26,7 @@ namespace ASASM
 
         std::string toString() const { return name; }
 
-        bool operator==(const Method& other) const = default;
-        bool operator<(const Method& other) const
-        {
-            if (paramTypes < other.paramTypes)
-            {
-                return true;
-            }
-            if (paramTypes == other.paramTypes)
-            {
-                if (returnType < other.returnType)
-                {
-                    return true;
-                }
-                if (returnType == other.returnType)
-                {
-                    if (name < other.name)
-                    {
-                        return true;
-                    }
-                    if (name == other.name)
-                    {
-                        if (flags < other.flags)
-                        {
-                            return true;
-                        }
-                        if (flags == other.flags)
-                        {
-                            if (options < other.options)
-                            {
-                                return true;
-                            }
-                            if (options == other.options)
-                            {
-                                if (paramNames < other.paramNames)
-                                {
-                                    return true;
-                                }
-                                if (paramNames == other.paramNames)
-                                {
-                                    if (id < other.id)
-                                    {
-                                        return true;
-                                    }
-                                    if (id == other.id)
-                                    {
-                                        return vbody < other.vbody;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
+        auto operator<=>(const Method&) const noexcept = default;
+        bool operator==(const Method&) const noexcept  = default;
     };
 }

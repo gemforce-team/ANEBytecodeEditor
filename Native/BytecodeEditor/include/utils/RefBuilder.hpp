@@ -16,7 +16,9 @@
 bool nsSimilar(const ASASM::Namespace& ns1, const ASASM::Namespace& ns2)
 {
     if (ns1.kind == ABCType::PrivateNamespace || ns2.kind == ABCType::PrivateNamespace)
+    {
         return ns1.kind == ns2.kind && ns1.id == ns2.id;
+    }
     // ignore ns kind in other cases
     return ns1.name == ns2.name;
 }
@@ -25,7 +27,7 @@ class RefBuilder : public ASASM::ASTraitsVisitor
 {
 private:
     std::array<std::unordered_map<std::string, std::unordered_map<uint32_t, bool>>,
-        ABCTypeMap.GetEntries().second>
+        ABCTypeMap.GetEntries().size()>
         homonyms;
 
 #ifndef NDEBUG
@@ -60,23 +62,29 @@ public:
             Group      /// Multiple ContextItem[]s (which are expanded and the common root is taken
                        /// as the result)
         };
+
         struct StrData
         {
             std::string str;
             bool filenameSuffix;
-            bool operator==(const StrData& other) const = default;
+            auto operator<=>(const StrData&) const noexcept = default;
+            bool operator==(const StrData&) const noexcept  = default;
         };
+
         struct GroupData
         {
             std::vector<ContextItem> group;
             std::string groupFallback;
-            bool operator==(const GroupData& other) const = default;
+            auto operator<=>(const GroupData&) const noexcept = default;
+            bool operator==(const GroupData&) const noexcept  = default;
         };
+
         struct Segment
         {
             char delim;
             std::string str;
-            bool operator==(const Segment& other) const = default;
+            auto operator<=>(const Segment&) const noexcept = default;
+            bool operator==(const Segment&) const noexcept  = default;
         };
 
     private:
@@ -91,25 +99,25 @@ public:
             assert(type == Type::Group);
 
             std::vector<std::vector<ContextItem>> contexts;
-            for (const auto& context : std::get<GroupData>(data).group)
+            for (const auto& ctx : std::get<GroupData>(data).group)
             {
-                contexts.emplace_back(ContextItem::expand(refs, {context}));
+                contexts.emplace_back(ContextItem::expand(refs, {ctx}));
             }
 
-            std::vector<ContextItem> context;
+            std::vector<ContextItem> ctx;
             if (!contexts.empty())
             {
-                context = contexts[0];
+                ctx = contexts[0];
                 for (size_t i = 1; i < contexts.size(); i++)
                 {
-                    context = contextRoot(context, contexts[i]);
+                    ctx = contextRoot(ctx, contexts[i]);
                 }
             }
-            if (context.empty())
+            if (ctx.empty())
             {
-                context = {ContextItem(std::get<GroupData>(data).groupFallback)};
+                ctx = {ContextItem(std::get<GroupData>(data).groupFallback)};
             }
-            return context;
+            return ctx;
         }
 
         std::vector<Segment> toSegments(const RefBuilder& refs, bool filename) const
@@ -157,9 +165,9 @@ public:
                 case Type::Group:
                 {
                     std::vector<Segment> segments;
-                    for (const auto& context : reduceGroup(refs))
+                    for (const auto& ctx : reduceGroup(refs))
                     {
-                        std::vector<Segment> tmp = context.toSegments(refs, filename);
+                        std::vector<Segment> tmp = ctx.toSegments(refs, filename);
                         segments.insert(segments.end(), tmp.begin(), tmp.end());
                     }
                     return segments;
@@ -214,23 +222,23 @@ public:
                             const auto& ns = multiname.qname().ns;
                             if (ns.kind == ABCType::PrivateNamespace)
                             {
-                                auto context = refs.namespaces[(uint8_t)ns.kind].getContext(
+                                auto ctx = refs.namespaces[(uint8_t)ns.kind].getContext(
                                     refs, (uint32_t)ns.id);
                                 if (!multiname.qname().name.empty())
                                 {
-                                    context.emplace_back(multiname.qname().name);
+                                    ctx.emplace_back(multiname.qname().name);
                                 }
                                 expanding = false;
-                                return context;
+                                return ctx;
                             }
                         }
                         break;
                         case ABCType::Multiname:
                             expanding = false;
                             return !multiname.multiname().name.empty()
-                                       ? std::vector<ContextItem>{ContextItem(
-                                             multiname.multiname().name)}
-                                       : std::vector<ContextItem>{};
+                                     ? std::vector<ContextItem>{ContextItem(
+                                           multiname.multiname().name)}
+                                     : std::vector<ContextItem>{};
                         default:
 #ifndef NDEBUG
                             assert(false);
@@ -251,21 +259,26 @@ public:
         }
 
         ContextItem(const ASASM::Multiname& m) : type(Type::Multiname), data(m) {}
+
         ContextItem(const std::string& s, bool filenameSuffix = false)
             : type(Type::String), data(StrData{s, filenameSuffix})
         {
         }
+
         ContextItem(const std::vector<ContextItem>& group, const std::string& groupFallback)
             : type(Type::Group), data(GroupData{group, groupFallback})
         {
         }
 
-        bool operator==(const ContextItem&) const = default;
+        auto operator<=>(const ContextItem&) const noexcept = default;
+        bool operator==(const ContextItem&) const noexcept  = default;
 
         static bool similar(const ContextItem& l, const ContextItem& r)
         {
             if (l.type != r.type)
+            {
                 return false;
+            }
             switch (l.type)
             {
                 case Type::String:
@@ -275,7 +288,9 @@ public:
                            std::get<ASASM::Multiname>(r.data).kind == ABCType::QName);
                     if (std::get<ASASM::Multiname>(l.data).qname().name !=
                         std::get<ASASM::Multiname>(r.data).qname().name)
+                    {
                         return false;
+                    }
                     return nsSimilar(std::get<ASASM::Multiname>(l.data).qname().ns,
                         std::get<ASASM::Multiname>(r.data).qname().ns);
                 case Type::Group:
@@ -288,13 +303,19 @@ public:
         static std::vector<ContextItem> combine(ContextItem& c1, ContextItem& c2)
         {
             if (similar(c1, c2))
+            {
                 return {c1};
+            }
 
             if (c1.type != Type::Multiname || c2.type != Type::Multiname)
+            {
                 return {};
+            }
             if (std::get<ASASM::Multiname>(c1.data).kind != ABCType::QName ||
                 std::get<ASASM::Multiname>(c2.data).kind != ABCType::QName)
+            {
                 return {};
+            }
 
             auto& name1 = std::get<ASASM::Multiname>(c1.data).qname().name;
             auto& name2 = std::get<ASASM::Multiname>(c1.data).qname().name;
@@ -369,7 +390,9 @@ public:
                 std::string fullName1 = ns1.name + (!name1.empty() ? ":" + name1 : "");
                 std::string fullName2 = ns2.name + (!name2.empty() ? ":" + name2 : "");
                 if (fullName2.starts_with(fullName1 + ":"))
+                {
                     return {truncate ? c1 : c2};
+                }
             }
 
             return {};
@@ -388,11 +411,14 @@ public:
         static std::vector<ContextItem> contextRoot(
             std::vector<ContextItem>& c1, std::vector<ContextItem>& c2)
         {
-            constexpr auto uninteresting = [](const std::vector<ContextItem>& c) {
+            constexpr auto uninteresting = [](const std::vector<ContextItem>& c)
+            {
+#ifndef NDEBUG
                 for (const auto& cc : c)
                 {
                     assert(cc.type != Type::Group);
                 }
+#endif
 
                 if (c.size() != 1)
                 {
@@ -410,9 +436,13 @@ public:
             };
 
             if (uninteresting(c1))
+            {
                 return c2;
+            }
             if (uninteresting(c2))
+            {
                 return c1;
+            }
 
             std::vector<ContextItem> c;
             while (c.size() < c1.size() && c.size() < c2.size())
@@ -424,7 +454,9 @@ public:
                     c.emplace_back(std::move(root[0]));
                 }
                 else
+                {
                     break;
+                }
             }
             return c;
         }
@@ -437,6 +469,7 @@ public:
     {
         context.emplace_back(args...);
     }
+
     void popContext() { context.pop_back(); }
 
     enum class ContextPriority : uint8_t
@@ -484,9 +517,13 @@ public:
         bool addIfNew(T obj, const std::vector<ContextItem>& context, ContextPriority priority)
         {
             if (isAdded(obj))
+            {
                 return false;
+            }
             else
+            {
                 return add(obj, context, priority);
+            }
         }
 
         bool isAdded(T obj) { return contextSets.contains(obj); }
@@ -513,7 +550,7 @@ public:
                 int counter = collisionCounter.contains(bname) ? collisionCounter.at(bname) : 0;
                 if (counter == 1)
                 {
-                    names.at(first[bname]) += "#0";
+                    names.at(first[bname])     += "#0";
                     filenames.at(first[bname]) += "#0";
                 }
 
@@ -552,18 +589,20 @@ public:
             for (const auto& prioritySet : contextSets.at(obj))
             {
                 if (!prioritySet.empty())
+                {
                     set = prioritySet;
+                }
             }
 
             if constexpr (ALLOW_DUPLICATES)
             {
-                std::vector<ContextItem> context = ContextItem::expand(refs, set[0]);
+                std::vector<ContextItem> ctx = ContextItem::expand(refs, set[0]);
                 for (size_t i = 1; i < set.size(); i++)
                 {
                     auto expanded = ContextItem::expand(refs, set[i]);
-                    context       = ContextItem::contextRoot(context, expanded);
+                    ctx           = ContextItem::contextRoot(ctx, expanded);
                 }
-                contexts[obj] = context;
+                contexts[obj] = ctx;
             }
             else
             {
@@ -602,7 +641,8 @@ public:
             again:
                 std::string subpath = StringUtils::join(dirSegments.data(), l, "/");
                 std::string subpathl(subpath.size(), '\0');
-                std::transform(subpath.begin(), subpath.end(), subpathl.begin(), tolower);
+                std::transform(subpath.begin(), subpath.end(), subpathl.begin(),
+                    [](auto v) { return (char)tolower(v); });
 
                 if (filenameMappings.contains(subpathl) && filenameMappings[subpathl] != subpath)
                 {
@@ -614,13 +654,13 @@ public:
             filename = StringUtils::join(dirSegments, "/");
 
             std::string ret = filename + ".";
-            ret += suffix;
-            ret += ".asasm";
+            ret             += suffix;
+            ret             += ".asasm";
             return ret;
         }
     };
 
-    std::array<ContextSet<uint32_t, true>, ABCTypeMap.GetEntries().second> namespaces;
+    std::array<ContextSet<uint32_t, true>, ABCTypeMap.GetEntries().size()> namespaces;
     ContextSet<const void*, false> objects, scripts;
 
     RefBuilder(const ASASM::ASProgram& as) : ASTraitsVisitor(as) {}
@@ -652,7 +692,9 @@ public:
             {
                 if (trait.name.kind == ABCType::QName &&
                     trait.name.qname().ns.kind != ABCType::PrivateNamespace)
+                {
                     classContexts.emplace_back(trait.name);
+                }
             }
 
             if (classContexts.empty())
@@ -663,7 +705,9 @@ public:
                 }
             }
 
-            context = {{classContexts, "script_" + std::to_string(i)}};
+            context = {
+                {classContexts, "script_" + std::to_string(i)}
+            };
             scripts.add(&as.scripts[i], context, ContextPriority::declaration);
             pushContext("init", true);
             addMethod(as.scripts[i].sinit, ContextPriority::declaration);
@@ -785,7 +829,9 @@ public:
     void visitNamespace(const ASASM::Namespace& ns, ContextPriority priority)
     {
         if (ns.kind == ABCType::Void)
+        {
             return;
+        }
 
         addHomonym(ns);
 
@@ -823,7 +869,9 @@ public:
     void visitMultiname(const ASASM::Multiname& m, ContextPriority priority)
     {
         if (m.kind == ABCType::Void)
+        {
             return;
+        }
         switch (m.kind)
         {
             case ABCType::QName:
@@ -841,7 +889,9 @@ public:
             case ABCType::TypeName:
                 visitMultiname(m.Typename().name(), priority);
                 for (const auto& param : m.Typename().params())
+                {
                     visitMultiname(param, priority);
+                }
                 break;
             default:
                 break;
@@ -867,13 +917,17 @@ public:
                     case OPCodeArgumentType::Class:
                         pushContext("inline_class");
                         if (isOrphan(instruction.arguments[i].classv().get()))
+                        {
                             addClass(instruction.arguments[i].classv(), ContextPriority::usage);
+                        }
                         popContext();
                         break;
                     case OPCodeArgumentType::Method:
                         pushContext("inline_method");
                         if (isOrphan(instruction.arguments[i].methodv().get()))
+                        {
                             addMethod(instruction.arguments[i].methodv(), ContextPriority::usage);
+                        }
                         popContext();
                         break;
                     default:
@@ -883,34 +937,39 @@ public:
         }
     }
 
-    std::string contextToString(std::vector<ContextItem> context, bool filename) const
+    std::string contextToString(std::vector<ContextItem> ctx, bool filename) const
     {
-        context = ContextItem::expand(*this, context);
-        if (context.empty())
-            return "";
-
-        for (size_t i = context.size() - 1; i > 0; i--)
+        ctx = ContextItem::expand(*this, ctx);
+        if (ctx.empty())
         {
-            auto root = ContextItem::deduplicate(context[i - 1], context[i]);
+            return "";
+        }
+
+        for (size_t i = ctx.size() - 1; i > 0; i--)
+        {
+            auto root = ContextItem::deduplicate(ctx[i - 1], ctx[i]);
             if (!root.empty())
             {
-                std::vector<ContextItem> newContext{context.begin(), context.begin() + i - 1};
+                std::vector<ContextItem> newContext{ctx.begin(), ctx.begin() + i - 1};
                 newContext.insert(newContext.end(), root.begin(), root.end());
-                newContext.insert(newContext.end(), context.begin() + i + 1, context.end());
-                context = std::move(newContext);
+                newContext.insert(newContext.end(), ctx.begin() + i + 1, ctx.end());
+                ctx = std::move(newContext);
             }
         }
 
         std::vector<ContextItem::Segment> segments;
-        for (const auto& ci : context)
+        for (const auto& ci : ctx)
         {
             auto newSegments = ci.toSegments(*this, filename);
             segments.insert(segments.end(), newSegments.begin(), newSegments.end());
         }
 
-        auto escape = [&](std::string_view s) {
+        auto escape = [&](std::string_view s)
+        {
             if (!filename)
+            {
                 return std::string(s);
+            }
 
             std::string ret;
             for (char c : s)
@@ -949,7 +1008,8 @@ public:
                     "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
 
                 std::string segmentU(segment.size(), '\0');
-                std::transform(segment.begin(), segment.end(), segmentU.begin(), toupper);
+                std::transform(segment.begin(), segment.end(), segmentU.begin(),
+                    [](auto v) { return (char)toupper(v); });
                 for (const auto& reservedName : reservedNames)
                 {
                     if (segmentU.starts_with(reservedName) &&

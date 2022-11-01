@@ -13,6 +13,9 @@
     m_taskResult = x;                                                                              \
     FREDispatchStatusEventAsync(ctx, (const uint8_t*)"Task complete", (const uint8_t*)"SUCCESS")
 
+#define SUCCEED_ASYNC_WITHMESSAGE(message)                                                         \
+    FREDispatchStatusEventAsync(ctx, (const uint8_t*)"Task complete", (const uint8_t*)(message))
+
 FREObject BytecodeEditor::disassemble()
 {
     if (runningTask.joinable())
@@ -32,15 +35,13 @@ FREObject BytecodeEditor::disassemble()
                            .disassemble();
 
         FREObject ret;
-        DO_OR_FAIL("Failed to create return object",
-            FRENewObject((uint8_t*)"Object", 0, nullptr, &ret, nullptr));
+        DO_OR_FAIL(
+            "Failed to create return object", ANENewObject("Object", 0, nullptr, &ret, nullptr));
 
         for (const auto& file : strings)
         {
-            FREObject str;
-            DO_OR_FAIL("Failed to create data string", FREString(file.second, &str));
             DO_OR_FAIL("Failed to set data",
-                FRESetObjectProperty(ret, (const uint8_t*)file.first.c_str(), str, nullptr));
+                ANESetObjectProperty(ret, file.first.c_str(), FREString(file.second), nullptr));
         }
 
         return ret;
@@ -74,10 +75,10 @@ FREObject BytecodeEditor::assemble(
 
     FREObject bytearrayObj;
     DO_OR_FAIL("Failed to create returned bytearray",
-        FRENewObject((const uint8_t*)"flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+        ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
 
     DO_OR_FAIL("Failed to set returned bytearray length to required size",
-        FRESetObjectProperty(bytearrayObj, (const uint8_t*)"length", lengthObj, nullptr));
+        ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
 
     FREByteArray ba;
     DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
@@ -95,23 +96,25 @@ FREObject BytecodeEditor::disassembleAsync()
         FAIL("Already running a task");
     }
 
-    runningTask = std::jthread([this] {
-        if (!currentSWF)
+    runningTask = std::jthread(
+        [this]
         {
-            FAIL_ASYNC("No SWF data specified to disassemble");
-        }
+            if (!currentSWF)
+            {
+                FAIL_ASYNC("No SWF data specified to disassemble");
+            }
 
-        try
-        {
-            SUCCEED_ASYNC(Disassembler::Disassembler(
-                ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()))
-                              .disassemble());
-        }
-        catch (std::exception& e)
-        {
-            FAIL_ASYNC(std::string("Exception during disassembly: ") + e.what());
-        }
-    });
+            try
+            {
+                SUCCEED_ASYNC(Disassembler::Disassembler(
+                    ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()))
+                                  .disassemble());
+            }
+            catch (std::exception& e)
+            {
+                FAIL_ASYNC(std::string("Exception during disassembly: ") + e.what());
+            }
+        });
 
     FREObject ret;
     DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
@@ -126,34 +129,181 @@ FREObject BytecodeEditor::assembleAsync(
         FAIL("Already running a task");
     }
 
-    runningTask = std::jthread([this, strings = std::move(strings), includeDebugInstructions] {
-        if (!currentSWF)
+    runningTask = std::jthread(
+        [this, strings = std::move(strings), includeDebugInstructions]
         {
-            FAIL_ASYNC("No SWF data specified to reassemble");
-        }
-        try
-        {
-            std::vector<uint8_t> data = std::move(
-                ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
-                    .data());
+            if (!currentSWF)
+            {
+                FAIL_ASYNC("No SWF data specified to reassemble");
+            }
+            try
+            {
+                std::vector<uint8_t> data = std::move(
+                    ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
+                        .data());
 
-            currentSWF->replaceABCData(data.data(), data.size());
+                currentSWF->replaceABCData(data.data(), data.size());
 
-            std::vector<uint8_t> finalData(currentSWF->getFullSize());
+                std::vector<uint8_t> finalData(currentSWF->getFullSize());
 
-            currentSWF->writeTo(finalData.data());
+                currentSWF->writeTo(finalData.data());
 
-            SUCCEED_ASYNC(std::move(finalData));
-        }
-        catch (std::exception& e)
-        {
-            FAIL_ASYNC(std::string("Exception during assembly: ") + e.what());
-        }
-    });
+                SUCCEED_ASYNC(finalData);
+            }
+            catch (std::exception& e)
+            {
+                FAIL_ASYNC(std::string("Exception during assembly: ") + e.what());
+            }
+        });
 
     FREObject ret;
     DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
     return ret;
+}
+
+FREObject BytecodeEditor::partialAssemble(
+    std::unordered_map<std::string, std::string>&& strings, bool includeDebugInstructions)
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+
+    this->partialAssembly =
+        std::make_unique<ASASM::ASProgram>(Assembler::assemble(strings, includeDebugInstructions));
+
+    FREObject ret;
+    DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
+    return ret;
+}
+
+FREObject BytecodeEditor::partialAssembleAsync(
+    std::unordered_map<std::string, std::string>&& strings, bool includeDebugInstructions)
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+
+    runningTask = std::jthread(
+        [this, strings = std::move(strings), includeDebugInstructions]
+        {
+            try
+            {
+                this->partialAssembly = std::make_unique<ASASM::ASProgram>(
+                    Assembler::assemble(strings, includeDebugInstructions));
+
+                SUCCEED_ASYNC_WITHMESSAGE("PartialSuccess");
+            }
+            catch (std::exception& e)
+            {
+                FAIL_ASYNC(std::string("Exception during partial assembly: ") + e.what());
+            }
+        });
+
+    FREObject ret;
+    DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
+    return ret;
+}
+
+FREObject BytecodeEditor::finishAssemble()
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+
+    if (!currentSWF)
+    {
+        FAIL("No SWF data specified to reassemble");
+    }
+    if (!partialAssembly)
+    {
+        FAIL("No partial assembly found");
+    }
+    std::vector<uint8_t> data = std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
+    partialAssembly           = nullptr;
+
+    currentSWF->replaceABCData(data.data(), data.size());
+
+    FREObject lengthObj;
+    DO_OR_FAIL("Failed to create length object",
+        FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
+
+    FREObject bytearrayObj;
+    DO_OR_FAIL("Failed to create returned bytearray",
+        ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+
+    DO_OR_FAIL("Failed to set returned bytearray length to required size",
+        ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
+
+    FREByteArray ba;
+    DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
+
+    currentSWF->writeTo(ba.bytes);
+    DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+
+    return bytearrayObj;
+}
+
+FREObject BytecodeEditor::finishAssembleAsync()
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+
+    runningTask = std::jthread(
+        [this]
+        {
+            if (!currentSWF)
+            {
+                FAIL_ASYNC("No SWF data specified to reassemble");
+            }
+            if (!partialAssembly)
+            {
+                FAIL_ASYNC("No partial assembly found");
+            }
+            try
+            {
+                std::vector<uint8_t> data =
+                    std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
+
+                currentSWF->replaceABCData(data.data(), data.size());
+
+                std::vector<uint8_t> finalData(currentSWF->getFullSize());
+
+                currentSWF->writeTo(finalData.data());
+
+                partialAssembly = nullptr;
+
+                SUCCEED_ASYNC(finalData);
+            }
+            catch (std::exception& e)
+            {
+                FAIL_ASYNC(std::string("Exception while finishing assembly: ") + e.what());
+            }
+        });
+
+    FREObject ret;
+    DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
+    return ret;
+}
+
+ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
+{
+    for (const auto& script : partialAssembly->scripts)
+    {
+        for (const auto& trait : script.traits)
+        {
+            if (trait.kind == TraitKind::Class && className == trait.name)
+            {
+                return trait.vClass().vclass.get();
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 #undef FAIL_RETURN
@@ -162,7 +312,8 @@ FREObject BytecodeEditor::assembleAsync(
     {                                                                                              \
         m_taskResult = std::monostate{};                                                           \
         return x;                                                                                  \
-    } while (false)
+    }                                                                                              \
+    while (false)
 
 FREObject BytecodeEditor::taskResult()
 {
@@ -176,8 +327,7 @@ FREObject BytecodeEditor::taskResult()
             return nullptr;
         case 1:
         {
-            FREObject r;
-            FREString(std::get<1>(m_taskResult), &r);
+            FREObject r  = FREString(std::get<1>(m_taskResult));
             m_taskResult = std::monostate{};
             return r;
         }
@@ -187,14 +337,12 @@ FREObject BytecodeEditor::taskResult()
 
             FREObject ret;
             DO_OR_FAIL("Failed to create return object",
-                FRENewObject((uint8_t*)"Object", 0, nullptr, &ret, nullptr));
+                ANENewObject("Object", 0, nullptr, &ret, nullptr));
 
             for (const auto& file : strings)
             {
-                FREObject str;
-                DO_OR_FAIL("Failed to create data string", FREString(file.second, &str));
                 DO_OR_FAIL("Failed to set data",
-                    FRESetObjectProperty(ret, (const uint8_t*)file.first.c_str(), str, nullptr));
+                    ANESetObjectProperty(ret, file.first.c_str(), FREString(file.second), nullptr));
             }
 
             m_taskResult = std::monostate{};
@@ -210,11 +358,10 @@ FREObject BytecodeEditor::taskResult()
 
             FREObject bytearrayObj;
             DO_OR_FAIL("Failed to create returned bytearray",
-                FRENewObject(
-                    (const uint8_t*)"flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+                ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
 
             DO_OR_FAIL("Failed to set returned bytearray length to required size",
-                FRESetObjectProperty(bytearrayObj, (const uint8_t*)"length", lengthObj, nullptr));
+                ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
 
             FREByteArray ba;
             DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));

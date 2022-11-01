@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <compare>
 
 namespace ABC
 {
@@ -10,6 +11,7 @@ namespace ABC
         int32_t offset           = 0;
         ptrdiff_t absoluteOffset = 0;
 
-        std::strong_ordering operator<=>(const Label&) const = default;
+        auto operator<=>(const Label&) const noexcept = default;
+        bool operator==(const Label&) const noexcept  = default;
     };
 }

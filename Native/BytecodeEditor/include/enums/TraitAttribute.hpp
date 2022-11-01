@@ -10,6 +10,5 @@ enum class TraitAttribute : uint8_t
     Metadata = 4
 };
 
-constexpr inline BidirectionalMap TraitAttributeMap =
-    MakeCStringMap(std::equal_to<>(), "FINAL", TraitAttribute::Final, "OVERRIDE",
-        TraitAttribute::Override, "METADATA", TraitAttribute::Metadata);
+constexpr inline BidirectionalMap TraitAttributeMap = {"FINAL", TraitAttribute::Final, "OVERRIDE",
+    TraitAttribute::Override, "METADATA", TraitAttribute::Metadata};

@@ -16,6 +16,7 @@ class ValuePoolBase
 {
 public:
     using Key = std::remove_cvref_t<T>;
+
     static Key toKey(T val) { return val; }
 };
 
@@ -26,6 +27,7 @@ class ValuePoolBase<double, haveNull>
 
 public:
     using Key = uint64_t;
+
     static Key toKey(double val) { return std::bit_cast<uint64_t>(val); }
 };
 
@@ -34,6 +36,7 @@ class ValuePoolBase<std::shared_ptr<T>, haveNull>
 {
 public:
     using Key = T*;
+
     static Key toKey(const std::shared_ptr<T>& val) { return val.get(); }
 };
 
@@ -98,10 +101,10 @@ private:
 public:
     struct Entry
     {
-        uint32_t hits;
-        T value;
-        size_t addIndex, index;
-        std::vector<Key> parents;
+        uint32_t hits{};
+        T value{};
+        size_t addIndex{}, index{};
+        std::vector<Key> parents{};
     };
 
     std::map<Key, Entry> pool;
@@ -190,7 +193,8 @@ public:
 
         if constexpr (std::is_same_v<T, double>)
         {
-            constexpr auto sortPred = [](Entry* a, Entry* b) {
+            constexpr auto sortPred = [](Entry* a, Entry* b)
+            {
                 return a->hits > b->hits ||
                        (a->hits == b->hits &&
                            std::bit_cast<uint64_t>(a->value) < std::bit_cast<uint64_t>(b->value));
@@ -199,16 +203,14 @@ public:
         }
         else if constexpr (std::is_pointer_v<Key>)
         {
-            constexpr auto sortPred = [](Entry* a, Entry* b) {
-                return a->hits > b->hits || (a->hits == b->hits && a->addIndex < b->addIndex);
-            };
+            constexpr auto sortPred = [](Entry* a, Entry* b)
+            { return a->hits > b->hits || (a->hits == b->hits && a->addIndex < b->addIndex); };
             std::sort(all.begin(), all.end(), sortPred);
         }
         else
         {
-            constexpr auto sortPred = [](Entry* a, Entry* b) {
-                return a->hits > b->hits || (a->hits == b->hits && a->value < b->value);
-            };
+            constexpr auto sortPred = [](Entry* a, Entry* b)
+            { return a->hits > b->hits || (a->hits == b->hits && a->value < b->value); };
             std::sort(all.begin(), all.end(), sortPred);
         }
 
@@ -250,9 +252,12 @@ public:
 
     uint32_t get(T value)
     {
-        if (haveNull && isNull(value))
+        if constexpr (haveNull)
         {
-            return 0;
+            if (isNull(value))
+            {
+                return 0;
+            }
         }
         return pool[toKey(value)].index + (haveNull ? 1 : 0);
     }

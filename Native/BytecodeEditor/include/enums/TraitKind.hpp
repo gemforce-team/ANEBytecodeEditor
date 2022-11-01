@@ -14,7 +14,6 @@ enum class TraitKind : uint8_t
     Const    = 6
 };
 
-constexpr inline BidirectionalMap TraitKindMap =
-    MakeCStringMap(std::equal_to<>(), "slot", TraitKind::Slot, "method", TraitKind::Method,
-        "getter", TraitKind::Getter, "setter", TraitKind::Setter, "class", TraitKind::Class,
-        "function", TraitKind::Function, "const", TraitKind::Const);
+inline constexpr BidirectionalMap TraitKindMap = {"slot", TraitKind::Slot, "method",
+    TraitKind::Method, "getter", TraitKind::Getter, "setter", TraitKind::Setter, "class",
+    TraitKind::Class, "function", TraitKind::Function, "const", TraitKind::Const};

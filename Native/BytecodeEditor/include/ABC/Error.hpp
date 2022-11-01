@@ -10,6 +10,7 @@ namespace ABC
         Label loc;
         std::string message;
 
-        std::strong_ordering operator<=>(const Error&) const = default;
+        auto operator<=>(const Error&) const noexcept = default;
+        bool operator==(const Error&) const noexcept  = default;
     };
 }

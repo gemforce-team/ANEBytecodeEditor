@@ -1,8 +1,10 @@
 #pragma once
 
+#include "ASASM/ASProgram.hpp"
 #include "SWF/SWFFile.hpp"
 #include "utils/ANEUtils.hpp"
 #include <FlashRuntimeExtensions.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -23,14 +25,27 @@ private:
         std::vector<uint8_t>>
         m_taskResult;
 
+    std::unique_ptr<ASASM::ASProgram> partialAssembly;
+
 public:
     BytecodeEditor(FREContext ctx) noexcept : ctx(ctx) {}
 
     FREObject disassemble();
     FREObject disassembleAsync();
 
-    FREObject assemble(std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
-    FREObject assembleAsync(std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+    FREObject assemble(
+        std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+    FREObject assembleAsync(
+        std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+
+    FREObject partialAssemble(
+        std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+    FREObject partialAssembleAsync(
+        std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
+    FREObject finishAssemble();
+    FREObject finishAssembleAsync();
+
+    ASASM::Class* getClass(const ASASM::Multiname& className) const;
 
     void setSWF(SWF::SWFFile&& file) { currentSWF = std::move(file); }
 
@@ -40,8 +55,9 @@ public:
         {
             runningTask.join();
         }
-        currentSWF   = std::nullopt;
-        m_taskResult = std::monostate{};
+        currentSWF      = std::nullopt;
+        partialAssembly = nullptr;
+        m_taskResult    = std::monostate{};
     }
 
     FREObject taskResult();

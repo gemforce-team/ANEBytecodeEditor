@@ -13,6 +13,6 @@ enum class InstanceFlags : uint8_t
                         // present in the interface_info structure.
 };
 
-constexpr inline BidirectionalMap InstanceFlagMap = MakeCStringMap(std::equal_to<>(), "SEALED",
-    InstanceFlags::Sealed, "FINAL", InstanceFlags::Final, "INTERFACE", InstanceFlags::Interface,
-    "PROTECTEDNS", InstanceFlags::ProtectedNs);
+inline constexpr BidirectionalMap InstanceFlagMap = {"SEALED", InstanceFlags::Sealed, "FINAL",
+    InstanceFlags::Final, "INTERFACE", InstanceFlags::Interface, "PROTECTEDNS",
+    InstanceFlags::ProtectedNs};

@@ -18,7 +18,7 @@ enum class MethodFlags : uint8_t
         0x80 // Must be set when the param_names field is present in this method_info structure.
 };
 
-constexpr inline BidirectionalMap MethodFlagMap = MakeCStringMap(std::equal_to<>(),
-    "NEED_ARGUMENTS", MethodFlags::NEED_ARGUMENTS, "NEED_ACTIVATION", MethodFlags::NEED_ACTIVATION,
-    "NEED_REST", MethodFlags::NEED_REST, "HAS_OPTIONAL", MethodFlags::HAS_OPTIONAL, "SET_DXNS",
-    MethodFlags::SET_DXNS, "HAS_PARAM_NAMES", MethodFlags::HAS_PARAM_NAMES);
+inline constexpr BidirectionalMap MethodFlagMap = {"NEED_ARGUMENTS", MethodFlags::NEED_ARGUMENTS,
+    "NEED_ACTIVATION", MethodFlags::NEED_ACTIVATION, "NEED_REST", MethodFlags::NEED_REST,
+    "HAS_OPTIONAL", MethodFlags::HAS_OPTIONAL, "SET_DXNS", MethodFlags::SET_DXNS, "HAS_PARAM_NAMES",
+    MethodFlags::HAS_PARAM_NAMES};

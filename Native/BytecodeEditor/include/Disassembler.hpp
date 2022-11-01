@@ -107,8 +107,8 @@ public:
             for (size_t i = 0; i < as.orphanMethods.size(); i++)
             {
                 newInclude(sb, refs.objects.getFilename(as.orphanMethods[i].get(), "method"),
-                    [this, i](
-                        StringBuilder& sb) { dumpMethod(sb, *as.orphanMethods[i], "method"); });
+                    [this, i](StringBuilder& sb)
+                    { dumpMethod(sb, *as.orphanMethods[i], "method"); });
             }
             sb.newLine();
         }
@@ -124,17 +124,25 @@ public:
     void dumpInt(StringBuilder& sb, int64_t v)
     {
         if (v == ABC::ABCFile::NULL_INT)
+        {
             sb << "null";
+        }
         else
+        {
             sb.write(v);
+        }
     }
 
     void dumpUInt(StringBuilder& sb, uint64_t v)
     {
         if (v == ABC::ABCFile::NULL_UINT)
+        {
             sb << "null";
+        }
         else
+        {
             sb.write(v);
+        }
     }
 
     void dumpDouble(StringBuilder& sb, double v)
@@ -273,11 +281,14 @@ public:
             {
                 dumpNamespace(sb, nsSet[i]);
                 if (i < size - 1)
+                {
                     sb << ", ";
+                }
             }
             sb << ']';
         }
     }
+
     void dumpNamespaceSet(StringBuilder& sb, const std::vector<ASASM::Namespace>& nsSet)
     {
         dumpNamespaceSet(sb, nsSet.data(), nsSet.size());
@@ -324,7 +335,9 @@ public:
                     {
                         dumpMultiname(sb, multiname.Typename().params()[i]);
                         if (i < multiname.Typename().params().size() - 1)
+                        {
                             sb << ", ";
+                        }
                     }
                     sb << '>';
                     break;
@@ -345,7 +358,9 @@ public:
             sb << "trait " << *TraitKindMap.ReverseFind(trait.kind) << ' ';
             dumpMultiname(sb, trait.name);
             if (trait.attributes)
+            {
                 dumpFlags(sb, trait.attributes, TraitAttributeMap, true);
+            }
             bool inLine = false;
             switch (trait.kind)
             {
@@ -378,8 +393,8 @@ public:
                     sb.newLine();
 
                     newInclude(sb, refs.objects.getFilename(trait.vClass().vclass.get(), "class"),
-                        [this, &trait](
-                            StringBuilder& sb) { dumpClass(sb, *trait.vClass().vclass); });
+                        [this, &trait](StringBuilder& sb)
+                        { dumpClass(sb, *trait.vClass().vclass); });
                     break;
                 case TraitKind::Function:
                     if (trait.vFunction().slotId)
@@ -391,9 +406,8 @@ public:
                     sb.newLine();
                     newInclude(
                         sb, refs.objects.getFilename(trait.vFunction().vfunction.get(), "method"),
-                        [this, &trait](StringBuilder& sb) {
-                            dumpMethod(sb, *trait.vFunction().vfunction, "method");
-                        },
+                        [this, &trait](StringBuilder& sb)
+                        { dumpMethod(sb, *trait.vFunction().vfunction, "method"); },
                         inScript);
                     break;
                 case TraitKind::Method:
@@ -408,9 +422,8 @@ public:
                     sb.newLine();
                     newInclude(
                         sb, refs.objects.getFilename(trait.vMethod().vmethod.get(), "method"),
-                        [this, &trait](StringBuilder& sb) {
-                            dumpMethod(sb, *trait.vMethod().vmethod, "method");
-                        },
+                        [this, &trait](StringBuilder& sb)
+                        { dumpMethod(sb, *trait.vMethod().vmethod, "method"); },
                         inScript);
                     break;
                 default:
@@ -441,6 +454,7 @@ public:
             }
         }
     }
+
     void dumpTraits(
         StringBuilder& sb, const std::vector<ASASM::Trait> traits, bool inScript = false)
     {
@@ -469,10 +483,8 @@ public:
     template <typename FlagMap>
     void dumpFlags(StringBuilder& sb, uint8_t v, const FlagMap& map, bool oneLine = false)
     {
-        const auto& entries = map.GetEntries();
-        for (size_t i = 0; i < entries.second; i++)
+        for (const auto& entry : map.GetEntries())
         {
-            const auto& entry = entries.first[i];
             if (v & (uint8_t)entry.second)
             {
                 sb << (oneLine ? " flag " : "flag ") << entry.first;
@@ -639,7 +651,7 @@ public:
         sb.newLine();
     }
 
-    void dumpScript(StringBuilder& sb, const ASASM::Script& script, uint32_t index)
+    void dumpScript(StringBuilder& sb, const ASASM::Script& script, uint32_t)
     {
         sb << "script";
         sb.indent++;
@@ -667,7 +679,9 @@ public:
         if (label.offset != 0)
         {
             if (label.offset > 0)
+            {
                 sb << '+';
+            }
             sb.write(label.offset);
         }
     }
@@ -749,7 +763,8 @@ public:
             }
         }
 
-        auto checkLabel = [&](size_t ii) {
+        auto checkLabel = [&](size_t ii)
+        {
             if (labels[ii])
             {
                 sb.noIndent();
@@ -771,7 +786,9 @@ public:
         {
             const auto& instruction = instructions[ii];
             if (extraNewLine)
+            {
                 sb.newLine();
+            }
             // extraNewLine = newLineAfter[instruction.opcode];
             checkLabel(ii);
 
@@ -859,10 +876,10 @@ public:
                         {
                             sb << '[';
                             const auto& targets = instruction.arguments[i].switchTargets();
-                            for (size_t i = 0; i < targets.size(); i++)
+                            for (size_t j = 0; j < targets.size(); j++)
                             {
-                                dumpLabel(sb, targets[i]);
-                                if (i < targets.size() - 1)
+                                dumpLabel(sb, targets[j]);
+                                if (j < targets.size() - 1)
                                 {
                                     sb << ", ";
                                 }

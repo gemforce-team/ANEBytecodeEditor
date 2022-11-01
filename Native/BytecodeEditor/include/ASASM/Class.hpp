@@ -9,27 +9,20 @@
 
 namespace ASASM
 {
-    struct Class
+    struct Class : public std::enable_shared_from_this<Class>
     {
         std::shared_ptr<Method> cinit;
         std::vector<Trait> traits;
         Instance instance;
 
-        bool operator==(const Class& other) const = default;
-        bool operator<(const Class& other) const
+        Class(std::shared_ptr<Method>&& cinit, std::vector<Trait>&& traits, Instance&& instance)
+            : cinit(cinit), traits(traits), instance(instance)
         {
-            if (cinit < other.cinit)
-            {
-                return true;
-            }
-            else if (cinit == other.cinit)
-            {
-                if (traits < other.traits)
-                {
-                    return instance < other.instance;
-                }
-            }
-            return false;
         }
+
+        Class() = default;
+
+        auto operator<=>(const Class&) const noexcept = default;
+        bool operator==(const Class&) const noexcept  = default;
     };
 }

@@ -39,7 +39,8 @@ namespace ABC
         size_t pos;
         const ABCFile& _abc;
 
-        static constexpr auto writeTable = [](const auto& table, auto writeFunc, size_t start = 0) {
+        static constexpr auto writeTable = [](const auto& table, auto writeFunc, size_t start = 0)
+        {
             for (size_t i = start; i < table.size(); i++)
             {
                 writeFunc(table[i]);
@@ -50,6 +51,7 @@ namespace ABC
         [[nodiscard]] const ABCFile& abc() const { return _abc; }
 
         [[nodiscard]] std::vector<uint8_t>& data() { return buf; }
+
         [[nodiscard]] const std::vector<uint8_t>& data() const { return buf; }
 
         ABCWriter(const ABCFile& _abc) : _abc(_abc), pos(0), buf(std::vector<uint8_t>(1024))
@@ -101,7 +103,9 @@ namespace ABC
         void writeU8(uint8_t v)
         {
             if (pos == buf.size())
+            {
                 buf.resize(buf.size() * 2);
+            }
             buf[pos++] = v;
         }
 
@@ -157,7 +161,9 @@ namespace ABC
         void writeU30(uint64_t v)
         {
             if (v >= 0x40'00'00'00)
+            {
                 throw StringException("U30 out of range");
+            }
             writeU32(v);
         }
 
@@ -305,7 +311,9 @@ namespace ABC
                     writeU30(v.Slot.typeName);
                     writeU30(v.Slot.vindex);
                     if (v.Slot.vindex != 0)
+                    {
                         writeU8((uint8_t)v.Slot.vkind);
+                    }
                     break;
                 case TraitKind::Class:
                     writeU30(v.Class.slotId);
@@ -356,9 +364,8 @@ namespace ABC
 
             std::vector<size_t> instructionOffsets(v.instructions.size() + 1);
 
-            auto resolveLabel = [&](const Label& label) -> ptrdiff_t {
-                return instructionOffsets[label.index] + label.offset;
-            };
+            auto resolveLabel = [&](const Label& label) -> ptrdiff_t
+            { return instructionOffsets[label.index] + label.offset; };
 
             {
                 // Temporarily store global buffer
@@ -387,7 +394,9 @@ namespace ABC
 
                     if (instruction.arguments.size() !=
                         OPCode_Info[(uint8_t)instruction.opcode].second.size())
+                    {
                         throw StringException("Mismatching number of arguments");
+                    }
 
                     for (size_t i = 0; i < instruction.arguments.size(); i++)
                     {
@@ -436,7 +445,9 @@ namespace ABC
 
                             case OPCodeArgumentType::SwitchTargets:
                                 if (instruction.arguments[i].switchTargets().size() < 1)
+                                {
                                     throw StringException("Too few switch cases");
+                                }
                                 writeU30(instruction.arguments[i].switchTargets().size() - 1);
                                 for (const auto& target : instruction.arguments[i].switchTargets())
                                 {

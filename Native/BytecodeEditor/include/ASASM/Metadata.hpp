@@ -11,18 +11,7 @@ namespace ASASM
         std::string name;
         std::vector<std::pair<std::string, std::string>> data;
 
-        bool operator==(const Metadata& other) const = default;
-        bool operator<(const Metadata& other) const
-        {
-            if (name < other.name)
-            {
-                return true;
-            }
-            if (name == other.name)
-            {
-                return data < other.data;
-            }
-            return false;
-        }
+        auto operator<=>(const Metadata&) const noexcept = default;
+        bool operator==(const Metadata&) const noexcept  = default;
     };
 }

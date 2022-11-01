@@ -33,8 +33,11 @@ namespace ASASM
         ABC::ABCFile abc;
 
         void visitInt(int64_t v) { ints.add(v); }
+
         void visitUint(uint64_t v) { uints.add(v); }
+
         void visitDouble(double v) { doubles.add(v); }
+
         void visitString(const std::string& v) { strings.add(v); }
 
         void visitNamespace(const Namespace& ns)
@@ -101,6 +104,7 @@ namespace ASASM
                 }
 
                 bool unrecursiveMultiname = multinames.add(multiname);
+                (void)unrecursiveMultiname;
                 assert(unrecursiveMultiname);
             }
         }
@@ -385,7 +389,8 @@ namespace ASASM
 
             for (const auto& c : classObjects)
             {
-                const auto depWork = [this, &c, &classByName](const ASASM::Multiname& dep) {
+                const auto depWork = [this, &c, &classByName](const ASASM::Multiname& dep)
+                {
                     if (dep.kind != ABCType::Void)
                     {
                         for (const auto& depName : dep.toQNames())

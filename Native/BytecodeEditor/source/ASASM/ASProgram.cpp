@@ -20,16 +20,19 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
     // Whether or not the class has already been converted
     std::vector<bool> classSet;
 
-    const auto getMethod = [&](uint32_t index) -> std::shared_ptr<Method>& {
+    const auto getMethod = [&](uint32_t index) -> std::shared_ptr<Method>&
+    {
         methodAdded[index] = true;
         return methods[index];
     };
-    const auto getClass = [&](uint32_t index) -> std::shared_ptr<Class>& {
+    const auto getClass = [&](uint32_t index) -> std::shared_ptr<Class>&
+    {
         classAdded[index] = true;
         return classes[index];
     };
 
-    const auto convertValue = [&](ABCType kind, uint32_t val) {
+    const auto convertValue = [&](ABCType kind, uint32_t val)
+    {
         Value ret;
         ret.vkind = kind;
         switch (kind)
@@ -70,7 +73,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return Namespace{ns.kind, abc.strings[ns.name], id};
     };
 
-    const auto convertNamespaceSet = [&](const std::vector<int32_t>& nsSet) {
+    const auto convertNamespaceSet = [&](const std::vector<int32_t>& nsSet)
+    {
         std::vector<Namespace> ret(nsSet.size());
         for (size_t i = 0; i < nsSet.size(); i++)
         {
@@ -79,7 +83,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertMultiname = [&](const ABC::Multiname& multiname) {
+    const auto convertMultiname = [&](const ABC::Multiname& multiname)
+    {
         Multiname ret;
         ret.kind = multiname.kind;
         switch (multiname.kind)
@@ -115,7 +120,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto postConvertMultiname = [&](const ABC::Multiname& multiname, Multiname& edit) {
+    const auto postConvertMultiname = [&](const ABC::Multiname& multiname, Multiname& edit)
+    {
         if (multiname.kind == ABCType::TypeName)
         {
             Multiname::_Typename nTypeName{multinames[multiname.Typename().name]};
@@ -129,7 +135,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         }
     };
 
-    const auto convertMethod = [&](const ABC::MethodInfo& method, int id) {
+    const auto convertMethod = [&](const ABC::MethodInfo& method, int id)
+    {
         std::shared_ptr<Method> ret = std::make_shared<Method>();
         ret->paramTypes.reserve(method.paramTypes.size());
         for (const auto& param : method.paramTypes)
@@ -153,7 +160,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertMetadata = [&](const ABC::Metadata& metadata) {
+    const auto convertMetadata = [&](const ABC::Metadata& metadata)
+    {
         Metadata ret;
         ret.name = abc.strings[metadata.name];
         ret.data.reserve(metadata.data.size());
@@ -164,7 +172,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertTraits = [&](const std::vector<ABC::TraitsInfo>& traits) {
+    const auto convertTraits = [&](const std::vector<ABC::TraitsInfo>& traits)
+    {
         std::vector<Trait> ret;
         ret.reserve(traits.size());
         for (const auto& trait : traits)
@@ -182,7 +191,9 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
                     break;
                 case TraitKind::Class:
                     if (classes.size() == 0 || !classSet[trait.Class.classi])
+                    {
                         throw StringException("Forward class reference");
+                    }
                     add.vClass({trait.Class.slotId, getClass(trait.Class.classi)});
                     break;
                 case TraitKind::Function:
@@ -206,7 +217,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertInstance = [&](const ABC::Instance& instance) {
+    const auto convertInstance = [&](const ABC::Instance& instance)
+    {
         Instance ret;
         ret.name        = multinames[instance.name];
         ret.superName   = multinames[instance.superName];
@@ -222,17 +234,19 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertClass = [&](const ABC::Class& clazz, uint32_t i) {
+    const auto convertClass = [&](const ABC::Class& clazz, uint32_t i)
+    {
         classSet[i] = true;
         return std::shared_ptr<Class>(
-            new Class{getMethod(clazz.cinit), convertTraits(clazz.traits), instances[i]});
+            new Class(std::move(getMethod(clazz.cinit)), convertTraits(clazz.traits), std::move(instances[i])));
     };
 
     const auto convertScript = [&](const ABC::Script& script) {
         return Script{getMethod(script.sinit), convertTraits(script.traits)};
     };
 
-    const auto convertInstruction = [&](const ABC::Instruction instruction) {
+    const auto convertInstruction = [&](const ABC::Instruction instruction)
+    {
         Instruction ret;
         ret.opcode = instruction.opcode;
         ret.arguments.reserve(instruction.arguments.size());
@@ -306,7 +320,8 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertBody = [&](const ABC::MethodBody& body) {
+    const auto convertBody = [&](const ABC::MethodBody& body)
+    {
         MethodBody ret;
         ret.method         = methods[body.method];
         ret.maxStack       = body.maxStack;

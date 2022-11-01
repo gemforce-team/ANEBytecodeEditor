@@ -5,8 +5,8 @@
 class StringBuilder : public std::stringstream
 {
 public:
-    bool indented;
-    int indent;
+    bool indented = false;
+    int indent = 0;
     std::string linePrefix;
 
     template <typename T>
@@ -32,7 +32,9 @@ public:
             //  *this << ' ';
             indented = true;
             if (!linePrefix.empty())
+            {
                 *this << linePrefix;
+            }
         }
     }
 };

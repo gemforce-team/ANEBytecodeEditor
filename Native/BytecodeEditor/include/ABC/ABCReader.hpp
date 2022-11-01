@@ -42,8 +42,9 @@ namespace ABC
         size_t pos;
         ABCFile _abc;
 
-        static constexpr auto setTable = [](auto& table, size_t number, auto readFunc,
-                                             size_t start = 0) {
+        static constexpr auto setTable =
+            [](auto& table, size_t number, auto readFunc, size_t start = 0)
+        {
             table.reserve(number + start);
             for (size_t i = start; i < number; i++)
             {
@@ -53,9 +54,11 @@ namespace ABC
 
     public:
         ABCFile& abc() { return _abc; }
+
         const ABCFile& abc() const { return _abc; }
 
         ABCReader(std::pair<const uint8_t*, size_t> d) : ABCReader(d.first, d.second) {}
+
         ABCReader(const uint8_t* data, size_t len) : buf(data), len(len), pos(0)
         {
             _abc.minorVersion = readU16();
@@ -99,7 +102,9 @@ namespace ABC
         uint8_t readU8()
         {
             if (pos >= len)
+            {
                 throw StringException("End of file reached");
+            }
             return buf[pos++];
         }
 
@@ -121,16 +126,24 @@ namespace ABC
 
             uint64_t result = next();
             if (!(result & 0x80))
+            {
                 return result;
+            }
             result = (result & 0x7F) | (next() << 7);
             if (!(result & 0x40'00))
+            {
                 return result;
+            }
             result = (result & 0x3F'FF) | (next() << 14);
             if (!(result & 0x20'00'00))
+            {
                 return result;
+            }
             result = (result & 0x1F'FF'FF) | (next() << 21);
             if (!(result & 0x10'00'00'00))
+            {
                 return result;
+            }
             result = (result & 0x0F'FF'FF'FF) | (next() << 28);
 
             assert(result <= ABCFile::MAX_UINT);
@@ -154,7 +167,9 @@ namespace ABC
         void readExact(std::vector<uint8_t>& data, size_t size)
         {
             if (pos + size > this->len)
+            {
                 throw StringException("End of file reached");
+            }
             data.clear();
             data.insert(data.begin(), buf + pos, buf + pos + size);
             pos += size;
@@ -163,7 +178,9 @@ namespace ABC
         void readExact(void* data, size_t size)
         {
             if (pos + size > this->len)
+            {
                 throw StringException("End of file reached");
+            }
             memcpy(data, buf + pos, size);
             pos += size;
         }
@@ -297,7 +314,9 @@ namespace ABC
             ret.superName = readU30();
             ret.flags     = readU8();
             if (ret.flags & uint8_t(InstanceFlags::ProtectedNs))
+            {
                 ret.protectedNs = readU30();
+            }
             size_t tempSize = readU30();
             ret.interfaces.reserve(tempSize);
             for (size_t i = 0; i < tempSize; i++)
@@ -393,9 +412,9 @@ namespace ABC
             ret.initScopeDepth = readU30();
             ret.maxScopeDepth  = readU30();
 
-            size_t len   = readU30();
-            size_t start = pos;
-            size_t end   = pos + len;
+            size_t methodLen = readU30();
+            size_t start     = pos;
+            size_t end       = pos + methodLen;
 
             pos = end;
 
@@ -412,15 +431,16 @@ namespace ABC
                 error
             };
 
-            std::vector<TraceState> traceState(len, TraceState::unexplored);
-            std::vector<Instruction> instructions(len);
+            std::vector<TraceState> traceState(methodLen, TraceState::unexplored);
+            std::vector<Instruction> instructions(methodLen);
 
             const auto offset = [&] { return pos - start; };
 
             bool done = false;
 
-            const auto queue = [&](size_t traceOffset) {
-                if (traceOffset < len && traceState[traceOffset] == TraceState::unexplored)
+            const auto queue = [&](size_t traceOffset)
+            {
+                if (traceOffset < methodLen && traceState[traceOffset] == TraceState::unexplored)
                 {
                     traceState[traceOffset] = TraceState::pending;
                     done                    = false;
@@ -450,14 +470,20 @@ namespace ABC
                             {
                                 instructionOffset = offset();
                                 if (traceState[instructionOffset] == TraceState::instructionBody)
+                                {
                                     throw StringException("Overlapping instruction");
+                                }
                                 if (traceState[instructionOffset] == TraceState::instruction)
+                                {
                                     break; // already decoded
+                                }
 
                                 Instruction instruction;
                                 instruction.opcode = OPCode(readU8());
                                 if (instruction.opcode == OPCode::OP_raw)
+                                {
                                     throw StringException("Null OPCode");
+                                }
 
                                 instruction.arguments.resize(
                                     OPCode_Info[(uint8_t)instruction.opcode].second.size());
@@ -494,8 +520,8 @@ namespace ABC
                                         case OPCodeArgumentType::Class:
                                         case OPCodeArgumentType::Method:
                                         {
-                                            size_t index = readU30();
-                                            size_t length;
+                                            size_t index  = readU30();
+                                            size_t length = 0;
                                             switch (
                                                 OPCode_Info[(uint8_t)instruction.opcode].second[i])
                                             {
@@ -527,8 +553,10 @@ namespace ABC
                                                     assert(false);
                                             }
                                             if (index >= length)
+                                            {
                                                 throw StringException(
                                                     "Out of bounds constant index");
+                                            }
                                             instruction.arguments[i].index(index);
                                         }
                                         break;
@@ -569,8 +597,10 @@ namespace ABC
                                     }
                                 }
 
-                                if (offset() > len)
+                                if (offset() > methodLen)
+                                {
                                     throw StringException("Out-of-bounds code read error");
+                                }
 
                                 instructions[instructionOffset] = instruction;
                                 traceState[instructionOffset]   = TraceState::instruction;
@@ -600,9 +630,10 @@ namespace ABC
             }
 
             std::vector<size_t> instructionOffsets;
-            std::vector<uint32_t> instructionAtOffset(len, UINT32_MAX);
+            std::vector<uint32_t> instructionAtOffset(methodLen, UINT32_MAX);
 
-            const auto addInstruction = [&](const Instruction& i, size_t offset) {
+            const auto addInstruction = [&](const Instruction& i, size_t offset)
+            {
                 instructionAtOffset[offset] = ret.instructions.size();
                 ret.instructions.emplace_back(i);
                 instructionOffsets.emplace_back(offset);
@@ -630,16 +661,17 @@ namespace ABC
                 }
             }
 
-            const auto translateLabel = [&](Label& label) {
+            const auto translateLabel = [&](Label& label)
+            {
                 ptrdiff_t absoluteOffset    = label.absoluteOffset;
                 ptrdiff_t instructionOffset = absoluteOffset;
 
                 while (true)
                 {
-                    if (instructionOffset >= len)
+                    if (instructionOffset >= (ptrdiff_t)methodLen)
                     {
                         label = {.index = (uint32_t)ret.instructions.size(), .offset = 0};
-                        instructionOffset = len;
+                        instructionOffset = methodLen;
                         break;
                     }
                     if (instructionOffset <= 0)

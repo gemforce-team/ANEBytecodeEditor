@@ -11,6 +11,7 @@ namespace ASASM
 
     public:
         explicit ASTraitsVisitor(const ASProgram& as) noexcept : as(as) {}
+
         virtual ~ASTraitsVisitor() = default;
 
         virtual void run()
@@ -42,13 +43,17 @@ namespace ASASM
                     break;
                 case TraitKind::Function:
                     if (trait.vFunction().vfunction->vbody)
+                    {
                         visitTraits(trait.vFunction().vfunction->vbody->traits);
+                    }
                     break;
                 case TraitKind::Method:
                 case TraitKind::Getter:
                 case TraitKind::Setter:
                     if (trait.vMethod().vmethod->vbody)
+                    {
                         visitTraits(trait.vMethod().vmethod->vbody->traits);
+                    }
                     break;
                 default:
                     throw StringException("Unknown trait kind");

@@ -38,15 +38,15 @@ enum class ABCType : uint8_t
     TypeName           = 0x1D
 };
 
-constexpr inline BidirectionalMap ABCTypeMap = MakeCStringMap(std::equal_to<>(), "Void",
-    ABCType::Void, "Utf8", ABCType::Utf8, "Decimal", ABCType::Decimal, "Integer", ABCType::Integer,
-    "UInteger", ABCType::UInteger, "PrivateNamespace", ABCType::PrivateNamespace, "Double",
-    ABCType::Double, "QName", ABCType::QName, "Namespace", ABCType::Namespace, "Multiname",
-    ABCType::Multiname, "False", ABCType::False, "True", ABCType::True, "Null", ABCType::Null,
-    "QNameA", ABCType::QNameA, "MultinameA", ABCType::MultinameA, "RTQName", ABCType::RTQName,
-    "RTQNameA", ABCType::RTQNameA, "RTQNameL", ABCType::RTQNameL, "RTQNameLA", ABCType::RTQNameLA,
-    "Namespace_Set", ABCType::Namespace_Set, "PackageNamespace", ABCType::PackageNamespace,
-    "PackageInternalNs", ABCType::PackageInternalNs, "ProtectedNamespace",
-    ABCType::ProtectedNamespace, "ExplicitNamespace", ABCType::ExplicitNamespace,
-    "StaticProtectedNs", ABCType::StaticProtectedNs, "MultinameL", ABCType::MultinameL,
-    "MultinameLA", ABCType::MultinameLA, "TypeName", ABCType::TypeName);
+inline constexpr BidirectionalMap ABCTypeMap = {"Void", ABCType::Void, "Utf8", ABCType::Utf8,
+    "Decimal", ABCType::Decimal, "Integer", ABCType::Integer, "UInteger", ABCType::UInteger,
+    "PrivateNamespace", ABCType::PrivateNamespace, "Double", ABCType::Double, "QName",
+    ABCType::QName, "Namespace", ABCType::Namespace, "Multiname", ABCType::Multiname, "False",
+    ABCType::False, "True", ABCType::True, "Null", ABCType::Null, "QNameA", ABCType::QNameA,
+    "MultinameA", ABCType::MultinameA, "RTQName", ABCType::RTQName, "RTQNameA", ABCType::RTQNameA,
+    "RTQNameL", ABCType::RTQNameL, "RTQNameLA", ABCType::RTQNameLA, "Namespace_Set",
+    ABCType::Namespace_Set, "PackageNamespace", ABCType::PackageNamespace, "PackageInternalNs",
+    ABCType::PackageInternalNs, "ProtectedNamespace", ABCType::ProtectedNamespace,
+    "ExplicitNamespace", ABCType::ExplicitNamespace, "StaticProtectedNs",
+    ABCType::StaticProtectedNs, "MultinameL", ABCType::MultinameL, "MultinameLA",
+    ABCType::MultinameLA, "TypeName", ABCType::TypeName};

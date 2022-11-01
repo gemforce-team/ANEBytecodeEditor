@@ -39,6 +39,7 @@ private:
         std::string name;
         std::vector<std::string> arguments;
         std::string data;
+
         bool isVirtual() { return data != ""; }
 
         std::shared_ptr<SourceFile> parent;
@@ -125,7 +126,8 @@ private:
                 do
                 {
                     skipChar();
-                } while (peekChar() != '\n');
+                }
+                while (peekChar() != '\n');
             }
             else
             {
@@ -182,7 +184,7 @@ private:
         }
         else if (word == "version")
         {
-            sourceVersion = readUInt();
+            sourceVersion = (uint32_t)readUInt();
             if (sourceVersion < 1 || sourceVersion > 4)
             {
                 throw StringException("Invalid/unknown #version");
@@ -265,7 +267,9 @@ private:
         {
             char c = currentFile->front();
             if (!isWordChar(c))
+            {
                 break;
+            }
             ret += c;
             currentFile->popFront();
         }
@@ -417,25 +421,24 @@ private:
         }
     }
 
-    template <const char* name, typename T>
-    void mustBeSet(const T& obj)
+    template <typename T>
+    void mustBeSet(const char* name, const T& obj)
     {
         using comp                 = std::remove_cvref_t<T>;
-        static constexpr auto fail = [] { throw StringException(std::string(name) + " not set"); };
         if constexpr (std::is_same_v<std::shared_ptr<ASASM::Method>, comp>)
         {
             if (obj == nullptr)
             {
-                fail();
+                throw StringException(std::string(name) + " not set");
             }
         }
         else if constexpr (std::is_same_v<ASASM::Instance, comp>)
         {
-            mustBeSet<name>(obj.iinit);
+            mustBeSet(name, obj.iinit);
         }
         else
         {
-            static_assert(std::is_same_v<void, comp>);
+            static_assert(std::is_same_v<void, comp> && std::is_same_v<uint8_t, comp>);
         }
     }
 
@@ -557,7 +560,7 @@ private:
             backpedal(word.size());
             throw StringException("Unknown flag " + word);
         }
-        return uint8_t(*found);
+        return (uint8_t)found->get();
     }
 
     template <char OPEN, char CLOSE, bool ALLOW_NULL, typename Reader>
@@ -592,7 +595,9 @@ private:
             ret.emplace_back(r());
             char c = readSymbol();
             if (c == CLOSE)
+            {
                 break;
+            }
             if (c != ',')
             {
                 backpedal();
@@ -681,7 +686,7 @@ private:
                         {
                             char c0 = readChar();
                             char c1 = readChar();
-                            ret += (char)((fromHex(c0) << 4) | fromHex(c1));
+                            ret     += (char)((fromHex(c0) << 4) | fromHex(c1));
                         }
                         break;
                         default:
@@ -803,6 +808,7 @@ private:
         std::shared_ptr<T>& ptr;
         std::string name;
     };
+
     std::vector<Fixup<ASASM::Class>> classFixups;
     std::vector<Fixup<ASASM::Method>> methodFixups;
 
@@ -832,7 +838,7 @@ private:
                     }
                     else if (word == "slotid")
                     {
-                        ret.vSlot().slotId = readUInt();
+                        ret.vSlot().slotId = (uint32_t)readUInt();
                     }
                     else if (word == "type")
                     {
@@ -869,7 +875,7 @@ private:
                     }
                     else if (word == "slotid")
                     {
-                        ret.vClass().slotId = readUInt();
+                        ret.vClass().slotId = (uint32_t)readUInt();
                     }
                     else if (word == "class")
                     {
@@ -902,7 +908,7 @@ private:
                     }
                     else if (word == "slotid")
                     {
-                        ret.vFunction().slotId = readUInt();
+                        ret.vFunction().slotId = (uint32_t)readUInt();
                     }
                     else if (word == "method")
                     {
@@ -937,7 +943,7 @@ private:
                     }
                     else if (word == "dispid")
                     {
-                        ret.vMethod().dispId = readUInt();
+                        ret.vMethod().dispId = (uint32_t)readUInt();
                     }
                     else if (word == "method")
                     {
@@ -1092,8 +1098,7 @@ private:
             }
             else if (word == "end")
             {
-                static constexpr char iinit[] = "iinit";
-                mustBeSet<iinit>(ret.iinit);
+                mustBeSet("iinit", ret.iinit);
                 return ret;
             }
             else
@@ -1129,10 +1134,8 @@ private:
             }
             else if (word == "end")
             {
-                static constexpr char cinit[]    = "cinit";
-                static constexpr char instance[] = "instance";
-                mustBeSet<cinit>(ret->cinit);
-                mustBeSet<instance>(ret->instance);
+                mustBeSet("cinit", ret->cinit);
+                mustBeSet("instance", ret->instance);
                 return ret;
             }
             else
@@ -1160,7 +1163,7 @@ private:
             else if (word == "end")
             {
                 static constexpr char sinit[] = "sinit";
-                mustBeSet<sinit>(ret.sinit);
+                mustBeSet("sinit", ret.sinit);
                 return ret;
             }
             else
@@ -1180,19 +1183,19 @@ private:
             std::string word = readWord();
             if (word == "maxstack")
             {
-                ret.maxStack = std::max<uint32_t>(ret.maxStack, readUInt());
+                ret.maxStack = std::max<uint32_t>(ret.maxStack, (uint32_t)readUInt());
             }
             else if (word == "localcount")
             {
-                ret.localCount = std::max<uint32_t>(ret.localCount, readUInt());
+                ret.localCount = std::max<uint32_t>(ret.localCount, (uint32_t)readUInt());
             }
             else if (word == "initscopedepth")
             {
-                ret.initScopeDepth = readUInt();
+                ret.initScopeDepth = (uint32_t)readUInt();
             }
             else if (word == "maxscopedepth")
             {
-                ret.maxScopeDepth = readUInt();
+                ret.maxScopeDepth = (uint32_t)readUInt();
             }
             else if (word == "code")
             {
@@ -1250,6 +1253,7 @@ private:
         std::unordered_map<std::string, uint32_t>& _labels)
     {
         std::vector<ASASM::Instruction> ret;
+
         struct LocalFixup
         {
             Position where;
@@ -1257,6 +1261,7 @@ private:
             std::string name;
             uint32_t si;
         };
+
         std::vector<LocalFixup> jumpFixups, switchFixups, localClassFixups, localMethodFixups;
         std::unordered_map<std::string, uint32_t> labels;
 
@@ -1304,7 +1309,7 @@ private:
                         }
                         break;
                     case OPCodeArgumentType::UByteLiteral:
-                        instruction.arguments[i].ubytev(readUInt());
+                        instruction.arguments[i].ubytev((uint8_t)readUInt());
                         break;
                     case OPCodeArgumentType::IntLiteral:
                         instruction.arguments[i].intv(readInt());
@@ -1429,7 +1434,8 @@ private:
 
     ASASM::Exception readException(const std::unordered_map<std::string, uint32_t>& labels)
     {
-        auto readLabel = [this, &labels] {
+        auto readLabel = [this, &labels]
+        {
             std::string word = readWord();
             try
             {
@@ -1492,11 +1498,11 @@ private:
             std::string word = readWord();
             if (word == "minorversion")
             {
-                ret.minorVersion = readUInt();
+                ret.minorVersion = (uint16_t)readUInt();
             }
             else if (word == "majorversion")
             {
-                ret.majorVersion = readUInt();
+                ret.majorVersion = (uint16_t)readUInt();
             }
             else if (word == "script")
             {

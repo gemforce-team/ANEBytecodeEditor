@@ -63,7 +63,8 @@ void testreassemble()
 
     size_t currOffset = 0;
 
-    static auto readNTString = [&stringData, &currOffset] {
+    static auto readNTString = [&stringData, &currOffset]
+    {
         std::string ret(stringData.data() + currOffset);
         currOffset += ret.size() + 1;
         return ret;
