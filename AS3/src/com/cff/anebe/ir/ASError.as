@@ -7,22 +7,14 @@ package com.cff.anebe.ir
     public class ASError
     {
         /** The instruction at which this error occurred */
-        public var loc:ASLabel;
+        public var loc:ASInstruction;
 
         /** The message that the assembler gave for this error */
         public var message:String;
 
-        public function ASError(loc:ASLabel = null, message:String = "")
+        public function ASError(loc:ASInstruction, message:String = "")
         {
-            if (loc != null)
-            {
-                this.loc = loc;
-            }
-            else
-            {
-                this.loc = new ASLabel(0, 0);
-            }
-
+            this.loc = loc;
             this.message = message;
         }
     }

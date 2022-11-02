@@ -10,8 +10,10 @@ package com.cff.anebe.ir
         public var opcode:String;
 
         /**
-         * A list of the arguments this instruction takes. The exact format of each OPCode is not currently listed here,
-         * but the valid types inside this array are int, uint, Number, String, ASNamespace, ASMultiname, ASClass, ASMethod, ASLabel, or Vector.&lt;ASLabel&gt;.
+         * A list of the arguments this instruction takes.
+         * The exact format of each OPCode is not currently listed here, but the valid types inside this array are int, uint,
+         * Number, String, ASNamespace, ASMultiname, ASClass, ASMethod, ASInstruction, or Vector.&lt;ASInstruction&gt;.
+         * Any ASInstruction contained in this array must be a reference to an instruction in the body of the method in which this instruction appears.
          */
         public var args:Array;
 

@@ -23,16 +23,35 @@ namespace
 
         uint32_t currentIfMultiple = 0;
 
-        for (const auto& trait : std::invoke(accessor, clazz).traits)
+        try
         {
-            if (trait.name == name)
+            for (const auto& trait : std::invoke(accessor, clazz).traits)
             {
-                if (currentIfMultiple == whichIfMultiple)
+                if (trait.name == name)
                 {
-                    return ConvertTrait(trait);
+                    if (currentIfMultiple == whichIfMultiple)
+                    {
+                        return ConvertTrait(trait);
+                    }
+                    currentIfMultiple++;
                 }
-                currentIfMultiple++;
             }
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
         }
 
         return nullptr;
@@ -95,26 +114,45 @@ namespace
 
         ASASM::Multiname name = ConvertMultiname(argv[0]);
 
-        uint32_t whichIfMultiple = CHECK_OBJECT<FRE_TYPE_NUMBER, uint32_t>(argv[1]);
-
-        uint32_t currentIfMultiple = 0;
-
-        for (size_t i = 0; i < std::invoke(accessor, clazz).traits.size(); i++)
+        try
         {
-            const auto& trait = std::invoke(accessor, clazz).traits[i];
-            if (trait.name == name)
-            {
-                if (currentIfMultiple == whichIfMultiple)
-                {
-                    std::invoke(accessor, clazz)
-                        .traits.erase(std::invoke(accessor, clazz).traits.begin() + i);
-                    SUCCEED_VOID();
-                }
-                currentIfMultiple++;
-            }
-        }
+            uint32_t whichIfMultiple = CHECK_OBJECT<FRE_TYPE_NUMBER, uint32_t>(argv[1]);
 
-        FAIL("Trait not found");
+            uint32_t currentIfMultiple = 0;
+
+            for (size_t i = 0; i < std::invoke(accessor, clazz).traits.size(); i++)
+            {
+                const auto& trait = std::invoke(accessor, clazz).traits[i];
+                if (trait.name == name)
+                {
+                    if (currentIfMultiple == whichIfMultiple)
+                    {
+                        std::invoke(accessor, clazz)
+                            .traits.erase(std::invoke(accessor, clazz).traits.begin() + i);
+                        SUCCEED_VOID();
+                    }
+                    currentIfMultiple++;
+                }
+            }
+
+            FAIL("Trait not found");
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
+        }
     }
 
     template <auto accessor>
@@ -132,9 +170,17 @@ namespace
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
     }
 
@@ -153,9 +199,17 @@ namespace
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
 
         SUCCEED_VOID();
@@ -248,9 +302,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
     }
 
@@ -279,9 +341,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
 
         SUCCEED_VOID();
@@ -301,9 +371,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
     }
 
@@ -321,9 +399,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
 
         SUCCEED_VOID();
@@ -360,9 +446,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
     }
 
@@ -391,9 +485,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
 
         SUCCEED_VOID();
@@ -413,9 +515,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
     }
 
@@ -433,9 +543,17 @@ namespace ASClass
         {
             return o;
         }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception") + e.what());
+        }
         catch (...)
         {
-            return nullptr;
+            FAIL("Some weird thing caught");
         }
 
         SUCCEED_VOID();

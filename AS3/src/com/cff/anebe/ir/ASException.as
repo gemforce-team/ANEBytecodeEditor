@@ -7,13 +7,13 @@ package com.cff.anebe.ir
     public class ASException
     {
         /** The instruction where the exception catch range starts */
-        public var from:ASLabel;
+        public var from:ASInstruction;
 
         /** The instruction where the exception catch range stops */
-        public var to:ASLabel;
+        public var to:ASInstruction;
 
         /** The target instruction for the catch block */
-        public var target:ASLabel;
+        public var target:ASInstruction;
 
         /** The type of the exception caught by this handler. Null means the any type. */
         public var exceptionType:ASMultiname;
@@ -29,35 +29,11 @@ package com.cff.anebe.ir
          * @param exceptionType The type of the exception caught by this handler. Null is interpreted as the any type
          * @param exceptionName The name of the variable the exception will be assigned to for this catch block. Null is interpreted as no name
          */
-        public function ASException(from:ASLabel = null, to:ASLabel = null, target:ASLabel = null, exceptionType:ASMultiname = null, exceptionName:ASMultiname = null)
+        public function ASException(from:ASInstruction, to:ASInstruction, target:ASInstruction, exceptionType:ASMultiname = null, exceptionName:ASMultiname = null)
         {
-            if (from != null)
-            {
-                this.from = from;
-            }
-            else
-            {
-                this.from = new ASLabel(0, 0);
-            }
-
-            if (to != null)
-            {
-                this.to = to;
-            }
-            else
-            {
-                this.to = new ASLabel(0, 0);
-            }
-
-            if (target != null)
-            {
-                this.target = target;
-            }
-            else
-            {
-                this.target = new ASLabel(0, 0);
-            }
-
+            this.from = from;
+            this.to = to;
+            this.target = target;
             this.exceptionType = exceptionType;
             this.exceptionName = exceptionName;
         }

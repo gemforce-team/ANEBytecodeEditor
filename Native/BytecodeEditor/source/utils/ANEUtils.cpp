@@ -584,10 +584,73 @@ FREObject ConvertMethodBody(const ASASM::MethodBody& b)
             "Vector.<com.cff.anebe.ir.ASInstruction>", 0, nullptr, &instructions, nullptr));
     DO_OR_FAIL(
         "Could not set instruction size", FRESetArrayLength(instructions, b.instructions.size()));
+
+    std::vector<FREObject> FREInstructions;
+    FREInstructions.reserve(b.instructions.size());
+    std::vector<std::size_t> fixups;
     for (size_t i = 0; i < b.instructions.size(); i++)
     {
-        DO_OR_FAIL("Could not set instruction to vector",
-            FRESetArrayElementAt(instructions, i, ConvertInstruction(b.instructions[i])));
+        auto [instr, requiresFixup] = ConvertInstruction(b.instructions[i]);
+        FREInstructions.emplace_back(instr);
+        if (requiresFixup)
+        {
+            fixups.emplace_back(i);
+        }
+        DO_OR_FAIL(
+            "Could not set instruction to vector", FRESetArrayElementAt(instructions, i, instr));
+    }
+
+    for (const auto& fixup : fixups)
+    {
+        const auto& instr    = b.instructions[fixup];
+        const auto& argTypes = OPCode_Info[uint8_t(instr.opcode)].second;
+
+        FREObject FREInstr;
+        DO_OR_FAIL("Could not get instruction from vector to set its labels",
+            FREGetArrayElementAt(instructions, fixup, &FREInstr));
+
+        FREObject FREInstrArgs = CheckMember<FRE_TYPE_ARRAY>(FREInstr, "args");
+
+        for (size_t i = 0; i < argTypes.size(); i++)
+        {
+            switch (argTypes[i])
+            {
+                using enum OPCodeArgumentType;
+                default:
+                    break; // Do nothing for non-label arguments
+                case JumpTarget:
+                case SwitchDefaultTarget:
+                {
+                    const auto& target = instr.arguments[i].jumpTarget();
+                    DO_OR_FAIL("Could not set instruction label",
+                        FRESetArrayElementAt(
+                            FREInstrArgs, i, FREInstructions[target.index + target.offset]));
+                }
+                break;
+                case SwitchTargets:
+                {
+                    const auto& targets = instr.arguments[i].switchTargets();
+                    FREObject FRETargets;
+                    DO_OR_FAIL("Couldn't create switch target array",
+                        ANENewObject("Vector.<com.cff.anebe.ir.ASInstruction>", 0, nullptr,
+                            &FRETargets, nullptr));
+                    DO_OR_FAIL("Couldn't set switch target array size",
+                        FRESetArrayLength(FRETargets, targets.size()));
+
+                    for (size_t j = 0; j < targets.size(); j++)
+                    {
+                        DO_OR_FAIL(
+                            "Could not set instruction label vector element " + std::to_string(j),
+                            FRESetArrayElementAt(FRETargets, j,
+                                FREInstructions[targets[j].index + targets[j].offset]));
+                    }
+
+                    DO_OR_FAIL("Could not set instruction labels",
+                        FRESetArrayElementAt(FREInstrArgs, i, FRETargets));
+                }
+                break;
+            }
+        }
     }
 
     FREObject exceptions;
@@ -597,7 +660,8 @@ FREObject ConvertMethodBody(const ASASM::MethodBody& b)
     for (size_t i = 0; i < b.exceptions.size(); i++)
     {
         DO_OR_FAIL("Could not set exception to vector",
-            FRESetArrayElementAt(exceptions, i, ConvertException(b.exceptions[i])));
+            FRESetArrayElementAt(
+                exceptions, i, ConvertException(b.exceptions[i], FREInstructions)));
     }
 
     FREObject traits;
@@ -617,7 +681,7 @@ FREObject ConvertMethodBody(const ASASM::MethodBody& b)
     for (size_t i = 0; i < b.errors.size(); i++)
     {
         DO_OR_FAIL("Could not set error to vector",
-            FRESetArrayElementAt(errors, i, ConvertError(b.errors[i])));
+            FRESetArrayElementAt(errors, i, ConvertError(b.errors[i], FREInstructions)));
     }
 
     FREObject args[] = {maxStack, localCount, initScopeDepth, maxScopeDepth, instructions,
@@ -640,13 +704,20 @@ ASASM::MethodBody ConvertMethodBody(FREObject o)
     FREObject array = CheckMember<FRE_TYPE_VECTOR>(o, "instructions");
     uint32_t arrLen;
     DO_OR_FAIL("Couldn't get instruction vector size", FREGetArrayLength(array, &arrLen));
-    body.instructions.reserve(arrLen);
+    std::vector<FREObject> FREInstructions;
+    FREInstructions.reserve(arrLen);
     for (uint32_t i = 0; i < arrLen; i++)
     {
         FREObject instruction;
         DO_OR_FAIL("Couldn't get instruction vector element",
             FREGetArrayElementAt(array, i, &instruction));
-        body.instructions.emplace_back(ConvertInstruction(instruction));
+        FREInstructions.emplace_back(instruction);
+    }
+
+    body.instructions.reserve(arrLen);
+    for (auto instruction : FREInstructions)
+    {
+        body.instructions.emplace_back(ConvertInstruction(instruction, FREInstructions));
     }
 
     array = CheckMember<FRE_TYPE_VECTOR>(o, "exceptions");
@@ -657,7 +728,7 @@ ASASM::MethodBody ConvertMethodBody(FREObject o)
         FREObject exception;
         DO_OR_FAIL(
             "Couldn't get exception vector element", FREGetArrayElementAt(array, i, &exception));
-        body.exceptions.emplace_back(ConvertException(exception));
+        body.exceptions.emplace_back(ConvertException(exception, FREInstructions));
     }
 
     array = CheckMember<FRE_TYPE_VECTOR>(o, "traits");
@@ -677,17 +748,17 @@ ASASM::MethodBody ConvertMethodBody(FREObject o)
     {
         FREObject error;
         DO_OR_FAIL("Couldn't get error vector element", FREGetArrayElementAt(array, i, &error));
-        body.errors.emplace_back(ConvertError(error));
+        body.errors.emplace_back(ConvertError(error, FREInstructions));
     }
 
     return body;
 }
 
-FREObject ConvertException(const ASASM::Exception& e)
+FREObject ConvertException(const ASASM::Exception& e, const std::vector<FREObject>& allInstrs)
 {
-    FREObject from          = ConvertLabel(e.from);
-    FREObject to            = ConvertLabel(e.to);
-    FREObject target        = ConvertLabel(e.target);
+    FREObject from          = ConvertLabel(e.from, allInstrs);
+    FREObject to            = ConvertLabel(e.to, allInstrs);
+    FREObject target        = ConvertLabel(e.target, allInstrs);
     FREObject exceptionType = ConvertMultiname(e.excType);
     FREObject exceptionName = ConvertMultiname(e.varName);
 
@@ -699,18 +770,18 @@ FREObject ConvertException(const ASASM::Exception& e)
     return ret;
 }
 
-ASASM::Exception ConvertException(FREObject o)
+ASASM::Exception ConvertException(FREObject o, const std::vector<FREObject>& allInstrs)
 {
-    return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "from")),
-        ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "to")),
-        ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "target")),
+    return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "from"), allInstrs),
+        ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "to"), allInstrs),
+        ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "target"), allInstrs),
         ConvertMultiname(GetMember(o, "exceptionType")),
         ConvertMultiname(GetMember(o, "exceptionName"))};
 }
 
-FREObject ConvertError(const ABC::Error& e)
+FREObject ConvertError(const ABC::Error& e, const std::vector<FREObject>& allInstrs)
 {
-    FREObject args[] = {ConvertLabel(e.loc), FREString(e.message)};
+    FREObject args[] = {ConvertLabel(e.loc, allInstrs), FREString(e.message)};
 
     FREObject ret;
     DO_OR_FAIL("Couldn't make com.cff.anebe.ir.ASError",
@@ -718,34 +789,32 @@ FREObject ConvertError(const ABC::Error& e)
     return ret;
 }
 
-ABC::Error ConvertError(FREObject o)
+ABC::Error ConvertError(FREObject o, const std::vector<FREObject>& allInstrs)
 {
-    return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "loc")),
+    return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "loc"), allInstrs),
         std::string(CheckMember<FRE_TYPE_STRING>(o, "message"))};
 }
 
-FREObject ConvertLabel(const ABC::Label& l)
+FREObject ConvertLabel(const ABC::Label& l, const std::vector<FREObject>& allInstrs)
 {
-    FREObject idx;
-    DO_OR_FAIL("Couldn't create label idx", FRENewObjectFromUint32(l.index, &idx));
-    FREObject ofs;
-    DO_OR_FAIL("Couldn't create label ofs", FRENewObjectFromInt32(l.offset, &ofs));
-
-    FREObject args[] = {idx, ofs};
-
-    FREObject ret;
-    DO_OR_FAIL("Couldn't create com.cff.anebe.ir.ASLabel",
-        ANENewObject("com.cff.anebe.ir.ASLabel", 2, args, &ret, nullptr));
-    return ret;
+    if (l.index + l.offset >= allInstrs.size())
+    {
+        FAIL("Invalid label");
+    }
+    return allInstrs[l.index + l.offset];
 }
 
-ABC::Label ConvertLabel(FREObject o)
+ABC::Label ConvertLabel(FREObject o, const std::vector<FREObject>& allInstrs)
 {
-    return {CheckMember<FRE_TYPE_NUMBER, uint32_t>(o, "instrIndex"),
-        CheckMember<FRE_TYPE_NUMBER, int32_t>(o, "offset"), 0};
+    if (auto found = std::ranges::find(allInstrs, o); found != allInstrs.end())
+    {
+        return ABC::Label{.index = (uint32_t)std::distance(allInstrs.begin(), found)};
+    }
+
+    FAIL("Could not find target instruction in full instruction list");
 }
 
-ASASM::Instruction ConvertInstruction(FREObject o)
+ASASM::Instruction ConvertInstruction(FREObject o, const std::vector<FREObject>& allInstrs)
 {
     ASASM::Instruction ret;
     if (auto found = OPCodeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "opcode")); found)
@@ -914,7 +983,8 @@ ASASM::Instruction ConvertInstruction(FREObject o)
             case JumpTarget:
             case SwitchDefaultTarget:
                 arg.jumpTarget(ConvertLabel(
-                    CHECK_OBJECT<FRE_TYPE_OBJECT>(argO, "args[" + std::to_string(i) + "]")));
+                    CHECK_OBJECT<FRE_TYPE_OBJECT>(argO, "args[" + std::to_string(i) + "]"),
+                    allInstrs));
                 break;
 
             case SwitchTargets:
@@ -931,7 +1001,7 @@ ASASM::Instruction ConvertInstruction(FREObject o)
                     FREObject target;
                     DO_OR_FAIL("Couldn't get switch targets entry",
                         FREGetArrayElementAt(argO, j, &target));
-                    arg.switchTargets()[j] = ConvertLabel(target);
+                    arg.switchTargets()[j] = ConvertLabel(target, allInstrs);
                 }
             }
             break;
@@ -943,8 +1013,10 @@ ASASM::Instruction ConvertInstruction(FREObject o)
     return ret;
 }
 
-FREObject ConvertInstruction(const ASASM::Instruction& instr)
+std::pair<FREObject, bool> ConvertInstruction(const ASASM::Instruction& instr)
 {
+    bool requiresFixup = false;
+
     FREObject opcode = FREString(OPCodeMap.ReverseFind(instr.opcode)->get());
     FREObject arguments;
     DO_OR_FAIL("Could not create instruction arguments array",
@@ -1031,23 +1103,28 @@ FREObject ConvertInstruction(const ASASM::Instruction& instr)
             case JumpTarget:
             case SwitchDefaultTarget:
             {
-                arg = ConvertLabel(instr.arguments[i].jumpTarget());
+                requiresFixup = true;
+                arg           = nullptr; // = ConvertLabel(instr.arguments[i].jumpTarget());
             }
             break;
 
             case SwitchTargets:
             {
-                DO_OR_FAIL("Couldn't create switch target array",
-                    ANENewObject("Vector.<com.cff.anebe.ir.ASLabel>", 0, nullptr, &arg, nullptr));
-                DO_OR_FAIL("Couldn't set switch target array size",
-                    FRESetArrayLength(arg, instr.arguments[i].switchTargets().size()));
+                requiresFixup = true;
+                arg           = nullptr;
 
-                for (size_t j = 0; j < instr.arguments[i].switchTargets().size(); j++)
-                {
-                    DO_OR_FAIL("Couldn't set switch target array element",
-                        FRESetArrayElementAt(
-                            arg, i, ConvertLabel(instr.arguments[i].switchTargets()[j])));
-                }
+                // DO_OR_FAIL("Couldn't create switch target array",
+                //     ANENewObject("Vector.<com.cff.anebe.ir.ASLabel>", 0, nullptr, &arg,
+                //     nullptr));
+                // DO_OR_FAIL("Couldn't set switch target array size",
+                //     FRESetArrayLength(arg, instr.arguments[i].switchTargets().size()));
+
+                // for (size_t j = 0; j < instr.arguments[i].switchTargets().size(); j++)
+                // {
+                //     DO_OR_FAIL("Couldn't set switch target array element",
+                //         FRESetArrayElementAt(
+                //             arg, i, ConvertLabel(instr.arguments[i].switchTargets()[j])));
+                // }
             }
             break;
         }
@@ -1060,7 +1137,7 @@ FREObject ConvertInstruction(const ASASM::Instruction& instr)
     FREObject ret;
     DO_OR_FAIL("Couldn't make com.cff.anebe.ir.ASInstruction",
         ANENewObject("com.cff.anebe.ir.ASInstruction", 2, args, &ret, nullptr));
-    return ret;
+    return {ret, requiresFixup};
 }
 
 FREObject ConvertValue(const ASASM::Value& v)
