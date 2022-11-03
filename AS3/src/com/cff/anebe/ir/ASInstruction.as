@@ -225,5 +225,706 @@ package com.cff.anebe.ir
             }
             this.args = args;
         }
+
+        /**
+         * If v is 0-3, the corresponding result of GetLocal0-3. Otherwise the result of GetLocal(v).
+         */
+        public static function EfficientGetLocal(v:uint):ASInstruction
+        {
+            switch (v)
+            {
+                case 0:
+                    return GetLocal0();
+                case 1:
+                    return GetLocal1();
+                case 2:
+                    return GetLocal2();
+                case 3:
+                    return GetLocal3();
+                default:
+                    return GetLocal(v);
+            }
+        }
+
+        /**
+         * If v is 0-3, the corresponding result of SetLocal0-3. Otherwise the result of SetLocal(v).
+         */
+        public static function EfficientSetLocal(v:uint):ASInstruction
+        {
+            switch (v)
+            {
+                case 0:
+                    return SetLocal0();
+                case 1:
+                    return SetLocal1();
+                case 2:
+                    return SetLocal2();
+                case 3:
+                    return SetLocal3();
+                default:
+                    return SetLocal(v);
+            }
+        }
+
+        public static function Raw(v:uint):ASInstruction
+        {
+            return new ASInstruction(OP_raw, [v]);
+        }
+        public static function Nop():ASInstruction
+        {
+            return new ASInstruction(OP_nop);
+        }
+        public static function Throw():ASInstruction
+        {
+            return new ASInstruction(OP_throw);
+        }
+        public static function GetSuper(propName:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_getsuper, [propName]);
+        }
+        public static function SetSuper(propName:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_setsuper, [propName]);
+        }
+        public static function Dxns(newXMLNamespace:String):ASInstruction
+        {
+            return new ASInstruction(OP_dxns, [newXMLNamespace]);
+        }
+        public static function DxnsLate():ASInstruction
+        {
+            return new ASInstruction(OP_dxnslate);
+        }
+        public static function Kill(slot:uint):ASInstruction
+        {
+            return new ASInstruction(OP_kill, [slot]);
+        }
+        public static function Label():ASInstruction
+        {
+            return new ASInstruction(OP_label);
+        }
+        public static function Ifnlt(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifnlt, [target]);
+        }
+        public static function Ifnle(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifnle, [target]);
+        }
+        public static function Ifngt(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifngt, [target]);
+        }
+        public static function Ifnge(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifnge, [target]);
+        }
+        public static function Jump(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_jump, [target]);
+        }
+        public static function IfTrue(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_iftrue, [target]);
+        }
+        public static function IfFalse(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_iffalse, [target]);
+        }
+        public static function Ifeq(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifeq, [target]);
+        }
+        public static function Ifne(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifne, [target]);
+        }
+        public static function Iflt(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_iflt, [target]);
+        }
+        public static function Ifle(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifle, [target]);
+        }
+        public static function Ifgt(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifgt, [target]);
+        }
+        public static function Ifge(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifge, [target]);
+        }
+        public static function IfStricteq(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifstricteq, [target]);
+        }
+        public static function IfStrictne(target:ASInstruction):ASInstruction
+        {
+            return new ASInstruction(OP_ifstrictne, [target]);
+        }
+        public static function LookupSwitch(Default:ASInstruction, switchTargets:Vector.<ASInstruction>):ASInstruction
+        {
+            return new ASInstruction(OP_lookupswitch, [Default, switchTargets]);
+        }
+        public static function PushWith():ASInstruction
+        {
+            return new ASInstruction(OP_pushwith);
+        }
+        public static function PopScope():ASInstruction
+        {
+            return new ASInstruction(OP_popscope);
+        }
+        public static function NextName():ASInstruction
+        {
+            return new ASInstruction(OP_nextname);
+        }
+        public static function HasNext():ASInstruction
+        {
+            return new ASInstruction(OP_hasnext);
+        }
+        public static function PushNull():ASInstruction
+        {
+            return new ASInstruction(OP_pushnull);
+        }
+        public static function PushUndefined():ASInstruction
+        {
+            return new ASInstruction(OP_pushundefined);
+        }
+        public static function NextValue():ASInstruction
+        {
+            return new ASInstruction(OP_nextvalue);
+        }
+        public static function PushByte(val:uint):ASInstruction
+        {
+            return new ASInstruction(OP_pushbyte, [val]);
+        }
+        public static function PushShort(val:int):ASInstruction
+        {
+            return new ASInstruction(OP_pushshort, [val]);
+        }
+        public static function PushTrue():ASInstruction
+        {
+            return new ASInstruction(OP_pushtrue);
+        }
+        public static function PushFalse():ASInstruction
+        {
+            return new ASInstruction(OP_pushfalse);
+        }
+        public static function PushNaN():ASInstruction
+        {
+            return new ASInstruction(OP_pushnan);
+        }
+        public static function Pop():ASInstruction
+        {
+            return new ASInstruction(OP_pop);
+        }
+        public static function Dup():ASInstruction
+        {
+            return new ASInstruction(OP_dup);
+        }
+        public static function Swap():ASInstruction
+        {
+            return new ASInstruction(OP_swap);
+        }
+        public static function PushString(val:String):ASInstruction
+        {
+            return new ASInstruction(OP_pushstring);
+        }
+        public static function PushInt(val:int):ASInstruction
+        {
+            return new ASInstruction(OP_pushint, [val]);
+        }
+        public static function PushUInt(val:uint):ASInstruction
+        {
+            return new ASInstruction(OP_pushuint, [val]);
+        }
+        public static function PushDouble(val:Number):ASInstruction
+        {
+            return new ASInstruction(OP_pushdouble, [val]);
+        }
+        public static function PushScope():ASInstruction
+        {
+            return new ASInstruction(OP_pushscope);
+        }
+        public static function PushNamespace(ns:ASNamespace):ASInstruction
+        {
+            return new ASInstruction(OP_pushnamespace, [ns]);
+        }
+        public static function HasNext2(objReg:uint, indexReg:uint):ASInstruction
+        {
+            return new ASInstruction(OP_hasnext2, [objReg, indexReg]);
+        }
+        public static function Li8():ASInstruction
+        {
+            return new ASInstruction(OP_li8);
+        }
+        public static function Li16():ASInstruction
+        {
+            return new ASInstruction(OP_li16);
+        }
+        public static function Li32():ASInstruction
+        {
+            return new ASInstruction(OP_li32);
+        }
+        public static function Lf32():ASInstruction
+        {
+            return new ASInstruction(OP_lf32);
+        }
+        public static function Lf64():ASInstruction
+        {
+            return new ASInstruction(OP_lf64);
+        }
+        public static function Si8():ASInstruction
+        {
+            return new ASInstruction(OP_si8);
+        }
+        public static function Si16():ASInstruction
+        {
+            return new ASInstruction(OP_si16);
+        }
+        public static function Si32():ASInstruction
+        {
+            return new ASInstruction(OP_si32);
+        }
+        public static function Sf32():ASInstruction
+        {
+            return new ASInstruction(OP_sf32);
+        }
+        public static function Sf64():ASInstruction
+        {
+            return new ASInstruction(OP_sf64);
+        }
+        public static function NewFunction(method:ASMethod):ASInstruction
+        {
+            return new ASInstruction(OP_newfunction, [method]);
+        }
+        public static function Call(args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_call, [args]);
+        }
+        public static function Construct(args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_construct, [args]);
+        }
+        public static function CallMethod(index:uint, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callmethod, [index, args]);
+        }
+        public static function CallStatic(method:ASMethod, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callstatic, [method, args]);
+        }
+        public static function CallSuper(methodName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callsuper, [methodName, args]);
+        }
+        public static function CallProperty(methodName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callproperty, [methodName, args]);
+        }
+        public static function ReturnVoid():ASInstruction
+        {
+            return new ASInstruction(OP_returnvoid);
+        }
+        public static function ReturnValue():ASInstruction
+        {
+            return new ASInstruction(OP_returnvalue);
+        }
+        public static function ConstructSuper(args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_constructsuper, [args]);
+        }
+        public static function ConstructProp(propName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_constructprop, [propName, args]);
+        }
+        public static function CallPropLex(propName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callproplex, [propName, args]);
+        }
+        public static function CallSuperVoid(propName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callsupervoid, [propName, args]);
+        }
+        public static function CallPropVoid(propName:ASMultiname, args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_callpropvoid, [propName, args]);
+        }
+        public static function Sxi1():ASInstruction
+        {
+            return new ASInstruction(OP_sxi1);
+        }
+        public static function Sxi8():ASInstruction
+        {
+            return new ASInstruction(OP_sxi8);
+        }
+        public static function Sxi16():ASInstruction
+        {
+            return new ASInstruction(OP_sxi16);
+        }
+        public static function ApplyType(args:uint):ASInstruction
+        {
+            return new ASInstruction(OP_applytype, [args]);
+        }
+        public static function NewObject(numProperties:uint):ASInstruction
+        {
+            return new ASInstruction(OP_newobject, [numProperties]);
+        }
+        public static function NewArray(numValues:uint):ASInstruction
+        {
+            return new ASInstruction(OP_newarray, [numValues]);
+        }
+        public static function NewActivation():ASInstruction
+        {
+            return new ASInstruction(OP_newactivation);
+        }
+        public static function NewClass(clazz:ASClass):ASInstruction
+        {
+            return new ASInstruction(OP_newclass, [clazz]);
+        }
+        public static function GetDescendants(descendantName:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_getdescendants, [descendantName]);
+        }
+        public static function NewCatch(exceptionIndex:uint):ASInstruction
+        {
+            return new ASInstruction(OP_newcatch, [exceptionIndex]);
+        }
+        public static function FindPropStrict(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_findpropstrict, [name]);
+        }
+        public static function FindProperty(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_findproperty, [name]);
+        }
+        public static function FindDef(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_finddef, [name]);
+        }
+        public static function GetLex(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_getlex, [name]);
+        }
+        public static function SetProperty(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_setproperty, [name]);
+        }
+        public static function GetLocal(idx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_getlocal, [idx]);
+        }
+        public static function SetLocal(idx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_setlocal, [idx]);
+        }
+        public static function GetGlobalScope():ASInstruction
+        {
+            return new ASInstruction(OP_getglobalscope);
+        }
+        public static function GetScopeObject(idx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_getscopeobject, [idx]);
+        }
+        public static function GetProperty(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_getproperty, [name]);
+        }
+        public static function GetPropertyLate():ASInstruction
+        {
+            return new ASInstruction(OP_getpropertylate);
+        }
+        public static function InitProperty(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_initproperty, [name]);
+        }
+        public static function SetPropertyLate():ASInstruction
+        {
+            return new ASInstruction(OP_setpropertylate);
+        }
+        public static function DeleteProperty(name:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_deleteproperty, [name]);
+        }
+        public static function DeletePropertyLate():ASInstruction
+        {
+            return new ASInstruction(OP_deletepropertylate);
+        }
+        public static function GetSlot(slotId:uint):ASInstruction
+        {
+            return new ASInstruction(OP_getslot, [slotId]);
+        }
+        public static function SetSlot(slotId:uint):ASInstruction
+        {
+            return new ASInstruction(OP_setslot, [slotId]);
+        }
+        public static function GetGlobalSlot(slotId:uint):ASInstruction
+        {
+            return new ASInstruction(OP_getglobalslot, [slotId]);
+        }
+        public static function SetGlobalSlot(slotId:uint):ASInstruction
+        {
+            return new ASInstruction(OP_setglobalslot, [slotId]);
+        }
+        public static function Convert_s():ASInstruction
+        {
+            return new ASInstruction(OP_convert_s);
+        }
+        public static function Esc_xelem():ASInstruction
+        {
+            return new ASInstruction(OP_esc_xelem);
+        }
+        public static function Esc_xattr():ASInstruction
+        {
+            return new ASInstruction(OP_esc_xattr);
+        }
+        public static function Convert_i():ASInstruction
+        {
+            return new ASInstruction(OP_convert_i);
+        }
+        public static function Convert_u():ASInstruction
+        {
+            return new ASInstruction(OP_convert_u);
+        }
+        public static function Convert_d():ASInstruction
+        {
+            return new ASInstruction(OP_convert_d);
+        }
+        public static function Convert_b():ASInstruction
+        {
+            return new ASInstruction(OP_convert_b);
+        }
+        public static function Convert_o():ASInstruction
+        {
+            return new ASInstruction(OP_convert_o);
+        }
+        public static function CheckFilter():ASInstruction
+        {
+            return new ASInstruction(OP_checkfilter);
+        }
+        public static function Coerce(type:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_coerce, [type]);
+        }
+        public static function Coerce_b():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_b);
+        }
+        public static function Coerce_a():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_a);
+        }
+        public static function Coerce_i():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_i);
+        }
+        public static function Coerce_d():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_d);
+        }
+        public static function Coerce_s():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_s);
+        }
+        public static function AsType(type:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_astype, [type]);
+        }
+        public static function AsTypeLate():ASInstruction
+        {
+            return new ASInstruction(OP_astypelate);
+        }
+        public static function Negate():ASInstruction
+        {
+            return new ASInstruction(OP_negate);
+        }
+        public static function Increment():ASInstruction
+        {
+            return new ASInstruction(OP_increment);
+        }
+        public static function IncLocal(localIdx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_inclocal, [localIdx]);
+        }
+        public static function Decrement():ASInstruction
+        {
+            return new ASInstruction(OP_decrement);
+        }
+        public static function DecLocal(localIdx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_declocal, [localIdx]);
+        }
+        public static function TypeOf():ASInstruction
+        {
+            return new ASInstruction(OP_typeof);
+        }
+        public static function Not():ASInstruction
+        {
+            return new ASInstruction(OP_not);
+        }
+        public static function BitNot():ASInstruction
+        {
+            return new ASInstruction(OP_bitnot);
+        }
+        public static function Add():ASInstruction
+        {
+            return new ASInstruction(OP_add);
+        }
+        public static function Subtract():ASInstruction
+        {
+            return new ASInstruction(OP_subtract);
+        }
+        public static function Multiply():ASInstruction
+        {
+            return new ASInstruction(OP_multiply);
+        }
+        public static function Divide():ASInstruction
+        {
+            return new ASInstruction(OP_divide);
+        }
+        public static function Modulo():ASInstruction
+        {
+            return new ASInstruction(OP_modulo);
+        }
+        public static function Lshift():ASInstruction
+        {
+            return new ASInstruction(OP_lshift);
+        }
+        public static function Rshift():ASInstruction
+        {
+            return new ASInstruction(OP_rshift);
+        }
+        public static function URshift():ASInstruction
+        {
+            return new ASInstruction(OP_urshift);
+        }
+        public static function BitAnd():ASInstruction
+        {
+            return new ASInstruction(OP_bitand);
+        }
+        public static function BitOr():ASInstruction
+        {
+            return new ASInstruction(OP_bitor);
+        }
+        public static function BitXor():ASInstruction
+        {
+            return new ASInstruction(OP_bitxor);
+        }
+        public static function Equals():ASInstruction
+        {
+            return new ASInstruction(OP_equals);
+        }
+        public static function StrictEquals():ASInstruction
+        {
+            return new ASInstruction(OP_strictequals);
+        }
+        public static function LessThan():ASInstruction
+        {
+            return new ASInstruction(OP_lessthan);
+        }
+        public static function LessEquals():ASInstruction
+        {
+            return new ASInstruction(OP_lessequals);
+        }
+        public static function GreaterThan():ASInstruction
+        {
+            return new ASInstruction(OP_greaterthan);
+        }
+        public static function GreaterEquals():ASInstruction
+        {
+            return new ASInstruction(OP_greaterequals);
+        }
+        public static function InstanceOf():ASInstruction
+        {
+            return new ASInstruction(OP_instanceof);
+        }
+        public static function IsType(type:ASMultiname):ASInstruction
+        {
+            return new ASInstruction(OP_istype, [type]);
+        }
+        public static function IsTypeLate():ASInstruction
+        {
+            return new ASInstruction(OP_istypelate);
+        }
+        public static function In():ASInstruction
+        {
+            return new ASInstruction(OP_in);
+        }
+        public static function Increment_i():ASInstruction
+        {
+            return new ASInstruction(OP_increment_i);
+        }
+        public static function Decrement_i():ASInstruction
+        {
+            return new ASInstruction(OP_decrement_i);
+        }
+        public static function IncLocal_i(localIdx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_inclocal_i);
+        }
+        public static function DecLocal_i(localIdx:uint):ASInstruction
+        {
+            return new ASInstruction(OP_declocal_i);
+        }
+        public static function Negate_i():ASInstruction
+        {
+            return new ASInstruction(OP_negate_i);
+        }
+        public static function Add_i():ASInstruction
+        {
+            return new ASInstruction(OP_add_i);
+        }
+        public static function Subtract_i():ASInstruction
+        {
+            return new ASInstruction(OP_subtract_i);
+        }
+        public static function Multiply_i():ASInstruction
+        {
+            return new ASInstruction(OP_multiply_i);
+        }
+        public static function GetLocal0():ASInstruction
+        {
+            return new ASInstruction(OP_getlocal0);
+        }
+        public static function GetLocal1():ASInstruction
+        {
+            return new ASInstruction(OP_getlocal1);
+        }
+        public static function GetLocal2():ASInstruction
+        {
+            return new ASInstruction(OP_getlocal2);
+        }
+        public static function GetLocal3():ASInstruction
+        {
+            return new ASInstruction(OP_getlocal3);
+        }
+        public static function SetLocal0():ASInstruction
+        {
+            return new ASInstruction(OP_setlocal0);
+        }
+        public static function SetLocal1():ASInstruction
+        {
+            return new ASInstruction(OP_setlocal1);
+        }
+        public static function SetLocal2():ASInstruction
+        {
+            return new ASInstruction(OP_setlocal2);
+        }
+        public static function SetLocal3():ASInstruction
+        {
+            return new ASInstruction(OP_setlocal3);
+        }
+        public static function Debug(infoType:uint, name:String, register:uint, unused:uint = 0):ASInstruction
+        {
+            return new ASInstruction(OP_debug, [infoType, name, register, unused]);
+        }
+        public static function DebugLine(lineNum:uint):ASInstruction
+        {
+            return new ASInstruction(OP_debugline, [lineNum]);
+        }
+        public static function DebugFile(filename:String):ASInstruction
+        {
+            return new ASInstruction(OP_debugfile, [filename]);
+        }
     }
 }
