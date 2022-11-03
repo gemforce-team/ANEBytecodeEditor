@@ -16,11 +16,11 @@ class SmallTrivialVector<T, Size>
 // clang-format on
 {
 private:
-    std::array<T, Size> data{};
-    std::size_t populated{0};
+    std::array<T, Size> data;
+    std::size_t populated;
 
 public:
-    consteval SmallTrivialVector() = default;
+    consteval SmallTrivialVector() : data(), populated(0) {}
 
     consteval SmallTrivialVector(std::initializer_list<T> l) : data(), populated(0)
     {

@@ -17,23 +17,53 @@ namespace
 
         GET_CLASS();
 
-        ASASM::Multiname name = ConvertMultiname(argv[0]);
-
-        uint32_t whichIfMultiple = CHECK_OBJECT<FRE_TYPE_NUMBER, uint32_t>(argv[1]);
-
-        uint32_t currentIfMultiple = 0;
-
         try
         {
+            ASASM::Multiname name = ConvertMultiname(argv[0]);
+
+            bool favorSetter = CHECK_OBJECT<FRE_TYPE_BOOLEAN>(argv[1]);
+
+            SmallTrivialVector<const ASASM::Trait*, 2> found;
+
             for (const auto& trait : std::invoke(accessor, clazz).traits)
             {
                 if (trait.name == name)
                 {
-                    if (currentIfMultiple == whichIfMultiple)
+                    if (!found.emplace_back(&trait))
                     {
-                        return ConvertTrait(trait);
+                        FAIL("More than two traits matched this multiname. This should never "
+                             "happen!");
                     }
-                    currentIfMultiple++;
+                }
+            }
+
+            if (found.size() == 1)
+            {
+                return ConvertTrait(*found[0]);
+            }
+            else if (found.size() == 2)
+            {
+                if (favorSetter && found[0]->kind == TraitKind::Getter)
+                {
+                    if (favorSetter)
+                    {
+                        return ConvertTrait(*found[1]);
+                    }
+                    else
+                    {
+                        return ConvertTrait(*found[0]);
+                    }
+                }
+                else
+                {
+                    if (favorSetter)
+                    {
+                        return ConvertTrait(*found[0]);
+                    }
+                    else
+                    {
+                        return ConvertTrait(*found[1]);
+                    }
                 }
             }
         }
@@ -68,21 +98,80 @@ namespace
         {
             ASASM::Trait value = ConvertTrait(argv[0]);
 
-            bool hasSet = false;
-            for (size_t i = 0; i < std::invoke(accessor, clazz).traits.size(); i++)
+            SmallTrivialVector<size_t, 2> found{};
+
+            auto& traits = std::invoke(accessor, clazz).traits;
+
+            for (size_t i = 0; i < traits.size(); i++)
             {
-                auto& trait = std::invoke(accessor, clazz).traits[i];
-                if (trait.name == value.name)
+                if (traits[i].name == value.name)
                 {
-                    trait  = std::move(value);
-                    hasSet = true;
-                    break;
+                    if (!found.emplace_back(i))
+                    {
+                        FAIL("More than two traits matched this multiname. This should never "
+                             "happen!");
+                    }
                 }
             }
 
-            if (!hasSet)
+            if (found.size() > 0)
             {
-                std::invoke(accessor, clazz).traits.emplace_back(std::move(ConvertTrait(argv[0])));
+                if (found.size() == 2) // Must be both getter and setter
+                {
+                    if (value.kind == TraitKind::Getter)
+                    {
+                        if (traits[found[0]].kind == TraitKind::Getter)
+                        {
+                            traits[found[0]] = std::move(value);
+                        }
+                        else
+                        {
+                            traits[found[1]] = std::move(value);
+                        }
+                    }
+                    else if (value.kind == TraitKind::Setter)
+                    {
+                        if (traits[found[0]].kind == TraitKind::Setter)
+                        {
+                            traits[found[0]] = std::move(value);
+                        }
+                        else
+                        {
+                            traits[found[1]] = std::move(value);
+                        }
+                    }
+                    else
+                    {
+                        traits.erase(
+                            traits.begin() +
+                            found[1]); // Erase found[1] because it's the closest to the back
+                        traits[found[0]] = std::move(value); // And replace found[0]
+                    }
+                }
+                else
+                {
+                    TraitKind kind = traits[found[0]].kind;
+                    if ((kind == TraitKind::Getter || kind == TraitKind::Setter) &&
+                        (value.kind == TraitKind::Setter || value.kind == TraitKind::Getter) &&
+                        kind == value.kind)
+                    {
+                        traits[found[0]] = std::move(value);
+                    }
+                    else if ((kind == TraitKind::Getter || kind == TraitKind::Setter) &&
+                             (value.kind == TraitKind::Setter || value.kind == TraitKind::Getter) &&
+                             kind != value.kind)
+                    {
+                        traits.emplace_back(std::move(value));
+                    }
+                    else
+                    {
+                        traits[found[0]] = std::move(value);
+                    }
+                }
+            }
+            else
+            {
+                traits.emplace_back(std::move(value));
             }
         }
         catch (FREObject o)
@@ -112,27 +201,59 @@ namespace
 
         GET_CLASS();
 
-        ASASM::Multiname name = ConvertMultiname(argv[0]);
-
         try
         {
-            uint32_t whichIfMultiple = CHECK_OBJECT<FRE_TYPE_NUMBER, uint32_t>(argv[1]);
+            ASASM::Multiname name = ConvertMultiname(argv[0]);
 
-            uint32_t currentIfMultiple = 0;
+            bool favorSetter = CHECK_OBJECT<FRE_TYPE_BOOLEAN>(argv[1]);
 
-            for (size_t i = 0; i < std::invoke(accessor, clazz).traits.size(); i++)
+            auto& traits = std::invoke(accessor, clazz).traits;
+
+            SmallTrivialVector<size_t, 2> found;
+
+            for (size_t i = 0; i < traits.size(); i++)
             {
-                const auto& trait = std::invoke(accessor, clazz).traits[i];
+                const auto& trait = traits[i];
                 if (trait.name == name)
                 {
-                    if (currentIfMultiple == whichIfMultiple)
+                    if (!found.emplace_back(i))
                     {
-                        std::invoke(accessor, clazz)
-                            .traits.erase(std::invoke(accessor, clazz).traits.begin() + i);
-                        SUCCEED_VOID();
+                        FAIL("More than two traits matched this multiname. This should never "
+                             "happen!");
                     }
-                    currentIfMultiple++;
                 }
+            }
+
+            if (found.size() == 1)
+            {
+                traits.erase(traits.begin() + found[0]);
+                SUCCEED_VOID();
+            }
+            else if (found.size() == 2)
+            {
+                if (traits[found[0]].kind == TraitKind::Getter)
+                {
+                    if (favorSetter)
+                    {
+                        traits.erase(traits.begin() + found[1]);
+                    }
+                    else
+                    {
+                        traits.erase(traits.begin() + found[0]);
+                    }
+                }
+                else
+                {
+                    if (favorSetter)
+                    {
+                        traits.erase(traits.begin() + found[0]);
+                    }
+                    else
+                    {
+                        traits.erase(traits.begin() + found[1]);
+                    }
+                }
+                SUCCEED_VOID();
             }
 
             FAIL("Trait not found");

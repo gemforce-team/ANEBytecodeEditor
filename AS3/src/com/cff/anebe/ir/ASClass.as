@@ -27,17 +27,17 @@ package com.cff.anebe.ir
         /**
          * Gets a static trait present in the class
          * @param name Name of the trait to retrieve
-         * @param whichIfMultiple If there are multiple traits that match this ASMultiname (such as may be the case with getters and setters), which index to get
+         * @param favorSetter If this name refers to both a getter and a setter, true will retrieve the getter, while false will retrieve the setter. If it is neither or only one exists, has no effect.
          * @return The trait retrieved, or null if none were found
          */
-        public function getStaticTrait(name:ASMultiname, whichIfMultiple:uint = 0):ASTrait
+        public function getStaticTrait(name:ASMultiname, favorSetter:Boolean = false):ASTrait
         {
             if (name == null || name.type != ASMultiname.TYPE_QNAME)
             {
                 throw new ArgumentError("Trait name must be a QName");
             }
 
-            var ret:Object = context.call("GetStaticTrait", name, whichIfMultiple);
+            var ret:Object = context.call("GetStaticTrait", name, favorSetter);
 
             if (ret == null)
             {
@@ -53,7 +53,13 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Sets a trait as static into the class. If it does not exist, it will be created, and if it does it will be overwritten.
+         * Sets a trait as static into the class.
+         * If a trait does not exist by the name of the new trait, the new trait will be added.
+         * If a getter exists by the name of the new trait and the new trait is a setter, the new trait will be added.
+         * If a setter exists by the name of the new trait and the new trait is a getter, the new trait will be added.
+         * If both a getter and setter exist by the name of the new trait and the new trait is neither a getter nor setter, the new trait will replace both the getter and setter.
+         * If a trait of the same kind already exists by the name of the new trait, the new trait will replace that trait.
+         * If a trait exists by the name of the new trait and the kinds do not match any of the above rules, the new trait will replace the original.
          * @param value The trait to set or add to the class
          */
         public function setStaticTrait(value:ASTrait):void
@@ -82,16 +88,16 @@ package com.cff.anebe.ir
         /**
          * Deletes a static trait present in the class
          * @param name Name of the trait to retrieve
-         * @param whichIfMultiple If there are multiple traits that match this ASMultiname (such as may be the case with getters and setters), which index to delete
+         * @param favorSetter If this name refers to both a getter and a setter, true will delete the getter, while false will delete the setter. If it is neither or only one exists, has no effect.
          */
-        public function deleteStaticTrait(name:ASMultiname, whichIfMultiple:uint = 0):void
+        public function deleteStaticTrait(name:ASMultiname, favorSetter:Boolean = false):void
         {
             if (name == null || name.type != ASMultiname.TYPE_QNAME)
             {
                 throw new ArgumentError("Trait name must be a QName");
             }
 
-            var ret:Object = context.call("DeleteStaticTrait", name, whichIfMultiple);
+            var ret:Object = context.call("DeleteStaticTrait", name, favorSetter);
 
             if (ret is String)
             {
@@ -106,17 +112,17 @@ package com.cff.anebe.ir
         /**
          * Gets an instance trait present in the class
          * @param name Name of the trait to retrieve
-         * @param whichIfMultiple If there are multiple traits that match this ASMultiname (such as may be the case with getters and setters), which index to get
+         * @param favorSetter If this name refers to both a getter and a setter, true will retrieve the getter, while false will retrieve the setter. If it is neither or only one exists, has no effect.
          * @return The trait retrieved, or null if none were found
          */
-        public function getInstanceTrait(name:ASMultiname, whichIfMultiple:uint = 0):ASTrait
+        public function getInstanceTrait(name:ASMultiname, favorSetter:Boolean = false):ASTrait
         {
             if (name == null || name.type != ASMultiname.TYPE_QNAME)
             {
                 throw new ArgumentError("Trait name must be a QName");
             }
 
-            var ret:Object = context.call("GetInstanceTrait", name, whichIfMultiple);
+            var ret:Object = context.call("GetInstanceTrait", name, favorSetter);
 
             if (ret == null)
             {
@@ -132,7 +138,13 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Sets an instance trait into the class. If it does not exist, it will be created, and if it does it will be overwritten.
+         * Sets an instance trait as into the class.
+         * If a trait does not exist by the name of the new trait, the new trait will be added.
+         * If a getter exists by the name of the new trait and the new trait is a setter, the new trait will be added.
+         * If a setter exists by the name of the new trait and the new trait is a getter, the new trait will be added.
+         * If both a getter and setter exist by the name of the new trait and the new trait is neither a getter nor setter, the new trait will replace both the getter and setter.
+         * If a trait of the same kind already exists by the name of the new trait, the new trait will replace that trait.
+         * If a trait exists by the name of the new trait and the kinds do not match any of the above rules, the new trait will replace the original.
          * @param value The trait to set or add to the class
          */
         public function setInstanceTrait(value:ASTrait):void
@@ -159,18 +171,18 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Deletes an instance trait present in the class
+         * Deletes an instance trait present in the class.
          * @param name Name of the trait to retrieve
-         * @param whichIfMultiple If there are multiple traits that match this ASMultiname (such as may be the case with getters and setters), which index to delete
+         * @param favorSetter If this name refers to both a getter and a setter, true will delete the getter, while false will delete the setter. If it is neither or only one exists, has no effect.
          */
-        public function deleteInstanceTrait(name:ASMultiname, whichIfMultiple:uint = 0):void
+        public function deleteInstanceTrait(name:ASMultiname, favorSetter:Boolean = false):void
         {
             if (name == null || name.type != ASMultiname.TYPE_QNAME)
             {
                 throw new ArgumentError("Trait name must be a QName");
             }
 
-            var ret:Object = context.call("DeleteInstanceTrait", name, whichIfMultiple);
+            var ret:Object = context.call("DeleteInstanceTrait", name, favorSetter);
 
             if (ret is String)
             {
