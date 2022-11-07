@@ -10,9 +10,16 @@ package com.cff.anebe.ir
     {
         private var context:ExtensionContext;
 
+        /** Sealed flag: indicates that the class cannot have properties added to it dynamically */
         public static const FLAG_SEALED:String = "SEALED";
+
+        /** Final flag: indicates that the class cannot be inherited from */
         public static const FLAG_FINAL:String = "FINAL";
+
+        /** Interface flag: indicates that the class is an interface */
         public static const FLAG_INTERFACE:String = "INTERFACE";
+
+        /** Protected namespace flag: indicates that the class uses and has a protected namespace. */
         public static const FLAG_PROTECTEDNS:String = "PROTECTEDNS";
 
         /**
@@ -386,7 +393,7 @@ package com.cff.anebe.ir
         {
             if (v == null)
             {
-                v = new ASNamespace();
+                throw new Error("Cannot set protected namespace to null");
             }
             var ret:Object = context.call("SetProtectedNamespace", v);
 

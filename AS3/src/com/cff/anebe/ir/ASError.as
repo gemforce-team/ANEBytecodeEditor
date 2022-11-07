@@ -12,6 +12,11 @@ package com.cff.anebe.ir
         /** The message that the assembler gave for this error */
         public var message:String;
 
+        /**
+         * Builds an error. Likely should only be used internally.
+         * @param loc The instruction where the error occurred
+         * @param message Description of the error
+         */
         public function ASError(loc:ASInstruction, message:String = "")
         {
             this.loc = loc;

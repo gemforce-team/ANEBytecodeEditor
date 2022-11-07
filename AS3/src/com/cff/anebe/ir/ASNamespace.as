@@ -6,20 +6,43 @@ package com.cff.anebe.ir
      */
     public class ASNamespace
     {
+        /** Type of the namespace. Types are listed as TYPE_* in this class. */
         public var type:String;
+
+        /** Namespace name. */
         public var name:String;
 
+        /** If there are multiple namespaces with the same name, disambiguates them. This should only very rarely be non-zero. */
         public var id:int = 0;
 
+        /** Type string for private namespaces */
         public static const TYPE_PRIVATE:String = "PrivateNamespace";
+
+        /** Type string for "normal" namespaces */
         public static const TYPE_NORMAL:String = "Namespace";
+
+        /** Type string for package namespaces */
         public static const TYPE_PACKAGE:String = "PackageNamespace";
+
+        /** Type string for package internal namespaces (things defined as "internal" in AS3 code) */
         public static const TYPE_PACKAGEINTERNAL:String = "PackageInternalNs";
+
+        /** Type string for protected namespaces */
         public static const TYPE_PROTECTED:String = "ProtectedNamespace";
+
+        /** Type string for explicit namespaces */
         public static const TYPE_EXPLICIT:String = "ExplicitNamespace";
+
+        /** Type string for static protected namespaces */
         public static const TYPE_STATICPROTECTED:String = "StaticProtectedNs";
 
-        public function ASNamespace(type:String = TYPE_NORMAL, name:String = "", id:int = 0)
+        /**
+         * Builds an ASNamespace from scratch. Should probably not be used; see instead helper functions in the package com.cff.anebe.ir.namespaces
+         * @param type Namespace type
+         * @param name Namespace name
+         * @param id Disambiguation ID
+         */
+        public function ASNamespace(type:String, name:String, id:int = 0)
         {
             this.type = type;
             this.name = name;

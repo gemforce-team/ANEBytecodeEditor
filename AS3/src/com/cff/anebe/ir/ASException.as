@@ -22,7 +22,7 @@ package com.cff.anebe.ir
         public var exceptionName:ASMultiname;
 
         /**
-         * Builds an ASException. Null labels are interpreted as instruction 0, offset 0
+         * Builds an ASException.
          * @param from The instruction where the exception catch range starts
          * @param to The instruction where the exception catch range stops
          * @param target The target instruction for the catch block

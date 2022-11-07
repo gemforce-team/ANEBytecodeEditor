@@ -227,6 +227,35 @@ package com.cff.anebe.ir
         }
 
         /**
+         * If this is a local get or set instruction, returns the index of the local. Otherwise throws an error.
+         * @return Index of the local this instruction manipulates.
+         */
+        public function localIndex():uint
+        {
+            switch (opcode)
+            {
+                case OP_getlocal:
+                case OP_setlocal:
+                    return args[0] as uint;
+                case OP_getlocal0:
+                case OP_setlocal0:
+                    return 0;
+                case OP_getlocal1:
+                case OP_setlocal1:
+                    return 1;
+                case OP_getlocal2:
+                case OP_setlocal2:
+                    return 2;
+                case OP_getlocal3:
+                case OP_setlocal3:
+                    return 3;
+
+                default:
+                    throw new Error("Cannot get the local index of an instruction that does not get or set a local");
+            }
+        }
+
+        /**
          * If v is 0-3, the corresponding result of GetLocal0-3. Otherwise the result of GetLocal(v).
          */
         public static function EfficientGetLocal(v:uint):ASInstruction

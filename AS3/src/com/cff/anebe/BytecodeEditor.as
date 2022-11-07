@@ -1,13 +1,14 @@
 package com.cff.anebe
 {
+	import com.cff.anebe.ir.ASClass;
+	import com.cff.anebe.ir.ASMultiname;
+
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.StatusEvent;
 	import flash.external.ExtensionContext;
 	import flash.utils.ByteArray;
 	import flash.utils.CompressionAlgorithm;
-	import com.cff.anebe.ir.ASClass;
-	import com.cff.anebe.ir.ASMultiname;
-	import flash.events.Event;
 
 	/**
 	 * The main interface of this library. Allows editing bytecode of passed in SWF files.
