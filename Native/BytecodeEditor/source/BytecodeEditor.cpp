@@ -142,13 +142,7 @@ FREObject BytecodeEditor::assembleAsync(
                     ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
                         .data());
 
-                currentSWF->replaceABCData(data.data(), data.size());
-
-                std::vector<uint8_t> finalData(currentSWF->getFullSize());
-
-                currentSWF->writeTo(finalData.data());
-
-                SUCCEED_ASYNC(finalData);
+                SUCCEED_ASYNC(data);
             }
             catch (std::exception& e)
             {
@@ -269,15 +263,9 @@ FREObject BytecodeEditor::finishAssembleAsync()
                 std::vector<uint8_t> data =
                     std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
 
-                currentSWF->replaceABCData(data.data(), data.size());
-
-                std::vector<uint8_t> finalData(currentSWF->getFullSize());
-
-                currentSWF->writeTo(finalData.data());
-
                 partialAssembly = nullptr;
 
-                SUCCEED_ASYNC(finalData);
+                SUCCEED_ASYNC(data);
             }
             catch (std::exception& e)
             {
@@ -352,9 +340,17 @@ FREObject BytecodeEditor::taskResult()
         {
             const auto& data = std::get<3>(m_taskResult);
 
+            if (!currentSWF)
+            {
+                FAIL("Current SWF not set when trying to access result data. Did you accidentally "
+                     "clean up first?");
+            }
+
+            currentSWF->replaceABCData(data.data(), data.size());
+
             FREObject lengthObj;
-            DO_OR_FAIL(
-                "Failed to create length object", FRENewObjectFromUint32(data.size(), &lengthObj));
+            DO_OR_FAIL("Failed to create length object",
+                FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
 
             FREObject bytearrayObj;
             DO_OR_FAIL("Failed to create returned bytearray",
@@ -366,7 +362,8 @@ FREObject BytecodeEditor::taskResult()
             FREByteArray ba;
             DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
 
-            std::copy(data.begin(), data.end(), ba.bytes);
+            currentSWF->writeTo(ba.bytes);
+
             DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
 
             m_taskResult = std::monostate{};
