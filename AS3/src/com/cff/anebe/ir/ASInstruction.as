@@ -299,6 +299,10 @@ package com.cff.anebe.ir
         {
             return new ASInstruction(OP_raw, [v]);
         }
+        public static function Bkpt():ASInstruction
+        {
+            return new ASInstruction(OP_bkpt);
+        }
         public static function Nop():ASInstruction
         {
             return new ASInstruction(OP_nop);
@@ -763,6 +767,14 @@ package com.cff.anebe.ir
         {
             return new ASInstruction(OP_astypelate);
         }
+        public static function Coerce_u():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_u);
+        }
+        public static function Coerce_o():ASInstruction
+        {
+            return new ASInstruction(OP_coerce_o);
+        }
         public static function Negate():ASInstruction
         {
             return new ASInstruction(OP_negate);
@@ -954,6 +966,14 @@ package com.cff.anebe.ir
         public static function DebugFile(filename:String):ASInstruction
         {
             return new ASInstruction(OP_debugfile, [filename]);
+        }
+        public static function BkptLine(lineNum:uint):ASInstruction
+        {
+            return new ASInstruction(OP_bkptline, [lineNum]);
+        }
+        public static function Timestamp():ASInstruction
+        {
+            return new ASInstruction(OP_timestamp);
         }
     }
 }
