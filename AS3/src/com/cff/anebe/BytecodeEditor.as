@@ -109,6 +109,11 @@ package com.cff.anebe
 		 */
 		public function Assemble(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):ByteArray
 		{
+			if (strings == null)
+			{
+				throw new Error("Cannot assemble null strings");
+			}
+
 			if (replaceSWF != null)
 			{
 				decompressAndSetSWF(replaceSWF);
@@ -169,6 +174,10 @@ package com.cff.anebe
 		 */
 		public function AssembleAsync(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):void
 		{
+			if (strings == null)
+			{
+				throw new Error("Cannot assemble null strings");
+			}
 			if (replaceSWF != null)
 			{
 				decompressAndSetSWF(replaceSWF);
@@ -213,6 +222,10 @@ package com.cff.anebe
 		 */
 		public function PartialAssemble(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):void
 		{
+			if (strings == null)
+			{
+				throw new Error("Cannot assemble null strings");
+			}
 			if (replaceSWF != null)
 			{
 				decompressAndSetSWF(replaceSWF);
@@ -249,6 +262,10 @@ package com.cff.anebe
 		 */
 		public function PartialAssembleAsync(strings:Object, includeDebugInstructions:Boolean, replaceSWF:ByteArray = null):void
 		{
+			if (strings == null)
+			{
+				throw new Error("Cannot assemble null strings");
+			}
 			if (replaceSWF != null)
 			{
 				decompressAndSetSWF(replaceSWF);

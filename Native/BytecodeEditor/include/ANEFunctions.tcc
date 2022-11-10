@@ -40,22 +40,29 @@ FREObject Assemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     DO_OR_FAIL("Failed to get argv[1] size", FREGetArrayLength(argv[1], &vecSize));
 
     std::unordered_map<std::string, std::string> strings;
-    for (uint32_t i = 0; i < vecSize; i++)
+    try
     {
-        FREObject str;
-        DO_OR_FAIL("Failed to get argv[1][i]", FREGetArrayElementAt(argv[1], i, &str));
-        char* key;
-        uint32_t keyLen;
-        DO_OR_FAIL("Failed to get argv[1][i]'s string value",
-            FREGetObjectAsUTF8(str, &keyLen, (const uint8_t**)&key));
-        FREObject str2;
-        DO_OR_FAIL("Failed to get argv[0][argv[1][i]]",
-            FREGetObjectProperty(argv[0], (const uint8_t*)key, &str2, nullptr));
-        char* val;
-        uint32_t valLen;
-        DO_OR_FAIL("Failed to get argv[0][argv[1][i]]'s string value",
-            FREGetObjectAsUTF8(str2, &valLen, (const uint8_t**)&val));
-        strings.emplace(key, val);
+        for (uint32_t i = 0; i < vecSize; i++)
+        {
+            FREObject str;
+            DO_OR_FAIL("Failed to get argv[1][i]", FREGetArrayElementAt(argv[1], i, &str));
+            char* key;
+            uint32_t keyLen;
+            DO_OR_FAIL("Failed to get argv[1][i]'s string value",
+                FREGetObjectAsUTF8(str, &keyLen, (const uint8_t**)&key));
+            FREObject str2;
+            DO_OR_FAIL("Failed to get argv[0][argv[1][i]]",
+                FREGetObjectProperty(argv[0], (const uint8_t*)key, &str2, nullptr));
+            char* val;
+            uint32_t valLen;
+            DO_OR_FAIL("Failed to get argv[0][argv[1][i]]'s string value",
+                FREGetObjectAsUTF8(str2, &valLen, (const uint8_t**)&val));
+            strings.emplace(key, val);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        FAIL(std::string("Exception occurred while converting strings: ") + e.what());
     }
 
     return (editor->*Assembler)(std::move(strings), includeDebugInstructions);

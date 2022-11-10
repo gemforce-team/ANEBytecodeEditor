@@ -64,29 +64,37 @@ FREObject BytecodeEditor::assemble(
     {
         FAIL("No SWF data specified to reassemble");
     }
-    std::vector<uint8_t> data = std::move(
-        ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC()).data());
 
-    currentSWF->replaceABCData(data.data(), data.size());
+    try
+    {
+        std::vector<uint8_t> data = std::move(
+            ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC()).data());
 
-    FREObject lengthObj;
-    DO_OR_FAIL("Failed to create length object",
-        FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
+        currentSWF->replaceABCData(data.data(), data.size());
 
-    FREObject bytearrayObj;
-    DO_OR_FAIL("Failed to create returned bytearray",
-        ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+        FREObject lengthObj;
+        DO_OR_FAIL("Failed to create length object",
+            FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
 
-    DO_OR_FAIL("Failed to set returned bytearray length to required size",
-        ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
+        FREObject bytearrayObj;
+        DO_OR_FAIL("Failed to create returned bytearray",
+            ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
 
-    FREByteArray ba;
-    DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
+        DO_OR_FAIL("Failed to set returned bytearray length to required size",
+            ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
 
-    currentSWF->writeTo(ba.bytes);
-    DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+        FREByteArray ba;
+        DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
 
-    return bytearrayObj;
+        currentSWF->writeTo(ba.bytes);
+        DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+
+        return bytearrayObj;
+    }
+    catch (const std::exception& e)
+    {
+        FAIL_ASYNC(std::string("Exception during assembly: ") + e.what());
+    }
 }
 
 FREObject BytecodeEditor::disassembleAsync()
@@ -110,7 +118,7 @@ FREObject BytecodeEditor::disassembleAsync()
                     ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()))
                                   .disassemble());
             }
-            catch (std::exception& e)
+            catch (const std::exception& e)
             {
                 FAIL_ASYNC(std::string("Exception during disassembly: ") + e.what());
             }
@@ -144,7 +152,7 @@ FREObject BytecodeEditor::assembleAsync(
 
                 SUCCEED_ASYNC(data);
             }
-            catch (std::exception& e)
+            catch (const std::exception& e)
             {
                 FAIL_ASYNC(std::string("Exception during assembly: ") + e.what());
             }
@@ -163,8 +171,15 @@ FREObject BytecodeEditor::partialAssemble(
         FAIL("Already running a task");
     }
 
-    this->partialAssembly =
-        std::make_unique<ASASM::ASProgram>(Assembler::assemble(strings, includeDebugInstructions));
+    try
+    {
+        this->partialAssembly = std::make_unique<ASASM::ASProgram>(
+            Assembler::assemble(strings, includeDebugInstructions));
+    }
+    catch (const std::exception& e)
+    {
+        FAIL(std::string("Exception during partial assembly: ") + e.what());
+    }
 
     FREObject ret;
     DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
@@ -215,29 +230,37 @@ FREObject BytecodeEditor::finishAssemble()
     {
         FAIL("No partial assembly found");
     }
-    std::vector<uint8_t> data = std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
-    partialAssembly           = nullptr;
 
-    currentSWF->replaceABCData(data.data(), data.size());
+    try
+    {
+        std::vector<uint8_t> data = std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
+        partialAssembly           = nullptr;
 
-    FREObject lengthObj;
-    DO_OR_FAIL("Failed to create length object",
-        FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
+        currentSWF->replaceABCData(data.data(), data.size());
 
-    FREObject bytearrayObj;
-    DO_OR_FAIL("Failed to create returned bytearray",
-        ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+        FREObject lengthObj;
+        DO_OR_FAIL("Failed to create length object",
+            FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
 
-    DO_OR_FAIL("Failed to set returned bytearray length to required size",
-        ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
+        FREObject bytearrayObj;
+        DO_OR_FAIL("Failed to create returned bytearray",
+            ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
 
-    FREByteArray ba;
-    DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
+        DO_OR_FAIL("Failed to set returned bytearray length to required size",
+            ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
 
-    currentSWF->writeTo(ba.bytes);
-    DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+        FREByteArray ba;
+        DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
 
-    return bytearrayObj;
+        currentSWF->writeTo(ba.bytes);
+        DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+
+        return bytearrayObj;
+    }
+    catch (const std::exception& e)
+    {
+        FAIL(std::string("Exception while finishing assembly: ") + e.what());
+    }
 }
 
 FREObject BytecodeEditor::finishAssembleAsync()
@@ -346,28 +369,35 @@ FREObject BytecodeEditor::taskResult()
                      "clean up first?");
             }
 
-            currentSWF->replaceABCData(data.data(), data.size());
+            try
+            {
+                currentSWF->replaceABCData(data.data(), data.size());
 
-            FREObject lengthObj;
-            DO_OR_FAIL("Failed to create length object",
-                FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
+                FREObject lengthObj;
+                DO_OR_FAIL("Failed to create length object",
+                    FRENewObjectFromUint32(currentSWF->getFullSize(), &lengthObj));
 
-            FREObject bytearrayObj;
-            DO_OR_FAIL("Failed to create returned bytearray",
-                ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
+                FREObject bytearrayObj;
+                DO_OR_FAIL("Failed to create returned bytearray",
+                    ANENewObject("flash.utils.ByteArray", 0, nullptr, &bytearrayObj, nullptr));
 
-            DO_OR_FAIL("Failed to set returned bytearray length to required size",
-                ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
+                DO_OR_FAIL("Failed to set returned bytearray length to required size",
+                    ANESetObjectProperty(bytearrayObj, "length", lengthObj, nullptr));
 
-            FREByteArray ba;
-            DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
+                FREByteArray ba;
+                DO_OR_FAIL("Failed to acquire bytearray", FREAcquireByteArray(bytearrayObj, &ba));
 
-            currentSWF->writeTo(ba.bytes);
+                currentSWF->writeTo(ba.bytes);
 
-            DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
+                DO_OR_FAIL("Failed to release bytearray", FREReleaseByteArray(bytearrayObj));
 
-            m_taskResult = std::monostate{};
-            return bytearrayObj;
+                m_taskResult = std::monostate{};
+                return bytearrayObj;
+            }
+            catch (const std::exception& e)
+            {
+                FAIL(std::string("Exception occurred while getting assembled SWF: ") + e.what());
+            }
         }
         default:
             FAIL("Invalid task result index");

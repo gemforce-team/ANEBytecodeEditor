@@ -77,7 +77,7 @@ namespace
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -184,7 +184,7 @@ namespace
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -268,7 +268,7 @@ namespace
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -297,7 +297,7 @@ namespace
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -326,7 +326,7 @@ namespace
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -429,7 +429,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -468,7 +468,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -498,7 +498,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -526,7 +526,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -573,7 +573,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -612,7 +612,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -642,7 +642,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
@@ -670,7 +670,7 @@ namespace ASClass
         }
         catch (std::exception& e)
         {
-            FAIL(std::string("Exception") + e.what());
+            FAIL(std::string("Exception: ") + e.what());
         }
         catch (...)
         {
