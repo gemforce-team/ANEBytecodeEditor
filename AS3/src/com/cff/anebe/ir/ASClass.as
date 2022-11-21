@@ -202,7 +202,8 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Gets the static constructor for a class
+         * Gets the static constructor for a class.
+         * Will be run when the "when the newclass instruction is executed on the class_info entry for the class".
          * @return The ASMethod that represents the static constructor
          */
         public function getStaticConstructor():ASMethod
@@ -222,7 +223,8 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Sets the static constructor for a class
+         * Sets the static constructor for a class.
+         * Will be run "when the newclass instruction is executed on the class_info entry for the class".
          * @param v The ASMethod that represents the new static constructor
          */
         public function setStaticConstructor(v:ASMethod):void

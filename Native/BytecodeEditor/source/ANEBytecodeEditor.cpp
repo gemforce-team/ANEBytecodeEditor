@@ -9,8 +9,8 @@
 
 using namespace std::literals::string_view_literals;
 
-void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx,
-    uint32_t* numFunctions, const FRENamedFunction** functions)
+void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32_t* numFunctions,
+    const FRENamedFunction** functions)
 {
     std::string_view ctxType = reinterpret_cast<const char*>(ctxTypeRaw);
 
@@ -35,9 +35,10 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx,
             {(const uint8_t*)"SetCurrentSWF",        editorForContext, &SetCurrentSWF                 },
             {(const uint8_t*)"Cleanup",              editorForContext, &Cleanup                       },
             {(const uint8_t*)"GetClass",             editorForContext, &GetClass                      },
+            {(const uint8_t*)"GetScript",            editorForContext, &GetScript                     },
         };
         *functions    = ANEBE_functions;
-        *numFunctions = 12;
+        *numFunctions = 13;
         FRESetContextNativeData(ctx, (void*)ANEBE_functions);
     }
     else if (ctxType == "Class"sv)
@@ -73,6 +74,20 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx,
         *functions         = CLASS_functions;
         *numFunctions      = 19;
         FRESetContextNativeData(ctx, (void*)CLASS_functions);
+    }
+    else if (ctxType == "Script"sv)
+    {
+        FRENamedFunction* SCRIPT_functions = new FRENamedFunction[]{
+            {(const uint8_t*)"GetTrait",       scriptPointerHelper, &ASScript::GetTrait      },
+            {(const uint8_t*)"SetTrait",       scriptPointerHelper, &ASScript::SetTrait      },
+            {(const uint8_t*)"DeleteTrait",    scriptPointerHelper, &ASScript::DeleteTrait   },
+            {(const uint8_t*)"GetInitializer", scriptPointerHelper, &ASScript::GetInitializer},
+            {(const uint8_t*)"SetInitializer", scriptPointerHelper, &ASScript::SetInitializer},
+        };
+        scriptPointerHelper = nullptr;
+        *functions          = SCRIPT_functions;
+        *numFunctions       = 5;
+        FRESetContextNativeData(ctx, (void*)SCRIPT_functions);
     }
 }
 

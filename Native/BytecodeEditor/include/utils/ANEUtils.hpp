@@ -1,7 +1,5 @@
 #pragma once
 
-#include <FlashRuntimeExtensions.h>
-
 #include "ABC/Error.hpp"
 #include "ABC/Label.hpp"
 #include "ASASM/Class.hpp"
@@ -15,6 +13,10 @@
 #include <source_location>
 #include <string>
 #include <string_view>
+
+#include <windows.h>
+
+#include <FlashRuntimeExtensions.h>
 
 #define DO_OR_FAIL_NULL(x)                                                                         \
     if (x != FRE_OK)                                                                               \

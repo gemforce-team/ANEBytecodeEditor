@@ -2,11 +2,15 @@
 
 #include "BytecodeEditor.hpp"
 #include "utils/ANEUtils.hpp"
-#include <FlashRuntimeExtensions.h>
 #include <stdint.h>
 #include <unordered_map>
 
-inline ASASM::Class* classPointerHelper = nullptr;
+#include <windows.h>
+
+#include <FlashRuntimeExtensions.h>
+
+inline ASASM::Class* classPointerHelper   = nullptr;
+inline ASASM::Script* scriptPointerHelper = nullptr;
 
 template <FREObject (BytecodeEditor::*Assembler)(
     std::unordered_map<std::string, std::string>&&, bool)>
@@ -19,6 +23,7 @@ FREObject TransparentZeroArg(FREContext ctx, void* funcData, uint32_t argc, FREO
 FREObject SetCurrentSWF(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 FREObject Cleanup(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 FREObject GetClass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+FREObject GetScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 
 namespace ASClass
 {
@@ -53,4 +58,15 @@ namespace ASClass
 
     // Allows converting an FREObject back to a shared_ptr
     FREObject ConvertClassHelper(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+}
+
+namespace ASScript
+{
+    // sinit
+    FREObject GetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject SetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    // traits
+    FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject SetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject DeleteTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 }

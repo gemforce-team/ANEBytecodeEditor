@@ -30,7 +30,11 @@ package com.cff.anebe.ir
         /** For getter, setter, method, or function kinds, the ASMethod that represents the function. Null for others. */
         public var funcOrMethod:ASMethod;
 
-        /** For class kind, the ASClass that represents the stored class. Null for others. */
+        /**
+         * For class kind, the ASClass that represents the stored class. Null for others.
+         * NOTE: currently, editing an ASClass through its methods changes the C++-side data for it *without* using a wrapper setTrait on this object.
+         * This is done for efficiency reasons. It is still recommended to perform a setTrait with this object in case this changes in the future.
+         */
         public var clazz:ASClass;
 
         /** Kind string for slots */

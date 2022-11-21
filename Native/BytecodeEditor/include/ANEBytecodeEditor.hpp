@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 #include <FlashRuntimeExtensions.h>
 
 #if defined(WIN32)

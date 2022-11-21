@@ -317,6 +317,22 @@ ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
     return nullptr;
 }
 
+ASASM::Script* BytecodeEditor::getScript(const ASASM::Multiname& traitName) const
+{
+    for (auto& script : partialAssembly->scripts)
+    {
+        for (const auto& trait : script.traits)
+        {
+            if (traitName == trait.name)
+            {
+                return &script;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 #undef FAIL_RETURN
 #define FAIL_RETURN(x)                                                                             \
     do                                                                                             \

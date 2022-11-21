@@ -9,6 +9,8 @@ package com.cff.anebe
 	import flash.external.ExtensionContext;
 	import flash.utils.ByteArray;
 	import flash.utils.CompressionAlgorithm;
+	import com.cff.anebe.ir.ASTrait;
+	import com.cff.anebe.ir.ASScript;
 
 	/**
 	 * The main interface of this library. Allows editing bytecode of passed in SWF files.
@@ -338,11 +340,11 @@ package com.cff.anebe
 
 		/**
 		 * Gets a class after partial assembly.
+		 * This is essentially a shortcut for GetScript(name).GetTrait(name).clazz, but is more efficient and should likely be used instead.
 		 * @param className Name of class to be patched. Must be a QName.
-		 * @param idx If there are multiple classes that match the name, disambiguates between them.
 		 * @return The class requested.
 		 */
-		public function GetClass(name:ASMultiname, idx:uint):ASClass
+		public function GetClass(name:ASMultiname):ASClass
 		{
 			if (name == null || name.type != ASMultiname.TYPE_QNAME)
 			{
@@ -362,6 +364,38 @@ package com.cff.anebe
 			else
 			{
 				return ret as ASClass;
+			}
+		}
+
+		/**
+		 * Gets a script after partial assembly.
+		 * Scripts are the top-level building block of AS3 programs, but are never referenced in-engine.
+		 * They can contain functions, classes, and variables, and have a single initializer method that sets them up.
+		 * Note that direct editing of script is discouraged; using GetClass is generally a better idea.
+		 * This is mostly provided for the case of top-level-scope functions and variables, which can only be edited as script traits.
+		 * @param identifier Name of an entity in the script. Must be a QName.
+		 * @return The script requested.
+		 */
+		public function GetScript(identifier:ASMultiname):ASScript
+		{
+			if (identifier == null || !(identifier is ASMultiname))
+			{
+				throw new Error("script identifier must be a QName");
+			}
+
+			var ret:Object = extContext.call("GetScript", identifier);
+
+			if (ret is String)
+			{
+				throw new Error(ret);
+			}
+			else if (ret == null || !(ret is ASScript))
+			{
+				throw new Error("Unknown error occurred");
+			}
+			else
+			{
+				return ret as ASScript;
 			}
 		}
 

@@ -1,9 +1,12 @@
 #pragma once
 #include "BytecodeEditor.hpp"
 #include "utils/ANEUtils.hpp"
-#include <FlashRuntimeExtensions.h>
 #include <stdint.h>
 #include <unordered_map>
+
+#include <windows.h>
+
+#include <FlashRuntimeExtensions.h>
 
 #define GET_EDITOR() BytecodeEditor* editor = reinterpret_cast<BytecodeEditor*>(funcData)
 

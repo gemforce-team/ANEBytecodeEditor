@@ -3,7 +3,6 @@
 #include "ASASM/ASProgram.hpp"
 #include "SWF/SWFFile.hpp"
 #include "utils/ANEUtils.hpp"
-#include <FlashRuntimeExtensions.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -11,6 +10,10 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
+#include <windows.h>
+
+#include <FlashRuntimeExtensions.h>
 
 class BytecodeEditor
 {
@@ -46,6 +49,7 @@ public:
     FREObject finishAssembleAsync();
 
     ASASM::Class* getClass(const ASASM::Multiname& className) const;
+    ASASM::Script* getScript(const ASASM::Multiname& trait) const;
 
     void setSWF(SWF::SWFFile&& file) { currentSWF = std::move(file); }
 

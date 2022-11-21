@@ -63,3 +63,25 @@ FREObject GetClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     return ret;
 }
+
+FREObject GetScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+{
+    CHECK_ARGC(1);
+
+    GET_EDITOR();
+
+    ASASM::Multiname name = ConvertMultiname(argv[0]);
+
+    scriptPointerHelper = editor->getScript(name);
+
+    if (scriptPointerHelper == nullptr)
+    {
+        FAIL("Script not found");
+    }
+
+    FREObject ret;
+    DO_OR_FAIL("Could not build com.cff.anebe.ir.ASScript",
+        ANENewObject("com.cff.anebe.ir.ASScript", 0, nullptr, &ret, nullptr));
+
+    return ret;
+}

@@ -1,7 +1,7 @@
 #include "ANEFunctions.hpp"
 #include "enums/InstanceFlags.hpp"
 
-#define GET_CLASS() ASASM::Class& clazz = *reinterpret_cast<ASASM::Class*>(funcData)
+#define GET_TYPE(type) type& clazz = *reinterpret_cast<type*>(funcData)
 
 #define SUCCEED_VOID()                                                                             \
     FREObject ret;                                                                                 \
@@ -10,12 +10,12 @@
 
 namespace
 {
-    template <auto accessor>
+    template <typename T, auto accessor>
     FREObject GetTrait(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     {
         CHECK_ARGC(2);
 
-        GET_CLASS();
+        GET_TYPE(T);
 
         try
         {
@@ -87,12 +87,12 @@ namespace
         return nullptr;
     }
 
-    template <auto accessor>
+    template <typename T, auto accessor>
     FREObject SetTrait(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(T);
 
         try
         {
@@ -194,12 +194,12 @@ namespace
         SUCCEED_VOID();
     }
 
-    template <auto accessor>
+    template <typename T, auto accessor>
     FREObject DeleteTrait(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     {
         CHECK_ARGC(2);
 
-        GET_CLASS();
+        GET_TYPE(T);
 
         try
         {
@@ -276,12 +276,12 @@ namespace
         }
     }
 
-    template <auto accessor>
+    template <typename T, auto accessor>
     FREObject GetConstructor(FREContext, void* funcData, uint32_t argc, FREObject[])
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(T);
 
         try
         {
@@ -305,12 +305,12 @@ namespace
         }
     }
 
-    template <auto accessor>
+    template <typename T, auto accessor>
     FREObject SetConstructor(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(T);
 
         try
         {
@@ -341,69 +341,76 @@ namespace ASClass
 {
     FREObject GetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return GetTrait<[](ASASM::Class& c) -> ASASM::Class& { return c; }>(
+        return GetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject SetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return SetTrait<[](ASASM::Class& c) -> ASASM::Class& { return c; }>(
+        return SetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject DeleteStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return DeleteTrait<[](ASASM::Class& c) -> ASASM::Class& { return c; }>(
+        return DeleteTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject GetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return GetTrait<[](ASASM::Class& c) -> ASASM::Instance& { return c.instance; }>(
-            ctx, funcData, argc, argv);
+        return GetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
+            return c.instance;
+        }>(ctx, funcData, argc, argv);
     }
 
     FREObject SetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return SetTrait<[](ASASM::Class& c) -> ASASM::Instance& { return c.instance; }>(
-            ctx, funcData, argc, argv);
+        return SetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
+            return c.instance;
+        }>(ctx, funcData, argc, argv);
     }
 
     FREObject DeleteInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return DeleteTrait<[](ASASM::Class& c) -> ASASM::Instance& { return c.instance; }>(
-            ctx, funcData, argc, argv);
+        return DeleteTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
+            return c.instance;
+        }>(ctx, funcData, argc, argv);
     }
 
     FREObject GetStaticConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::GetConstructor<[](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>&
-            { return c.cinit; }>(ctx, funcData, argc, argv);
+        return ::GetConstructor<ASASM::Class,
+            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.cinit; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject SetStaticConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::SetConstructor<[](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>&
-            { return c.cinit; }>(ctx, funcData, argc, argv);
+        return ::SetConstructor<ASASM::Class,
+            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.cinit; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject GetConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::GetConstructor<[](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>&
-            { return c.instance.iinit; }>(ctx, funcData, argc, argv);
+        return ::GetConstructor<ASASM::Class,
+            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.instance.iinit; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject SetConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::SetConstructor<[](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>&
-            { return c.instance.iinit; }>(ctx, funcData, argc, argv);
+        return ::SetConstructor<ASASM::Class,
+            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.instance.iinit; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject GetInterfaces(FREContext, void* funcData, uint32_t argc, FREObject[])
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -441,7 +448,7 @@ namespace ASClass
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -482,7 +489,7 @@ namespace ASClass
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -510,7 +517,7 @@ namespace ASClass
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -540,7 +547,7 @@ namespace ASClass
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -585,7 +592,7 @@ namespace ASClass
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -626,7 +633,7 @@ namespace ASClass
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -654,7 +661,7 @@ namespace ASClass
     {
         CHECK_ARGC(1);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         try
         {
@@ -684,10 +691,45 @@ namespace ASClass
     {
         CHECK_ARGC(0);
 
-        GET_CLASS();
+        GET_TYPE(ASASM::Class);
 
         classPointerHelper = &clazz;
 
         return nullptr;
+    }
+}
+
+namespace ASScript
+{
+    FREObject GetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::GetConstructor<ASASM::Script,
+            [](ASASM::Script& c) -> std::shared_ptr<ASASM::Method>& { return c.sinit; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject SetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::SetConstructor<ASASM::Script,
+            [](ASASM::Script& c) -> std::shared_ptr<ASASM::Method>& { return c.sinit; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::GetTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject SetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::SetTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject DeleteTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::DeleteTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+            ctx, funcData, argc, argv);
     }
 }
