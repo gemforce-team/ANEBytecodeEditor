@@ -461,7 +461,7 @@ package com.cff.anebe.ir
         }
         public static function PushString(val:String):ASInstruction
         {
-            return new ASInstruction(OP_pushstring);
+            return new ASInstruction(OP_pushstring, [val]);
         }
         public static function PushInt(val:int):ASInstruction
         {
