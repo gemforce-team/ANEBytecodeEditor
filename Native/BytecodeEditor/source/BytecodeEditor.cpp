@@ -93,7 +93,7 @@ FREObject BytecodeEditor::assemble(
     }
     catch (const std::exception& e)
     {
-        FAIL_ASYNC(std::string("Exception during assembly: ") + e.what());
+        FAIL(std::string("Exception during assembly: ") + e.what());
     }
 }
 
@@ -295,6 +295,35 @@ FREObject BytecodeEditor::finishAssembleAsync()
                 FAIL_ASYNC(std::string("Exception while finishing assembly: ") + e.what());
             }
         });
+
+    FREObject ret;
+    DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));
+    return ret;
+}
+
+FREObject BytecodeEditor::beginIntrospection()
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+
+    if (!currentSWF)
+    {
+        FAIL("No SWF data to begin introspection on");
+    }
+
+    try
+    {
+        this->partialAssembly = std::make_unique<ASASM::ASProgram>(
+            ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()));
+
+        currentSWF = std::nullopt;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(std::string("Exception while beginning introspection: ") + e.what());
+    }
 
     FREObject ret;
     DO_OR_FAIL("Failed to create success boolean", FRENewObjectFromBool(1, &ret));

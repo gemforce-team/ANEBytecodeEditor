@@ -85,3 +85,47 @@ FREObject GetScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     return ret;
 }
+
+FREObject GetROClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+{
+    CHECK_ARGC(1);
+
+    GET_EDITOR();
+
+    ASASM::Multiname name = ConvertMultiname(argv[0]);
+
+    classPointerHelper = editor->getClass(name);
+
+    if (classPointerHelper == nullptr)
+    {
+        FAIL("Class not found");
+    }
+
+    FREObject ret;
+    DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
+        ANENewObject("com.cff.anebe.ir.ASReadOnlyClass", 0, nullptr, &ret, nullptr));
+
+    return ret;
+}
+
+FREObject GetROScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+{
+    CHECK_ARGC(1);
+
+    GET_EDITOR();
+
+    ASASM::Multiname name = ConvertMultiname(argv[0]);
+
+    scriptPointerHelper = editor->getScript(name);
+
+    if (scriptPointerHelper == nullptr)
+    {
+        FAIL("Script not found");
+    }
+
+    FREObject ret;
+    DO_OR_FAIL("Could not build com.cff.anebe.ir.ASScript",
+        ANENewObject("com.cff.anebe.ir.ASReadOnlyScript", 0, nullptr, &ret, nullptr));
+
+    return ret;
+}

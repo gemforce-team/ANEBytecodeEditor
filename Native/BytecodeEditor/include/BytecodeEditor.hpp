@@ -48,6 +48,8 @@ public:
     FREObject finishAssemble();
     FREObject finishAssembleAsync();
 
+    FREObject beginIntrospection();
+
     ASASM::Class* getClass(const ASASM::Multiname& className) const;
     ASASM::Script* getScript(const ASASM::Multiname& trait) const;
 

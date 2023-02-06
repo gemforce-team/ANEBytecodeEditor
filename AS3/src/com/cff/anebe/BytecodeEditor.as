@@ -8,8 +8,6 @@ package com.cff.anebe
 	import flash.events.StatusEvent;
 	import flash.external.ExtensionContext;
 	import flash.utils.ByteArray;
-	import flash.utils.CompressionAlgorithm;
-	import com.cff.anebe.ir.ASTrait;
 	import com.cff.anebe.ir.ASScript;
 
 	/**
@@ -20,41 +18,8 @@ package com.cff.anebe
 	{
 		private var extContext:ExtensionContext;
 
-		private function decompressAndSetSWF(replaceSWF:ByteArray):void
+		private function setSWF(replaceSWF:ByteArray):void
 		{
-			replaceSWF.position = 0;
-			var decompressor:ByteArray = new ByteArray();
-			switch (replaceSWF.readUTFBytes(1))
-			{
-				case "F":
-					replaceSWF.position = 0;
-					break;
-				case "C":
-					replaceSWF.position = 8;
-					replaceSWF.readBytes(decompressor);
-					replaceSWF.position = 8;
-					decompressor.uncompress(CompressionAlgorithm.ZLIB);
-					replaceSWF.writeBytes(decompressor);
-					replaceSWF.position = 0;
-					replaceSWF.writeUTFBytes("F");
-					replaceSWF.position = 0;
-					decompressor = null;
-					break;
-				case "Z":
-					replaceSWF.position = 8;
-					replaceSWF.readBytes(decompressor, 8);
-					replaceSWF.position = 8;
-					decompressor.uncompress(CompressionAlgorithm.LZMA);
-					replaceSWF.writeBytes(decompressor);
-					replaceSWF.position = 0;
-					replaceSWF.writeUTFBytes("F");
-					replaceSWF.position = 0;
-					decompressor = null;
-					break;
-				default:
-					throw new Error("Unrecognized compression scheme for SWF");
-			}
-
 			var ret:Object = extContext.call("SetCurrentSWF", replaceSWF);
 
 			if (ret is String)
@@ -84,7 +49,7 @@ package com.cff.anebe
 		 */
 		public function Disassemble(swf:ByteArray):Object
 		{
-			decompressAndSetSWF(swf);
+			setSWF(Utils.decompressSWF(swf));
 
 			var ret:Object = extContext.call("Disassemble");
 
@@ -118,7 +83,7 @@ package com.cff.anebe
 
 			if (replaceSWF != null)
 			{
-				decompressAndSetSWF(replaceSWF);
+				setSWF(Utils.decompressSWF(replaceSWF));
 			}
 
 			var vec:Vector.<String> = new <String>[];
@@ -149,7 +114,7 @@ package com.cff.anebe
 		 */
 		public function DisassembleAsync(swf:ByteArray):void
 		{
-			decompressAndSetSWF(swf);
+			setSWF(Utils.decompressSWF(swf));
 
 			var ret:Object = extContext.call("DisassembleAsync");
 
@@ -182,7 +147,7 @@ package com.cff.anebe
 			}
 			if (replaceSWF != null)
 			{
-				decompressAndSetSWF(replaceSWF);
+				setSWF(Utils.decompressSWF(replaceSWF));
 			}
 
 			var vec:Vector.<String> = new <String>[];
@@ -230,7 +195,7 @@ package com.cff.anebe
 			}
 			if (replaceSWF != null)
 			{
-				decompressAndSetSWF(replaceSWF);
+				setSWF(Utils.decompressSWF(replaceSWF));
 			}
 
 			var vec:Vector.<String> = new <String>[];
@@ -270,7 +235,7 @@ package com.cff.anebe
 			}
 			if (replaceSWF != null)
 			{
-				decompressAndSetSWF(replaceSWF);
+				setSWF(Utils.decompressSWF(replaceSWF));
 			}
 
 			var vec:Vector.<String> = new <String>[];

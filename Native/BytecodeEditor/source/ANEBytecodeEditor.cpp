@@ -41,6 +41,19 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
         *numFunctions = 13;
         FRESetContextNativeData(ctx, (void*)ANEBE_functions);
     }
+    else if (ctxType == "SWFIntrospector"sv)
+    {
+        BytecodeEditor* editorForContext  = new BytecodeEditor(ctx);
+        FRENamedFunction* ANEBE_functions = new FRENamedFunction[]{
+            {(const uint8_t*)"SetCurrentSWF",      editorForContext, &SetCurrentSWF               },
+            {(const uint8_t*)"BeginIntrospection", editorForContext, &TZA<&BE::beginIntrospection>},
+            {(const uint8_t*)"GetClass",           editorForContext, &GetROClass                  },
+            {(const uint8_t*)"GetScript",          editorForContext, &GetROScript                 },
+        };
+        *functions    = ANEBE_functions;
+        *numFunctions = 4;
+        FRESetContextNativeData(ctx, (void*)ANEBE_functions);
+    }
     else if (ctxType == "Class"sv)
     {
         FRENamedFunction* CLASS_functions = new FRENamedFunction[]{

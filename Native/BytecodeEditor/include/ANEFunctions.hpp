@@ -24,6 +24,8 @@ FREObject SetCurrentSWF(FREContext ctx, void* funcData, uint32_t argc, FREObject
 FREObject Cleanup(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 FREObject GetClass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 FREObject GetScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+FREObject GetROClass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+FREObject GetROScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 
 namespace ASClass
 {
