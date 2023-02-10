@@ -591,6 +591,7 @@ public:
                 if (!prioritySet.empty())
                 {
                     set = prioritySet;
+                    break;
                 }
             }
 
