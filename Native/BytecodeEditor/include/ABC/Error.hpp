@@ -3,7 +3,7 @@
 #include "ABC/Label.hpp"
 #include <string>
 
-namespace ABC
+namespace SWFABC
 {
     struct Error
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BytecodeEditor.hpp"
+#include "utils/ANEFunctionContext.hpp"
 #include "utils/ANEUtils.hpp"
 #include <stdint.h>
 #include <unordered_map>
@@ -9,14 +10,15 @@
 
 #include <FlashRuntimeExtensions.h>
 
-inline ASASM::Class* classPointerHelper   = nullptr;
-inline ASASM::Script* scriptPointerHelper = nullptr;
+inline std::optional<ANEFunctionContext> nextObjectContext;
 
 template <FREObject (BytecodeEditor::*Assembler)(
     std::unordered_map<std::string, std::string>&&, bool)>
 FREObject Assemble(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 template <FREObject (BytecodeEditor::*Function)()>
 FREObject TransparentZeroArg(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+template <FREObject (*Function)(FREContext, void*, uint32_t, FREObject[])>
+FREObject CheckAssemblyValid(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 
 #include "ANEFunctions.tcc"
 

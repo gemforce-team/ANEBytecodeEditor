@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace ABC
+namespace SWFABC
 {
     struct MethodBody
     {

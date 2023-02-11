@@ -1,6 +1,6 @@
 #include "ANEFunctions.hpp"
 
-#define GET_EDITOR() BytecodeEditor* editor = reinterpret_cast<BytecodeEditor*>(funcData)
+#define GET_EDITOR() BytecodeEditor& editor = *static_cast<ANEFunctionContext*>(funcData)->editor
 
 FREObject SetCurrentSWF(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 {
@@ -19,7 +19,7 @@ FREObject SetCurrentSWF(FREContext, void* funcData, uint32_t argc, FREObject arg
 
     try
     {
-        editor->setSWF(SWF::SWFFile(std::move(data)));
+        editor.setSWF(SWF::SWFFile(std::move(data)));
     }
     catch (std::exception& e)
     {
@@ -37,7 +37,7 @@ FREObject Cleanup(FREContext, void* funcData, uint32_t argc, FREObject[])
 
     GET_EDITOR();
 
-    editor->cleanup();
+    editor.cleanup();
 
     return nullptr;
 }
@@ -48,14 +48,17 @@ FREObject GetClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     GET_EDITOR();
 
-    ASASM::Multiname name = ConvertMultiname(argv[0]);
+    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    classPointerHelper = editor->getClass(name);
+    ASASM::Class* clazz = editor.getClass(name);
 
-    if (classPointerHelper == nullptr)
+    if (clazz == nullptr)
     {
         FAIL("Class not found");
     }
+
+    nextObjectContext = ANEFunctionContext{
+        editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{clazz}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
@@ -70,14 +73,17 @@ FREObject GetScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     GET_EDITOR();
 
-    ASASM::Multiname name = ConvertMultiname(argv[0]);
+    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    scriptPointerHelper = editor->getScript(name);
+    ASASM::Script* script = editor.getScript(name);
 
-    if (scriptPointerHelper == nullptr)
+    if (script == nullptr)
     {
         FAIL("Script not found");
     }
+
+    nextObjectContext = ANEFunctionContext{
+        editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{script}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASScript",
@@ -92,14 +98,17 @@ FREObject GetROClass(FREContext, void* funcData, uint32_t argc, FREObject argv[]
 
     GET_EDITOR();
 
-    ASASM::Multiname name = ConvertMultiname(argv[0]);
+    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    classPointerHelper = editor->getClass(name);
+    ASASM::Class* clazz = editor.getClass(name);
 
-    if (classPointerHelper == nullptr)
+    if (clazz == nullptr)
     {
         FAIL("Class not found");
     }
+
+    nextObjectContext = ANEFunctionContext{
+        editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{clazz}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
@@ -114,14 +123,17 @@ FREObject GetROScript(FREContext, void* funcData, uint32_t argc, FREObject argv[
 
     GET_EDITOR();
 
-    ASASM::Multiname name = ConvertMultiname(argv[0]);
+    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    scriptPointerHelper = editor->getScript(name);
+    ASASM::Script* script = editor.getScript(name);
 
-    if (scriptPointerHelper == nullptr)
+    if (script == nullptr)
     {
         FAIL("Script not found");
     }
+
+    nextObjectContext = ANEFunctionContext{
+        editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{script}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASScript",

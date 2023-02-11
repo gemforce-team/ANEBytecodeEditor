@@ -3,7 +3,7 @@
 #include "enums/ABCType.hpp"
 #include <stdint.h>
 
-namespace ABC
+namespace SWFABC
 {
     struct OptionDetail
     {

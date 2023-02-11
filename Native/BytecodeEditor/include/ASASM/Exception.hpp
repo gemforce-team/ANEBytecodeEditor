@@ -7,7 +7,7 @@ namespace ASASM
 {
     struct Exception
     {
-        ABC::Label from, to, target;
+        SWFABC::Label from, to, target;
         Multiname excType;
         Multiname varName;
 

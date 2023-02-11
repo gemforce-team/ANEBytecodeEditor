@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enums/ABCType.hpp"
+#include "utils/generic_hash.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -18,3 +19,6 @@ namespace ASASM
         bool operator==(const Namespace&) const noexcept  = default;
     };
 }
+
+DEFINE_HASH(
+    ASASM::Namespace, &ASASM::Namespace::kind, &ASASM::Namespace::name, &ASASM::Namespace::id);

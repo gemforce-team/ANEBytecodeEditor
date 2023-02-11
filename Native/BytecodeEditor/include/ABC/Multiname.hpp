@@ -5,7 +5,7 @@
 #include <variant>
 #include <vector>
 
-namespace ABC
+namespace SWFABC
 {
     struct Multiname
     {

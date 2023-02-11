@@ -25,7 +25,7 @@ namespace ASASM
         std::vector<Exception> exceptions;
         std::vector<Trait> traits;
 
-        std::vector<ABC::Error> errors;
+        std::vector<SWFABC::Error> errors;
 
         auto operator<=>(const MethodBody&) const noexcept = default;
         bool operator==(const MethodBody&) const noexcept  = default;

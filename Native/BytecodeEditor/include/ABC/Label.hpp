@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdint.h>
 #include <compare>
+#include <stdint.h>
 
-namespace ABC
+namespace SWFABC
 {
     struct Label
     {

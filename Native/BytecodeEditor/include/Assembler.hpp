@@ -137,7 +137,7 @@ private:
     }
 
     std::unordered_map<std::string, std::string> vars;
-    std::unordered_map<std::string, uint32_t> namespaceLabels;
+    std::vector<std::string> namespaceLabels;
     uint32_t sourceVersion = 1;
 
     void handlePreprocessor()
@@ -424,7 +424,7 @@ private:
     template <typename T>
     void mustBeSet(const char* name, const T& obj)
     {
-        using comp                 = std::remove_cvref_t<T>;
+        using comp = std::remove_cvref_t<T>;
         if constexpr (std::is_same_v<std::shared_ptr<ASASM::Method>, comp>)
         {
             if (obj == nullptr)
@@ -612,10 +612,10 @@ private:
         const std::string w = readWord();
         if (w == "null")
         {
-            return ABC::ABCFile::NULL_INT;
+            return SWFABC::ABCFile::NULL_INT;
         }
         const int64_t ret = strtoll(w.c_str(), nullptr, 0);
-        if (ret < ABC::ABCFile::MIN_INT || ret > ABC::ABCFile::MAX_INT)
+        if (ret < SWFABC::ABCFile::MIN_INT || ret > SWFABC::ABCFile::MAX_INT)
         {
             throw StringException("Int out of bounds");
         }
@@ -627,10 +627,10 @@ private:
         const std::string w = readWord();
         if (w == "null")
         {
-            return ABC::ABCFile::NULL_UINT;
+            return SWFABC::ABCFile::NULL_UINT;
         }
         const uint64_t ret = strtoull(w.c_str(), nullptr, 0);
-        if (ret > ABC::ABCFile::MAX_UINT)
+        if (ret > SWFABC::ABCFile::MAX_UINT)
         {
             throw StringException("UInt out of bounds");
         }
@@ -642,7 +642,7 @@ private:
         const std::string w = readWord();
         if (w == "null")
         {
-            return ABC::ABCFile::NULL_DOUBLE;
+            return SWFABC::ABCFile::NULL_DOUBLE;
         }
         return strtod(w.c_str(), nullptr);
     }
@@ -720,13 +720,15 @@ private:
         {
             skipChar();
             std::string s = readString();
-            if (namespaceLabels.contains(s))
+            auto found    = std::find(namespaceLabels.begin(), namespaceLabels.end(), s);
+            if (found != namespaceLabels.end())
             {
-                id = namespaceLabels.at(s);
+                id = std::distance(namespaceLabels.begin(), found) + 1;
             }
             else
             {
-                id = namespaceLabels[s] = namespaceLabels.size() + 1;
+                namespaceLabels.emplace_back(std::move(s));
+                id = namespaceLabels.size();
             }
         }
         expectSymbol(')');
@@ -1221,7 +1223,7 @@ private:
         }
     }
 
-    ABC::Label parseLabel(
+    SWFABC::Label parseLabel(
         const std::string& label, const std::unordered_map<std::string, uint32_t>& labels)
     {
         std::string name = label;
@@ -1246,7 +1248,7 @@ private:
             throw StringException("Unknown label " + name);
         }
 
-        return ABC::Label{labels.at(name), offset, 0};
+        return SWFABC::Label{labels.at(name), offset, 0};
     }
 
     std::vector<ASASM::Instruction> readInstructions(
@@ -1359,7 +1361,7 @@ private:
                         std::vector<std::string> switchTargetLabels =
                             readList<'[', ']', false>([this] { return readWord(); });
                         instruction.arguments[i].switchTargets(
-                            std::vector<ABC::Label>(switchTargetLabels.size()));
+                            std::vector<SWFABC::Label>(switchTargetLabels.size()));
                         for (size_t li = 0; li < switchTargetLabels.size(); li++)
                         {
                             switchFixups.emplace_back(

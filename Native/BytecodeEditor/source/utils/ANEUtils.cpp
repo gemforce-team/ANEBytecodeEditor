@@ -5,18 +5,19 @@
 #undef FAIL_RETURN
 #define FAIL_RETURN(x) throw x
 
-std::shared_ptr<ASASM::Class> ConvertClass(FREObject o)
+std::shared_ptr<ASASM::Class> BytecodeEditor::ConvertClass(FREObject o) const
 {
     FREObject dummy;
     DO_OR_FAIL("Could not get class's native pointer",
         ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, nullptr));
 
-    return classPointerHelper->shared_from_this();
+    return std::get<ASASM::Class*>(nextObjectContext->objectData->object)->shared_from_this();
 }
 
-FREObject ConvertClass(ASASM::Class& clazz)
+FREObject BytecodeEditor::ConvertClass(ASASM::Class& clazz) const
 {
-    classPointerHelper = &clazz;
+    nextObjectContext = ANEFunctionContext{const_cast<BytecodeEditor*>(this)->shared_from_this(),
+        nullptr, ANEFunctionContext::ObjectData{&clazz}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
@@ -25,21 +26,56 @@ FREObject ConvertClass(ASASM::Class& clazz)
     return ret;
 }
 
-ASASM::Namespace ConvertNamespace(FREObject o)
+ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
 {
-    return ASASM::Namespace{ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type"))->get(),
-        std::string(CheckMember<FRE_TYPE_STRING>(o, "name")),
-        CheckMember<FRE_TYPE_NUMBER, int32_t>(o, "id")};
+    ASASM::Namespace ret{ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type"))->get(),
+        std::string(CheckMember<FRE_TYPE_STRING>(o, "name"))};
+
+    FREObject disambiguatorObj = GetMember(o, "secondaryName");
+    FREObjectType objType;
+    DO_OR_FAIL("Could not get multiname type", FREGetObjectType(disambiguatorObj, &objType));
+
+    auto homonyms = partialAssembly->second.getHomonyms(ret);
+
+    if (objType == FRE_TYPE_NULL)
+    {
+        if (homonyms)
+        {
+            ret.id = homonyms->get().begin()->id;
+        }
+        return ret;
+    }
+
+    std::string_view disambiguator = CheckMember<FRE_TYPE_STRING>(o, "secondaryName");
+
+    if (homonyms)
+    {
+        for (const auto& homonym : homonyms->get())
+        {
+            if (partialAssembly->second.namespaces[(uint8_t)homonym.kind].getName(homonym.id) ==
+                disambiguator)
+            {
+                ret.id = homonym.id;
+                break;
+            }
+        }
+    }
+
+    return ret;
 }
 
-FREObject ConvertNamespace(const ASASM::Namespace& n)
+FREObject BytecodeEditor::ConvertNamespace(const ASASM::Namespace& n) const
 {
-    FREObject name = FREString(n.name);
-    FREObject kind = FREString(ABCTypeMap.ReverseFind(n.kind)->get());
-    FREObject id;
-    DO_OR_FAIL("Could not convert namespace ID", FRENewObjectFromInt32(n.id, &id));
+    FREObject name          = FREString(n.name);
+    FREObject kind          = FREString(ABCTypeMap.ReverseFind(n.kind)->get());
+    FREObject disambiguator = nullptr;
+    if (partialAssembly->second.hasHomonyms(n))
+    {
+        disambiguator =
+            FREString(partialAssembly->second.namespaces[(uint8_t)n.kind].getName(n.id));
+    }
 
-    FREObject args[] = {kind, name, id};
+    FREObject args[] = {kind, name, disambiguator};
 
     FREObject ret;
     DO_OR_FAIL("Could not create com.cff.anebe.ir.ASNamespace",
@@ -48,7 +84,7 @@ FREObject ConvertNamespace(const ASASM::Namespace& n)
     return ret;
 }
 
-ASASM::Multiname ConvertMultiname(FREObject o)
+ASASM::Multiname BytecodeEditor::ConvertMultiname(FREObject o) const
 {
     ASASM::Multiname ret;
 
@@ -155,7 +191,7 @@ ASASM::Multiname ConvertMultiname(FREObject o)
     return ret;
 }
 
-FREObject ConvertMultiname(const ASASM::Multiname& m)
+FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
 {
     if (m.kind == ABCType::Void)
     {
@@ -250,7 +286,7 @@ FREObject ConvertMultiname(const ASASM::Multiname& m)
     return ret;
 }
 
-FREObject ConvertTrait(const ASASM::Trait& t)
+FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
 {
     FREObject kind      = FREString(TraitKindMap.ReverseFind(t.kind)->get());
     FREObject traitName = ConvertMultiname(t.name);
@@ -346,7 +382,7 @@ FREObject ConvertTrait(const ASASM::Trait& t)
     return ret;
 }
 
-ASASM::Trait ConvertTrait(FREObject o)
+ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
 {
     TraitKind kind;
     if (auto found = TraitKindMap.Find(CheckMember<FRE_TYPE_STRING>(o, "kind")); found)
@@ -437,7 +473,7 @@ ASASM::Trait ConvertTrait(FREObject o)
     return ret;
 }
 
-FREObject ConvertMethod(const ASASM::Method& m)
+FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
 {
     FREObject paramTypes;
     DO_OR_FAIL("Could not create method paramTypes array",
@@ -495,7 +531,7 @@ FREObject ConvertMethod(const ASASM::Method& m)
     return ret;
 }
 
-std::shared_ptr<ASASM::Method> ConvertMethod(FREObject o)
+std::shared_ptr<ASASM::Method> BytecodeEditor::ConvertMethod(FREObject o) const
 {
     std::shared_ptr<ASASM::Method> ret = std::make_shared<ASASM::Method>();
 
@@ -564,7 +600,7 @@ std::shared_ptr<ASASM::Method> ConvertMethod(FREObject o)
     return ret;
 }
 
-FREObject ConvertMethodBody(const ASASM::MethodBody& b)
+FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
 {
     FREObject maxStack;
     DO_OR_FAIL("Could not create body max stack", FRENewObjectFromUint32(b.maxStack, &maxStack));
@@ -693,7 +729,7 @@ FREObject ConvertMethodBody(const ASASM::MethodBody& b)
     return ret;
 }
 
-ASASM::MethodBody ConvertMethodBody(FREObject o)
+ASASM::MethodBody BytecodeEditor::ConvertMethodBody(FREObject o) const
 {
     ASASM::MethodBody body;
     body.maxStack       = CheckMember<FRE_TYPE_NUMBER, uint32_t>(o, "maxStack");
@@ -754,7 +790,8 @@ ASASM::MethodBody ConvertMethodBody(FREObject o)
     return body;
 }
 
-FREObject ConvertException(const ASASM::Exception& e, const std::vector<FREObject>& allInstrs)
+FREObject BytecodeEditor::ConvertException(
+    const ASASM::Exception& e, const std::vector<FREObject>& allInstrs) const
 {
     FREObject from          = ConvertLabel(e.from, allInstrs);
     FREObject to            = ConvertLabel(e.to, allInstrs);
@@ -770,7 +807,8 @@ FREObject ConvertException(const ASASM::Exception& e, const std::vector<FREObjec
     return ret;
 }
 
-ASASM::Exception ConvertException(FREObject o, const std::vector<FREObject>& allInstrs)
+ASASM::Exception BytecodeEditor::ConvertException(
+    FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "from"), allInstrs),
         ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "to"), allInstrs),
@@ -779,7 +817,8 @@ ASASM::Exception ConvertException(FREObject o, const std::vector<FREObject>& all
         ConvertMultiname(GetMember(o, "exceptionName"))};
 }
 
-FREObject ConvertError(const ABC::Error& e, const std::vector<FREObject>& allInstrs)
+FREObject BytecodeEditor::ConvertError(
+    const SWFABC::Error& e, const std::vector<FREObject>& allInstrs) const
 {
     FREObject args[] = {ConvertLabel(e.loc, allInstrs), FREString(e.message)};
 
@@ -789,13 +828,15 @@ FREObject ConvertError(const ABC::Error& e, const std::vector<FREObject>& allIns
     return ret;
 }
 
-ABC::Error ConvertError(FREObject o, const std::vector<FREObject>& allInstrs)
+SWFABC::Error BytecodeEditor::ConvertError(
+    FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "loc"), allInstrs),
         std::string(CheckMember<FRE_TYPE_STRING>(o, "message"))};
 }
 
-FREObject ConvertLabel(const ABC::Label& l, const std::vector<FREObject>& allInstrs)
+FREObject BytecodeEditor::ConvertLabel(
+    const SWFABC::Label& l, const std::vector<FREObject>& allInstrs) const
 {
     if (l.index + l.offset >= allInstrs.size())
     {
@@ -804,17 +845,19 @@ FREObject ConvertLabel(const ABC::Label& l, const std::vector<FREObject>& allIns
     return allInstrs[l.index + l.offset];
 }
 
-ABC::Label ConvertLabel(FREObject o, const std::vector<FREObject>& allInstrs)
+SWFABC::Label BytecodeEditor::ConvertLabel(
+    FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     if (auto found = std::ranges::find(allInstrs, o); found != allInstrs.end())
     {
-        return ABC::Label{.index = (uint32_t)std::distance(allInstrs.begin(), found)};
+        return SWFABC::Label{.index = (uint32_t)std::distance(allInstrs.begin(), found)};
     }
 
     FAIL("Could not find target instruction in full instruction list");
 }
 
-ASASM::Instruction ConvertInstruction(FREObject o, const std::vector<FREObject>& allInstrs)
+ASASM::Instruction BytecodeEditor::ConvertInstruction(
+    FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     ASASM::Instruction ret;
     if (auto found = OPCodeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "opcode")); found)
@@ -995,7 +1038,7 @@ ASASM::Instruction ConvertInstruction(FREObject o, const std::vector<FREObject>&
                         CHECK_OBJECT<FRE_TYPE_VECTOR>(argO, "args[" + std::to_string(i) + "]"),
                         &targetLen));
 
-                arg.switchTargets(std::vector<ABC::Label>(targetLen));
+                arg.switchTargets(std::vector<SWFABC::Label>(targetLen));
                 for (size_t j = 0; j < targetLen; j++)
                 {
                     FREObject target;
@@ -1013,7 +1056,7 @@ ASASM::Instruction ConvertInstruction(FREObject o, const std::vector<FREObject>&
     return ret;
 }
 
-std::pair<FREObject, bool> ConvertInstruction(const ASASM::Instruction& instr)
+std::pair<FREObject, bool> BytecodeEditor::ConvertInstruction(const ASASM::Instruction& instr) const
 {
     bool requiresFixup = false;
 
@@ -1140,7 +1183,7 @@ std::pair<FREObject, bool> ConvertInstruction(const ASASM::Instruction& instr)
     return {ret, requiresFixup};
 }
 
-FREObject ConvertValue(const ASASM::Value& v)
+FREObject BytecodeEditor::ConvertValue(const ASASM::Value& v) const
 {
     FREObject value;
     switch (v.vkind)
@@ -1190,7 +1233,7 @@ FREObject ConvertValue(const ASASM::Value& v)
     return ret;
 }
 
-ASASM::Value ConvertValue(FREObject o)
+ASASM::Value BytecodeEditor::ConvertValue(FREObject o) const
 {
     ASASM::Value ret;
 

@@ -8,7 +8,7 @@
 
 #include <FlashRuntimeExtensions.h>
 
-#define GET_EDITOR() BytecodeEditor* editor = reinterpret_cast<BytecodeEditor*>(funcData)
+#define GET_EDITOR() BytecodeEditor& editor = *static_cast<ANEFunctionContext*>(funcData)->editor
 
 template <FREObject (BytecodeEditor::*Assembler)(
     std::unordered_map<std::string, std::string>&&, bool)>
@@ -68,7 +68,7 @@ FREObject Assemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
         FAIL(std::string("Exception occurred while converting strings: ") + e.what());
     }
 
-    return (editor->*Assembler)(std::move(strings), includeDebugInstructions);
+    return (editor.*Assembler)(std::move(strings), includeDebugInstructions);
 }
 
 template <FREObject (BytecodeEditor::*Function)()>
@@ -78,7 +78,21 @@ FREObject TransparentZeroArg(FREContext, void* funcData, uint32_t argc, FREObjec
 
     GET_EDITOR();
 
-    return (editor->*Function)();
+    return (editor.*Function)();
+}
+
+template <FREObject (*Function)(FREContext, void*, uint32_t, FREObject[])>
+FREObject CheckAssemblyValid(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+{
+    ANEFunctionContext& context = *static_cast<ANEFunctionContext*>(funcData);
+    BytecodeEditor& editor      = *context.editor;
+
+    if (editor.partialAssembly.get() != context.objectData->program)
+    {
+        FAIL("Invalid instance: underlying data has been disposed of");
+    }
+
+    return Function(ctx, funcData, argc, argv);
 }
 
 #undef GET_EDITOR

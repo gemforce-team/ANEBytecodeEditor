@@ -160,8 +160,10 @@
     <ClInclude Include="include\enums\TraitAttribute.hpp" />
     <ClInclude Include="include\enums\TraitKind.hpp" />
     <ClInclude Include="include\SWF\SWFFile.hpp" />
+    <ClInclude Include="include\utils\ANEFunctionContext.hpp" />
     <ClInclude Include="include\utils\ANEUtils.hpp" />
     <ClInclude Include="include\utils\BidirectionalMap.hpp" />
+    <ClInclude Include="include\utils\generic_hash.hpp" />
     <ClInclude Include="include\utils\RefBuilder.hpp" />
     <ClInclude Include="include\utils\SmallTrivialVector.hpp" />
     <ClInclude Include="include\utils\StringBuilder.hpp" />

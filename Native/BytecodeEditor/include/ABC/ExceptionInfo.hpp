@@ -3,7 +3,7 @@
 #include "ABC/Label.hpp"
 #include <stdint.h>
 
-namespace ABC
+namespace SWFABC
 {
     struct ExceptionInfo
     {

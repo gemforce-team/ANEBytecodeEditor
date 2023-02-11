@@ -61,11 +61,11 @@ private:
                       std::is_same_v<comp, std::shared_ptr<ASASM::Method>>);
         if constexpr (std::is_same_v<comp, uint64_t>)
         {
-            return v == ABC::ABCFile::NULL_UINT;
+            return v == SWFABC::ABCFile::NULL_UINT;
         }
         else if constexpr (std::is_same_v<comp, int64_t>)
         {
-            return v == ABC::ABCFile::NULL_INT;
+            return v == SWFABC::ABCFile::NULL_INT;
         }
         else if constexpr (std::is_same_v<comp, double>)
         {

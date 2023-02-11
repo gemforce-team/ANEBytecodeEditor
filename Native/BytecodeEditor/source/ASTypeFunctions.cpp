@@ -1,7 +1,12 @@
 #include "ANEFunctions.hpp"
 #include "enums/InstanceFlags.hpp"
+#include <string_view>
 
-#define GET_TYPE(type) type& clazz = *reinterpret_cast<type*>(funcData)
+using namespace std::string_view_literals;
+
+#define GET_TYPE(type)                                                                             \
+    type& clazz = *std::get<type*>(static_cast<ANEFunctionContext*>(funcData)->objectData->object)
+#define GET_EDITOR() BytecodeEditor& editor = *static_cast<ANEFunctionContext*>(funcData)->editor
 
 #define SUCCEED_VOID()                                                                             \
     FREObject ret;                                                                                 \
@@ -16,10 +21,11 @@ namespace
         CHECK_ARGC(2);
 
         GET_TYPE(T);
+        GET_EDITOR();
 
         try
         {
-            ASASM::Multiname name = ConvertMultiname(argv[0]);
+            ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
             bool favorSetter = CHECK_OBJECT<FRE_TYPE_BOOLEAN>(argv[1]);
 
@@ -39,7 +45,7 @@ namespace
 
             if (found.size() == 1)
             {
-                return ConvertTrait(*found[0]);
+                return editor.ConvertTrait(*found[0]);
             }
             else if (found.size() == 2)
             {
@@ -47,22 +53,22 @@ namespace
                 {
                     if (favorSetter)
                     {
-                        return ConvertTrait(*found[1]);
+                        return editor.ConvertTrait(*found[1]);
                     }
                     else
                     {
-                        return ConvertTrait(*found[0]);
+                        return editor.ConvertTrait(*found[0]);
                     }
                 }
                 else
                 {
                     if (favorSetter)
                     {
-                        return ConvertTrait(*found[0]);
+                        return editor.ConvertTrait(*found[0]);
                     }
                     else
                     {
-                        return ConvertTrait(*found[1]);
+                        return editor.ConvertTrait(*found[1]);
                     }
                 }
             }
@@ -93,10 +99,11 @@ namespace
         CHECK_ARGC(1);
 
         GET_TYPE(T);
+        GET_EDITOR();
 
         try
         {
-            ASASM::Trait value = ConvertTrait(argv[0]);
+            ASASM::Trait value = editor.ConvertTrait(argv[0]);
 
             SmallTrivialVector<size_t, 2> found{};
 
@@ -200,10 +207,11 @@ namespace
         CHECK_ARGC(2);
 
         GET_TYPE(T);
+        GET_EDITOR();
 
         try
         {
-            ASASM::Multiname name = ConvertMultiname(argv[0]);
+            ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
             bool favorSetter = CHECK_OBJECT<FRE_TYPE_BOOLEAN>(argv[1]);
 
@@ -282,10 +290,11 @@ namespace
         CHECK_ARGC(0);
 
         GET_TYPE(T);
+        GET_EDITOR();
 
         try
         {
-            return ConvertMethod(*std::invoke(accessor, clazz));
+            return editor.ConvertMethod(*std::invoke(accessor, clazz));
         }
         catch (FREObject o)
         {
@@ -311,10 +320,11 @@ namespace
         CHECK_ARGC(1);
 
         GET_TYPE(T);
+        GET_EDITOR();
 
         try
         {
-            std::invoke(accessor, clazz) = ConvertMethod(argv[0]);
+            std::invoke(accessor, clazz) = editor.ConvertMethod(argv[0]);
         }
         catch (FREObject o)
         {
@@ -411,6 +421,7 @@ namespace ASClass
         CHECK_ARGC(0);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
@@ -422,7 +433,8 @@ namespace ASClass
             for (size_t i = 0; i < clazz.instance.interfaces.size(); i++)
             {
                 DO_OR_FAIL("Couldn't set interface vector entry",
-                    FRESetArrayElementAt(ret, i, ConvertMultiname(clazz.instance.interfaces[i])));
+                    FRESetArrayElementAt(
+                        ret, i, editor.ConvertMultiname(clazz.instance.interfaces[i])));
             }
             return ret;
         }
@@ -449,6 +461,7 @@ namespace ASClass
         CHECK_ARGC(1);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
@@ -460,7 +473,7 @@ namespace ASClass
                 FREObject mname;
                 DO_OR_FAIL("Couldn't get interface vector element",
                     FREGetArrayElementAt(argv[0], i, &mname));
-                newMultinames.emplace_back(ConvertMultiname(mname));
+                newMultinames.emplace_back(editor.ConvertMultiname(mname));
             }
 
             clazz.instance.interfaces = newMultinames;
@@ -490,10 +503,11 @@ namespace ASClass
         CHECK_ARGC(0);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
-            return ConvertMultiname(clazz.instance.superName);
+            return editor.ConvertMultiname(clazz.instance.superName);
         }
         catch (FREObject o)
         {
@@ -518,10 +532,11 @@ namespace ASClass
         CHECK_ARGC(1);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
-            clazz.instance.superName = ConvertMultiname(argv[0]);
+            clazz.instance.superName = editor.ConvertMultiname(argv[0]);
         }
         catch (FREObject o)
         {
@@ -634,10 +649,11 @@ namespace ASClass
         CHECK_ARGC(0);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
-            return ConvertNamespace(clazz.instance.protectedNs);
+            return editor.ConvertNamespace(clazz.instance.protectedNs);
         }
         catch (FREObject o)
         {
@@ -662,10 +678,11 @@ namespace ASClass
         CHECK_ARGC(1);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
         try
         {
-            clazz.instance.protectedNs = ConvertNamespace(argv[0]);
+            clazz.instance.protectedNs = editor.ConvertNamespace(argv[0]);
         }
         catch (FREObject o)
         {
@@ -692,8 +709,10 @@ namespace ASClass
         CHECK_ARGC(0);
 
         GET_TYPE(ASASM::Class);
+        GET_EDITOR();
 
-        classPointerHelper = &clazz;
+        nextObjectContext = ANEFunctionContext{
+            editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{&clazz}};
 
         return nullptr;
     }

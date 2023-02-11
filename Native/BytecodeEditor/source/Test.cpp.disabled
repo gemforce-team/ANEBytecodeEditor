@@ -32,7 +32,7 @@ void testdisassemble()
 
         auto abcData = swf.abcData();
 
-        ABC::ABCReader reader(abcData.first, abcData.second);
+        SWFABC::ABCReader reader(abcData.first, abcData.second);
         const auto& abc          = reader.abc();
         ASASM::ASProgram program = ASASM::ASProgram::fromABC(abc);
         disassembled             = Disassembler(program).disassemble();
@@ -79,7 +79,7 @@ void testreassemble()
     }
 
     std::vector<uint8_t> abcData =
-        std::move(ABC::ABCWriter(Assembler::assemble(asasmFiles).toABC()).data());
+        std::move(SWFABC::ABCWriter(Assembler::assemble(asasmFiles).toABC()).data());
 
     file = fopen("test.swf", "rb");
     fseek(file, 0, SEEK_END);

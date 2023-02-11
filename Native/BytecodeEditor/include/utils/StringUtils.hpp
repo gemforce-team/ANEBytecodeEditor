@@ -5,7 +5,7 @@
 
 namespace StringUtils
 {
-    std::vector<std::string> split(std::string_view s, std::string_view delimiter)
+    constexpr std::vector<std::string> split(std::string_view s, std::string_view delimiter)
     {
         std::vector<std::string> ret;
         if (delimiter.size() == 0)
@@ -29,7 +29,7 @@ namespace StringUtils
         return ret;
     }
 
-    std::string join(const std::string_view* s, size_t len, std::string_view joiner)
+    constexpr std::string join(const std::string_view* s, size_t len, std::string_view joiner)
     {
         if (len == 0)
         {
@@ -54,7 +54,7 @@ namespace StringUtils
         return ret;
     }
 
-    std::string join(const std::string* s, size_t len, std::string_view joiner)
+    constexpr std::string join(const std::string* s, size_t len, std::string_view joiner)
     {
         if (len == 0)
         {
@@ -79,12 +79,12 @@ namespace StringUtils
         return ret;
     }
 
-    std::string join(const std::vector<std::string_view>& s, std::string_view joiner)
+    constexpr std::string join(const std::vector<std::string_view>& s, std::string_view joiner)
     {
         return join(s.data(), s.size(), joiner);
     }
 
-    std::string join(const std::vector<std::string>& s, std::string_view joiner)
+    constexpr std::string join(const std::vector<std::string>& s, std::string_view joiner)
     {
         return join(s.data(), s.size(), joiner);
     }

@@ -30,7 +30,7 @@ namespace ASASM
         ValuePool<std::shared_ptr<ASASM::Class>, false> classes;
         ValuePool<std::shared_ptr<ASASM::Method>, false> methods;
 
-        ABC::ABCFile abc;
+        SWFABC::ABCFile abc;
 
         void visitInt(int64_t v) { ints.add(v); }
 
@@ -476,8 +476,8 @@ namespace ASASM
             abc.multinames.reserve(multinames.values.size());
             for (size_t i = 1; i < multinames.values.size(); i++)
             {
-                ABC::Multiname& multiname = abc.multinames.emplace_back();
-                multiname.kind            = multinames.values[i].kind;
+                SWFABC::Multiname& multiname = abc.multinames.emplace_back();
+                multiname.kind               = multinames.values[i].kind;
                 switch (multinames.values[i].kind)
                 {
                     case ABCType::QName:
@@ -507,7 +507,7 @@ namespace ASASM
                         break;
                     case ABCType::TypeName:
                     {
-                        ABC::Multiname::_Typename tn = {
+                        SWFABC::Multiname::_Typename tn = {
                             .name   = multinames.get(multinames.values[i].Typename().name()),
                             .params = std::vector<uint32_t>(
                                 multinames.values[i].Typename().params().size())};
@@ -527,7 +527,7 @@ namespace ASASM
             abc.metadata.reserve(metadatas.values.size());
             for (size_t i = 0; i < metadatas.values.size(); i++)
             {
-                ABC::Metadata& metadata = abc.metadata.emplace_back(
+                SWFABC::Metadata& metadata = abc.metadata.emplace_back(
                     strings.get(metadatas.values[i].name),
                     std::vector<std::pair<uint32_t, uint32_t>>(metadatas.values[i].data.size()));
                 for (size_t j = 0; j < metadatas.values[i].data.size(); j++)
@@ -542,7 +542,7 @@ namespace ASASM
             abc.methods.reserve(methods.values.size());
             for (size_t i = 0; i < methods.values.size(); i++)
             {
-                ABC::MethodInfo& info = abc.methods.emplace_back();
+                SWFABC::MethodInfo& info = abc.methods.emplace_back();
 
                 info.paramTypes.reserve(methods.values[i]->paramTypes.size());
                 for (const auto& paramType : methods.values[i]->paramTypes)
@@ -572,7 +572,7 @@ namespace ASASM
             abc.instances.reserve(classes.values.size());
             for (size_t i = 0; i < classes.values.size(); i++)
             {
-                ABC::Instance& instance = abc.instances.emplace_back();
+                SWFABC::Instance& instance = abc.instances.emplace_back();
 
                 instance.name        = multinames.get(classes.values[i]->instance.name);
                 instance.superName   = multinames.get(classes.values[i]->instance.superName);
@@ -604,12 +604,12 @@ namespace ASASM
             abc.bodies.reserve(bodies.size());
             for (size_t i = 0; i < bodies.size(); i++)
             {
-                ABC::MethodBody& body = abc.bodies.emplace_back();
-                body.method           = methods.get(bodies[i].method.lock());
-                body.maxStack         = bodies[i].maxStack;
-                body.localCount       = bodies[i].localCount;
-                body.initScopeDepth   = bodies[i].initScopeDepth;
-                body.maxScopeDepth    = bodies[i].maxScopeDepth;
+                SWFABC::MethodBody& body = abc.bodies.emplace_back();
+                body.method              = methods.get(bodies[i].method.lock());
+                body.maxStack            = bodies[i].maxStack;
+                body.localCount          = bodies[i].localCount;
+                body.initScopeDepth      = bodies[i].initScopeDepth;
+                body.maxScopeDepth       = bodies[i].maxScopeDepth;
                 body.instructions.reserve(bodies[i].instructions.size());
                 for (size_t j = 0; j < bodies[i].instructions.size(); j++)
                 {
@@ -625,15 +625,15 @@ namespace ASASM
             }
         }
 
-        std::vector<ABC::TraitsInfo> convertTraits(const std::vector<ASASM::Trait>& traits)
+        std::vector<SWFABC::TraitsInfo> convertTraits(const std::vector<ASASM::Trait>& traits)
         {
-            std::vector<ABC::TraitsInfo> ret;
+            std::vector<SWFABC::TraitsInfo> ret;
             ret.reserve(traits.size());
 
             for (const auto& oTrait : traits)
             {
-                ABC::TraitsInfo& nTrait = ret.emplace_back();
-                nTrait.name             = multinames.get(oTrait.name);
+                SWFABC::TraitsInfo& nTrait = ret.emplace_back();
+                nTrait.name                = multinames.get(oTrait.name);
                 nTrait.kind(oTrait.kind);
                 nTrait.attr(oTrait.attributes);
                 switch (oTrait.kind)
@@ -671,15 +671,15 @@ namespace ASASM
             return ret;
         }
 
-        ABC::Instruction convertInstruction(const ASASM::Instruction& instruction)
+        SWFABC::Instruction convertInstruction(const ASASM::Instruction& instruction)
         {
-            ABC::Instruction ret;
+            SWFABC::Instruction ret;
             ret.opcode = instruction.opcode;
             ret.arguments.reserve(instruction.arguments.size());
 
             for (size_t i = 0; i < OPCode_Info[(uint8_t)instruction.opcode].second.size(); i++)
             {
-                ABC::Instruction::Argument& newArg = ret.arguments.emplace_back();
+                SWFABC::Instruction::Argument& newArg = ret.arguments.emplace_back();
                 switch (OPCode_Info[(uint8_t)instruction.opcode].second[i])
                 {
                     case OPCodeArgumentType::Unknown:
@@ -747,7 +747,7 @@ namespace ASASM
 
                     case OPCodeArgumentType::SwitchTargets:
                         newArg.switchTargets(
-                            std::vector<ABC::Label>(instruction.arguments[i].switchTargets()));
+                            std::vector<SWFABC::Label>(instruction.arguments[i].switchTargets()));
                         break;
                 }
             }

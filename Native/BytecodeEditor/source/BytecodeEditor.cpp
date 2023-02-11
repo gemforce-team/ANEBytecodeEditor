@@ -31,7 +31,7 @@ FREObject BytecodeEditor::disassemble()
     try
     {
         auto strings = Disassembler::Disassembler(
-            ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()))
+            ASASM::ASProgram::fromABC(SWFABC::ABCReader(currentSWF->abcData()).abc()))
                            .disassemble();
 
         FREObject ret;
@@ -68,7 +68,8 @@ FREObject BytecodeEditor::assemble(
     try
     {
         std::vector<uint8_t> data = std::move(
-            ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC()).data());
+            SWFABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
+                .data());
 
         currentSWF->replaceABCData(data.data(), data.size());
 
@@ -115,7 +116,7 @@ FREObject BytecodeEditor::disassembleAsync()
             try
             {
                 SUCCEED_ASYNC(Disassembler::Disassembler(
-                    ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()))
+                    ASASM::ASProgram::fromABC(SWFABC::ABCReader(currentSWF->abcData()).abc()))
                                   .disassemble());
             }
             catch (const std::exception& e)
@@ -146,9 +147,9 @@ FREObject BytecodeEditor::assembleAsync(
             }
             try
             {
-                std::vector<uint8_t> data = std::move(
-                    ABC::ABCWriter(Assembler::assemble(strings, includeDebugInstructions).toABC())
-                        .data());
+                std::vector<uint8_t> data = std::move(SWFABC::ABCWriter(
+                    Assembler::assemble(strings, includeDebugInstructions).toABC())
+                                                          .data());
 
                 SUCCEED_ASYNC(data);
             }
@@ -173,8 +174,11 @@ FREObject BytecodeEditor::partialAssemble(
 
     try
     {
-        this->partialAssembly = std::make_unique<ASASM::ASProgram>(
-            Assembler::assemble(strings, includeDebugInstructions));
+        auto assembled = Assembler::assemble(strings, includeDebugInstructions);
+        RefBuilder rb(assembled);
+        rb.run();
+        this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
+            std::move(assembled), std::move(rb));
     }
     catch (const std::exception& e)
     {
@@ -199,8 +203,11 @@ FREObject BytecodeEditor::partialAssembleAsync(
         {
             try
             {
-                this->partialAssembly = std::make_unique<ASASM::ASProgram>(
-                    Assembler::assemble(strings, includeDebugInstructions));
+                auto assembled = Assembler::assemble(strings, includeDebugInstructions);
+                RefBuilder rb(assembled);
+                rb.run();
+                this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
+                    std::move(assembled), std::move(rb));
 
                 SUCCEED_ASYNC_WITHMESSAGE("PartialSuccess");
             }
@@ -233,8 +240,9 @@ FREObject BytecodeEditor::finishAssemble()
 
     try
     {
-        std::vector<uint8_t> data = std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
-        partialAssembly           = nullptr;
+        std::vector<uint8_t> data =
+            std::move(SWFABC::ABCWriter(partialAssembly->first.toABC()).data());
+        partialAssembly = nullptr;
 
         currentSWF->replaceABCData(data.data(), data.size());
 
@@ -284,7 +292,7 @@ FREObject BytecodeEditor::finishAssembleAsync()
             try
             {
                 std::vector<uint8_t> data =
-                    std::move(ABC::ABCWriter(partialAssembly->toABC()).data());
+                    std::move(SWFABC::ABCWriter(partialAssembly->first.toABC()).data());
 
                 partialAssembly = nullptr;
 
@@ -293,6 +301,10 @@ FREObject BytecodeEditor::finishAssembleAsync()
             catch (std::exception& e)
             {
                 FAIL_ASYNC(std::string("Exception while finishing assembly: ") + e.what());
+            }
+            catch (...)
+            {
+                FAIL_ASYNC("AAAA");
             }
         });
 
@@ -315,8 +327,11 @@ FREObject BytecodeEditor::beginIntrospection()
 
     try
     {
-        this->partialAssembly = std::make_unique<ASASM::ASProgram>(
-            ASASM::ASProgram::fromABC(ABC::ABCReader(currentSWF->abcData()).abc()));
+        auto assembled = ASASM::ASProgram::fromABC(SWFABC::ABCReader(currentSWF->abcData()).abc());
+        RefBuilder rb(assembled);
+        rb.run();
+        this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
+            std::move(assembled), std::move(rb));
 
         currentSWF = std::nullopt;
     }
@@ -332,7 +347,7 @@ FREObject BytecodeEditor::beginIntrospection()
 
 ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
 {
-    for (const auto& script : partialAssembly->scripts)
+    for (const auto& script : partialAssembly->first.scripts)
     {
         for (const auto& trait : script.traits)
         {
@@ -348,7 +363,7 @@ ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
 
 ASASM::Script* BytecodeEditor::getScript(const ASASM::Multiname& traitName) const
 {
-    for (auto& script : partialAssembly->scripts)
+    for (auto& script : partialAssembly->first.scripts)
     {
         for (const auto& trait : script.traits)
         {

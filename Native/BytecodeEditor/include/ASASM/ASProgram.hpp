@@ -29,7 +29,7 @@ namespace ASASM
         std::vector<std::shared_ptr<Class>> orphanClasses;
         std::vector<std::shared_ptr<Method>> orphanMethods;
 
-        static ASProgram fromABC(const ABC::ABCFile& abc);
-        ABC::ABCFile toABC();
+        static ASProgram fromABC(const SWFABC::ABCFile& abc);
+        SWFABC::ABCFile toABC();
     };
 }

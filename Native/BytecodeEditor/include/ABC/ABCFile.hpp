@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace ABC
+namespace SWFABC
 {
     struct ABCFile
     {

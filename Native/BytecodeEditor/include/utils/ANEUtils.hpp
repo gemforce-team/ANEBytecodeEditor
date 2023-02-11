@@ -165,30 +165,6 @@ inline FREResult ANECallObjectMethod(
     return FRECallObjectMethod(o, (const uint8_t*)m, c, v, r, e);
 }
 
-std::shared_ptr<ASASM::Class> ConvertClass(FREObject o);
-FREObject ConvertClass(const std::shared_ptr<ASASM::Class>& c);
-
-ASASM::Namespace ConvertNamespace(FREObject o);
-FREObject ConvertNamespace(const ASASM::Namespace& o);
-ASASM::Multiname ConvertMultiname(FREObject o);
-FREObject ConvertMultiname(const ASASM::Multiname& o);
-ASASM::Trait ConvertTrait(FREObject o);
-FREObject ConvertTrait(const ASASM::Trait& t);
-std::shared_ptr<ASASM::Method> ConvertMethod(FREObject o);
-FREObject ConvertMethod(const ASASM::Method& m);
-ASASM::MethodBody ConvertMethodBody(FREObject o);
-FREObject ConvertMethodBody(const ASASM::MethodBody& b);
-ASASM::Exception ConvertException(FREObject o, const std::vector<FREObject>& allInstrs);
-FREObject ConvertException(const ASASM::Exception& e, const std::vector<FREObject>& allInstrs);
-ABC::Error ConvertError(FREObject o, const std::vector<FREObject>& allInstrs);
-FREObject ConvertError(const ABC::Error& e, const std::vector<FREObject>& allInstrs);
-ABC::Label ConvertLabel(FREObject o, const std::vector<FREObject>& allInstrs);
-FREObject ConvertLabel(const ABC::Label& l, const std::vector<FREObject>& allInstrs);
-ASASM::Instruction ConvertInstruction(FREObject o, const std::vector<FREObject>& allInstrs);
-std::pair<FREObject, bool> ConvertInstruction(const ASASM::Instruction& i);
-ASASM::Value ConvertValue(FREObject o);
-FREObject ConvertValue(const ASASM::Value& v);
-
 #undef FAIL_RETURN
 
 #define FAIL_RETURN(x) return x

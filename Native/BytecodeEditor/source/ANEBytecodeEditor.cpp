@@ -1,6 +1,7 @@
 #include "ANEBytecodeEditor.hpp"
 #include "ANEFunctions.hpp"
 #include "BytecodeEditor.hpp"
+#include "utils/ANEFunctionContext.hpp"
 #include "utils/ANEUtils.hpp"
 
 #include <array>
@@ -14,101 +15,104 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
 {
     std::string_view ctxType = reinterpret_cast<const char*>(ctxTypeRaw);
 
+    ANEFunctionContext* context = new ANEFunctionContext;
+
 #define TZA TransparentZeroArg
 #define BE BytecodeEditor
+#define CAV CheckAssemblyValid
 
     if (ctxType == "BytecodeEditor"sv)
     {
-        BytecodeEditor* editorForContext  = new BytecodeEditor(ctx);
-        FRENamedFunction* ANEBE_functions = new FRENamedFunction[]{
-            {(const uint8_t*)"Disassemble",          editorForContext, &TZA<&BE::disassemble>         },
-            {(const uint8_t*)"Assemble",             editorForContext, &Assemble<&BE::assemble>       },
-            {(const uint8_t*)"PartialAssemble",      editorForContext, &Assemble<&BE::partialAssemble>},
-            {(const uint8_t*)"FinishAssemble",       editorForContext, &TZA<&BE::finishAssemble>      },
-            {(const uint8_t*)"DisassembleAsync",     editorForContext, &TZA<&BE::disassembleAsync>    },
-            {(const uint8_t*)"AssembleAsync",        editorForContext, &Assemble<&BE::assembleAsync>  },
-            {(const uint8_t*)"PartialAssembleAsync", editorForContext,
-             &Assemble<&BE::partialAssembleAsync>                                                     },
-            {(const uint8_t*)"FinishAssembleAsync",  editorForContext,
-             &TZA<&BE::finishAssembleAsync>                                                           },
-            {(const uint8_t*)"AsyncTaskResult",      editorForContext, &TZA<&BE::taskResult>          },
-            {(const uint8_t*)"SetCurrentSWF",        editorForContext, &SetCurrentSWF                 },
-            {(const uint8_t*)"Cleanup",              editorForContext, &Cleanup                       },
-            {(const uint8_t*)"GetClass",             editorForContext, &GetClass                      },
-            {(const uint8_t*)"GetScript",            editorForContext, &GetScript                     },
-        };
-        *functions    = ANEBE_functions;
+        context->editor    = std::shared_ptr<BytecodeEditor>(new BytecodeEditor(ctx));
+        context->functions = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
+            {(const uint8_t*)"Disassemble",          context, &TZA<&BE::disassemble>              },
+            {(const uint8_t*)"Assemble",             context, &Assemble<&BE::assemble>            },
+            {(const uint8_t*)"PartialAssemble",      context, &Assemble<&BE::partialAssemble>     },
+            {(const uint8_t*)"FinishAssemble",       context, &TZA<&BE::finishAssemble>           },
+            {(const uint8_t*)"DisassembleAsync",     context, &TZA<&BE::disassembleAsync>         },
+            {(const uint8_t*)"AssembleAsync",        context, &Assemble<&BE::assembleAsync>       },
+            {(const uint8_t*)"PartialAssembleAsync", context, &Assemble<&BE::partialAssembleAsync>},
+            {(const uint8_t*)"FinishAssembleAsync",  context, &TZA<&BE::finishAssembleAsync>      },
+            {(const uint8_t*)"AsyncTaskResult",      context, &TZA<&BE::taskResult>               },
+            {(const uint8_t*)"SetCurrentSWF",        context, &SetCurrentSWF                      },
+            {(const uint8_t*)"Cleanup",              context, &Cleanup                            },
+            {(const uint8_t*)"GetClass",             context, &GetClass                           },
+            {(const uint8_t*)"GetScript",            context, &GetScript                          },
+        });
+
+        *functions    = context->functions.get();
         *numFunctions = 13;
-        FRESetContextNativeData(ctx, (void*)ANEBE_functions);
     }
     else if (ctxType == "SWFIntrospector"sv)
     {
-        BytecodeEditor* editorForContext  = new BytecodeEditor(ctx);
-        FRENamedFunction* ANEBE_functions = new FRENamedFunction[]{
-            {(const uint8_t*)"SetCurrentSWF",      editorForContext, &SetCurrentSWF               },
-            {(const uint8_t*)"BeginIntrospection", editorForContext, &TZA<&BE::beginIntrospection>},
-            {(const uint8_t*)"GetClass",           editorForContext, &GetROClass                  },
-            {(const uint8_t*)"GetScript",          editorForContext, &GetROScript                 },
-        };
-        *functions    = ANEBE_functions;
-        *numFunctions = 4;
-        FRESetContextNativeData(ctx, (void*)ANEBE_functions);
+        context->editor    = std::shared_ptr<BytecodeEditor>(new BytecodeEditor(ctx));
+        context->functions = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
+            {(const uint8_t*)"SetCurrentSWF",      context, &SetCurrentSWF               },
+            {(const uint8_t*)"BeginIntrospection", context, &TZA<&BE::beginIntrospection>},
+            {(const uint8_t*)"GetClass",           context, &GetROClass                  },
+            {(const uint8_t*)"GetScript",          context, &GetROScript                 },
+        });
+        *functions         = context->functions.get();
+        *numFunctions      = 4;
     }
     else if (ctxType == "Class"sv)
     {
-        FRENamedFunction* CLASS_functions = new FRENamedFunction[]{
-            {(const uint8_t*)"GetStaticTrait",        classPointerHelper, &ASClass::GetStaticTrait   },
-            {(const uint8_t*)"SetStaticTrait",        classPointerHelper, &ASClass::SetStaticTrait   },
-            {(const uint8_t*)"DeleteStaticTrait",     classPointerHelper, &ASClass::DeleteStaticTrait},
-            {(const uint8_t*)"GetInstanceTrait",      classPointerHelper, &ASClass::GetInstanceTrait },
-            {(const uint8_t*)"SetInstanceTrait",      classPointerHelper, &ASClass::SetInstanceTrait },
-            {(const uint8_t*)"DeleteInstanceTrait",   classPointerHelper,
-             &ASClass::DeleteInstanceTrait                                                           },
-            {(const uint8_t*)"GetStaticConstructor",  classPointerHelper,
-             &ASClass::GetStaticConstructor                                                          },
-            {(const uint8_t*)"SetStaticConstructor",  classPointerHelper,
-             &ASClass::SetStaticConstructor                                                          },
-            {(const uint8_t*)"GetConstructor",        classPointerHelper, &ASClass::GetConstructor   },
-            {(const uint8_t*)"SetConstructor",        classPointerHelper, &ASClass::SetConstructor   },
-            {(const uint8_t*)"GetInterfaces",         classPointerHelper, &ASClass::GetInterfaces    },
-            {(const uint8_t*)"SetInterfaces",         classPointerHelper, &ASClass::SetInterfaces    },
-            {(const uint8_t*)"GetSuperclass",         classPointerHelper, &ASClass::GetSuperclass    },
-            {(const uint8_t*)"SetSuperclass",         classPointerHelper, &ASClass::SetSuperclass    },
-            {(const uint8_t*)"GetFlags",              classPointerHelper, &ASClass::GetFlags         },
-            {(const uint8_t*)"SetFlags",              classPointerHelper, &ASClass::SetFlags         },
-            {(const uint8_t*)"GetProtectedNamespace", classPointerHelper,
-             &ASClass::GetProtectedNamespace                                                         },
-            {(const uint8_t*)"SetProtectedNamespace", classPointerHelper,
-             &ASClass::SetProtectedNamespace                                                         },
-            {(const uint8_t*)"ConvertClassHelper",    classPointerHelper,
-             &ASClass::ConvertClassHelper                                                            }
-        };
-        classPointerHelper = nullptr;
-        *functions         = CLASS_functions;
-        *numFunctions      = 19;
-        FRESetContextNativeData(ctx, (void*)CLASS_functions);
+        context->editor     = nextObjectContext->editor;
+        context->functions  = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
+            {(const uint8_t*)"GetStaticTrait",        context, &CAV<&ASClass::GetStaticTrait>      },
+            {(const uint8_t*)"SetStaticTrait",        context, &CAV<&ASClass::SetStaticTrait>      },
+            {(const uint8_t*)"DeleteStaticTrait",     context, &CAV<&ASClass::DeleteStaticTrait>   },
+            {(const uint8_t*)"GetInstanceTrait",      context, &CAV<&ASClass::GetInstanceTrait>    },
+            {(const uint8_t*)"SetInstanceTrait",      context, &CAV<&ASClass::SetInstanceTrait>    },
+            {(const uint8_t*)"DeleteInstanceTrait",   context, &CAV<&ASClass::DeleteInstanceTrait> },
+            {(const uint8_t*)"GetStaticConstructor",  context, &CAV<&ASClass::GetStaticConstructor>},
+            {(const uint8_t*)"SetStaticConstructor",  context, &CAV<&ASClass::SetStaticConstructor>},
+            {(const uint8_t*)"GetConstructor",        context, &CAV<&ASClass::GetConstructor>      },
+            {(const uint8_t*)"SetConstructor",        context, &CAV<&ASClass::SetConstructor>      },
+            {(const uint8_t*)"GetInterfaces",         context, &CAV<&ASClass::GetInterfaces>       },
+            {(const uint8_t*)"SetInterfaces",         context, &CAV<&ASClass::SetInterfaces>       },
+            {(const uint8_t*)"GetSuperclass",         context, &CAV<&ASClass::GetSuperclass>       },
+            {(const uint8_t*)"SetSuperclass",         context, &CAV<&ASClass::SetSuperclass>       },
+            {(const uint8_t*)"GetFlags",              context, &CAV<&ASClass::GetFlags>            },
+            {(const uint8_t*)"SetFlags",              context, &CAV<&ASClass::SetFlags>            },
+            {(const uint8_t*)"GetProtectedNamespace", context,
+             &CAV<&ASClass::GetProtectedNamespace>                                                 },
+            {(const uint8_t*)"SetProtectedNamespace", context,
+             &CAV<&ASClass::SetProtectedNamespace>                                                 },
+            {(const uint8_t*)"ConvertClassHelper",    context, &CAV<&ASClass::ConvertClassHelper>  }
+        });
+        context->objectData = {
+            nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
+        nextObjectContext = std::nullopt;
+        *functions        = context->functions.get();
+        *numFunctions     = 19;
+        FRESetContextNativeData(ctx, context);
     }
     else if (ctxType == "Script"sv)
     {
-        FRENamedFunction* SCRIPT_functions = new FRENamedFunction[]{
-            {(const uint8_t*)"GetTrait",       scriptPointerHelper, &ASScript::GetTrait      },
-            {(const uint8_t*)"SetTrait",       scriptPointerHelper, &ASScript::SetTrait      },
-            {(const uint8_t*)"DeleteTrait",    scriptPointerHelper, &ASScript::DeleteTrait   },
-            {(const uint8_t*)"GetInitializer", scriptPointerHelper, &ASScript::GetInitializer},
-            {(const uint8_t*)"SetInitializer", scriptPointerHelper, &ASScript::SetInitializer},
-        };
-        scriptPointerHelper = nullptr;
-        *functions          = SCRIPT_functions;
-        *numFunctions       = 5;
-        FRESetContextNativeData(ctx, (void*)SCRIPT_functions);
+        context->editor     = nextObjectContext->editor;
+        context->functions  = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
+            {(const uint8_t*)"GetTrait",       context, &CAV<&ASScript::GetTrait>      },
+            {(const uint8_t*)"SetTrait",       context, &CAV<&ASScript::SetTrait>      },
+            {(const uint8_t*)"DeleteTrait",    context, &CAV<&ASScript::DeleteTrait>   },
+            {(const uint8_t*)"GetInitializer", context, &CAV<&ASScript::GetInitializer>},
+            {(const uint8_t*)"SetInitializer", context, &CAV<&ASScript::SetInitializer>},
+        });
+        context->objectData = {
+            nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
+        nextObjectContext = std::nullopt;
+        *functions        = context->functions.get();
+        *numFunctions     = 5;
+        FRESetContextNativeData(ctx, context);
     }
+    FRESetContextNativeData(ctx, context);
 }
 
 void ContextFinalizer(FREContext ctx)
 {
     void* d;
     FREGetContextNativeData(ctx, &d);
-    delete[] static_cast<FRENamedFunction*>(d);
+    delete static_cast<ANEFunctionContext*>(d);
 }
 
 extern "C" EXPORT void ExtInitializerANEBytecodeEditor(void** extDataToSet,

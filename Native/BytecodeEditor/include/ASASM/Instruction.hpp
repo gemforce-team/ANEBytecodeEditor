@@ -23,8 +23,8 @@ namespace ASASM
         {
         private:
             std::variant<std::monostate, int8_t, uint8_t, int64_t, uint64_t, double, std::string,
-                Namespace, Multiname, std::shared_ptr<Class>, std::shared_ptr<Method>, ABC::Label,
-                std::vector<ABC::Label>>
+                Namespace, Multiname, std::shared_ptr<Class>, std::shared_ptr<Method>,
+                SWFABC::Label, std::vector<SWFABC::Label>>
                 data;
 
         public:
@@ -100,26 +100,26 @@ namespace ASASM
 
             void methodv(std::shared_ptr<Method> v) { data = v; }
 
-            [[nodiscard]] ABC::Label& jumpTarget() { return std::get<ABC::Label>(data); }
+            [[nodiscard]] SWFABC::Label& jumpTarget() { return std::get<SWFABC::Label>(data); }
 
-            [[nodiscard]] const ABC::Label& jumpTarget() const
+            [[nodiscard]] const SWFABC::Label& jumpTarget() const
             {
-                return std::get<ABC::Label>(data);
+                return std::get<SWFABC::Label>(data);
             }
 
-            void jumpTarget(const ABC::Label& v) { data = v; }
+            void jumpTarget(const SWFABC::Label& v) { data = v; }
 
-            [[nodiscard]] std::vector<ABC::Label>& switchTargets()
+            [[nodiscard]] std::vector<SWFABC::Label>& switchTargets()
             {
-                return std::get<std::vector<ABC::Label>>(data);
+                return std::get<std::vector<SWFABC::Label>>(data);
             }
 
-            [[nodiscard]] const std::vector<ABC::Label>& switchTargets() const
+            [[nodiscard]] const std::vector<SWFABC::Label>& switchTargets() const
             {
-                return std::get<std::vector<ABC::Label>>(data);
+                return std::get<std::vector<SWFABC::Label>>(data);
             }
 
-            void switchTargets(const std::vector<ABC::Label>& v) { data = v; }
+            void switchTargets(const std::vector<SWFABC::Label>& v) { data = v; }
 
             auto operator<=>(const Argument& other) const noexcept
             {

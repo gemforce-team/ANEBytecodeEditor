@@ -123,7 +123,7 @@ public:
 
     void dumpInt(StringBuilder& sb, int64_t v)
     {
-        if (v == ABC::ABCFile::NULL_INT)
+        if (v == SWFABC::ABCFile::NULL_INT)
         {
             sb << "null";
         }
@@ -135,7 +135,7 @@ public:
 
     void dumpUInt(StringBuilder& sb, uint64_t v)
     {
-        if (v == ABC::ABCFile::NULL_UINT)
+        if (v == SWFABC::ABCFile::NULL_UINT)
         {
             sb << "null";
         }
@@ -147,7 +147,7 @@ public:
 
     void dumpDouble(StringBuilder& sb, double v)
     {
-        if (std::isnan(v)) // v == ABC::ABCFile::NULL_DOUBLE
+        if (std::isnan(v)) // v == SWFABC::ABCFile::NULL_DOUBLE
         {
             sb << "null";
             return;
@@ -628,10 +628,10 @@ public:
             sb.newLine();
         }
 
-        for (const auto& interface : instance.interfaces)
+        for (const auto& iface : instance.interfaces)
         {
             sb << "implements ";
-            dumpMultiname(sb, interface);
+            dumpMultiname(sb, iface);
             sb.newLine();
         }
 
@@ -672,7 +672,7 @@ public:
         sb.newLine();
     }
 
-    void dumpLabel(StringBuilder& sb, const ABC::Label& label)
+    void dumpLabel(StringBuilder& sb, const SWFABC::Label& label)
     {
         sb << 'L';
         sb.write(label.index);
@@ -739,7 +739,7 @@ public:
     }
 
     void dumpInstructions(StringBuilder& sb, const std::vector<ASASM::Instruction>& instructions,
-        std::vector<bool>& labels, const std::vector<ABC::Error>& errors)
+        std::vector<bool>& labels, const std::vector<SWFABC::Error>& errors)
     {
         for (const auto& instruction : instructions)
         {

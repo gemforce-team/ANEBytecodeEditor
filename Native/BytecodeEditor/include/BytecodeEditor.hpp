@@ -3,6 +3,7 @@
 #include "ASASM/ASProgram.hpp"
 #include "SWF/SWFFile.hpp"
 #include "utils/ANEUtils.hpp"
+#include "utils/RefBuilder.hpp"
 #include <memory>
 #include <optional>
 #include <string>
@@ -15,7 +16,7 @@
 
 #include <FlashRuntimeExtensions.h>
 
-class BytecodeEditor
+class BytecodeEditor : public std::enable_shared_from_this<BytecodeEditor>
 {
 private:
     FREContext ctx;
@@ -28,9 +29,9 @@ private:
         std::vector<uint8_t>>
         m_taskResult;
 
-    std::unique_ptr<ASASM::ASProgram> partialAssembly;
-
 public:
+    std::unique_ptr<std::pair<ASASM::ASProgram, RefBuilder>> partialAssembly;
+
     BytecodeEditor(FREContext ctx) noexcept : ctx(ctx) {}
 
     FREObject disassemble();
@@ -67,4 +68,29 @@ public:
     }
 
     FREObject taskResult();
+
+    std::shared_ptr<ASASM::Class> ConvertClass(FREObject o) const;
+    FREObject ConvertClass(ASASM::Class& c) const;
+    ASASM::Namespace ConvertNamespace(FREObject o) const;
+    FREObject ConvertNamespace(const ASASM::Namespace& o) const;
+    ASASM::Multiname ConvertMultiname(FREObject o) const;
+    FREObject ConvertMultiname(const ASASM::Multiname& o) const;
+    ASASM::Trait ConvertTrait(FREObject o) const;
+    FREObject ConvertTrait(const ASASM::Trait& t) const;
+    std::shared_ptr<ASASM::Method> ConvertMethod(FREObject o) const;
+    FREObject ConvertMethod(const ASASM::Method& m) const;
+    ASASM::MethodBody ConvertMethodBody(FREObject o) const;
+    FREObject ConvertMethodBody(const ASASM::MethodBody& b) const;
+    ASASM::Exception ConvertException(FREObject o, const std::vector<FREObject>& allInstrs) const;
+    FREObject ConvertException(
+        const ASASM::Exception& e, const std::vector<FREObject>& allInstrs) const;
+    SWFABC::Error ConvertError(FREObject o, const std::vector<FREObject>& allInstrs) const;
+    FREObject ConvertError(const SWFABC::Error& e, const std::vector<FREObject>& allInstrs) const;
+    SWFABC::Label ConvertLabel(FREObject o, const std::vector<FREObject>& allInstrs) const;
+    FREObject ConvertLabel(const SWFABC::Label& l, const std::vector<FREObject>& allInstrs) const;
+    ASASM::Instruction ConvertInstruction(
+        FREObject o, const std::vector<FREObject>& allInstrs) const;
+    std::pair<FREObject, bool> ConvertInstruction(const ASASM::Instruction& i) const;
+    ASASM::Value ConvertValue(FREObject o) const;
+    FREObject ConvertValue(const ASASM::Value& v) const;
 };

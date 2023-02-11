@@ -12,8 +12,8 @@ package com.cff.anebe.ir
         /** Namespace name. */
         public var name:String;
 
-        /** If there are multiple namespaces with the same name, disambiguates them. This should only very rarely be non-zero. */
-        public var id:int = 0;
+        /** If there are multiple namespaces with the same name, disambiguates them. This should only very rarely be non-null. */
+        public var secondaryName:String;
 
         /** Type string for private namespaces */
         public static const TYPE_PRIVATE:String = "PrivateNamespace";
@@ -40,13 +40,13 @@ package com.cff.anebe.ir
          * Builds an ASNamespace from scratch. Should probably not be used; see instead helper functions in the package com.cff.anebe.ir.namespaces
          * @param type Namespace type
          * @param name Namespace name
-         * @param id Disambiguation ID
+         * @param secondaryName Namespace secondary name, if disambiguation is required
          */
-        public function ASNamespace(type:String, name:String, id:int = 0)
+        public function ASNamespace(type:String, name:String, secondaryName:String = null)
         {
             this.type = type;
             this.name = name;
-            this.id = id;
+            this.secondaryName = secondaryName;
         }
     }
 }

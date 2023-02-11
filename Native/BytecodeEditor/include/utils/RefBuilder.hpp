@@ -11,22 +11,25 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
-
-bool nsSimilar(const ASASM::Namespace& ns1, const ASASM::Namespace& ns2)
-{
-    if (ns1.kind == ABCType::PrivateNamespace || ns2.kind == ABCType::PrivateNamespace)
-    {
-        return ns1.kind == ns2.kind && ns1.id == ns2.id;
-    }
-    // ignore ns kind in other cases
-    return ns1.name == ns2.name;
-}
 
 class RefBuilder : public ASASM::ASTraitsVisitor
 {
 private:
-    std::array<std::unordered_map<std::string, std::unordered_map<uint32_t, bool>>,
+    static bool nsSimilar(const ASASM::Namespace& ns1, const ASASM::Namespace& ns2)
+    {
+        if (ns1.kind == ABCType::PrivateNamespace || ns2.kind == ABCType::PrivateNamespace)
+        {
+            return ns1.kind == ns2.kind && ns1.id == ns2.id;
+        }
+        // ignore ns kind in other cases
+        return ns1.name == ns2.name;
+    }
+
+    std::list<std::unordered_set<ASASM::Namespace>> homonymData;
+    std::array<std::unordered_map<std::string,
+                   std::reference_wrapper<std::unordered_set<ASASM::Namespace>>>,
         ABCTypeMap.GetEntries().size()>
         homonyms;
 
@@ -37,14 +40,41 @@ private:
 public:
     bool hasHomonyms(const ASASM::Namespace& ns) const
     {
-        return homonyms[(uint8_t)ns.kind].contains(ns.name) &&
-               homonyms[(uint8_t)ns.kind].at(ns.name).size() > 1;
+        if (auto found = homonyms[(uint8_t)ns.kind].find(ns.name);
+            found != homonyms[(uint8_t)ns.kind].end())
+        {
+            return found->second.get().size() > 1;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     void addHomonym(const ASASM::Namespace& ns)
     {
         assert(!homonymsBuilt);
-        homonyms[(uint8_t)ns.kind][ns.name][ns.id] = true;
+        if (auto found = homonyms[(uint8_t)ns.kind].find(ns.name);
+            found != homonyms[(uint8_t)ns.kind].end())
+        {
+            found->second.get().emplace(ns);
+        }
+        else
+        {
+            homonyms[(uint8_t)ns.kind].emplace(ns.name, homonymData.emplace_back());
+            homonymData.back().emplace(ns);
+        }
+    }
+
+    std::optional<std::reference_wrapper<const std::unordered_set<ASASM::Namespace>>> getHomonyms(
+        const ASASM::Namespace& ns) const
+    {
+        if (auto found = homonyms[(uint8_t)ns.kind].find(ns.name);
+            found != homonyms[(uint8_t)ns.kind].end())
+        {
+            return found->second;
+        }
+        return std::nullopt;
     }
 
     /// Represents a link in a "context chain", which represents the context in which an object
@@ -222,8 +252,8 @@ public:
                             const auto& ns = multiname.qname().ns;
                             if (ns.kind == ABCType::PrivateNamespace)
                             {
-                                auto ctx = refs.namespaces[(uint8_t)ns.kind].getContext(
-                                    refs, (uint32_t)ns.id);
+                                auto ctx =
+                                    refs.namespaces[(uint8_t)ns.kind].getContext(refs, ns.id);
                                 if (!multiname.qname().name.empty())
                                 {
                                     ctx.emplace_back(multiname.qname().name);
@@ -498,19 +528,19 @@ public:
             assert(!coagulated);
             assert(!contextsSealed);
 
-            if (!contextSets.contains(obj))
+            if (auto found = contextSets.find(obj); found != contextSets.end())
             {
-                contextSets[obj][(uint8_t)priority].emplace_back(context);
-                return true;
-            }
-            else
-            {
-                auto& pet = contextSets.at(obj)[(uint8_t)priority];
+                auto& pet = found->second[(uint8_t)priority];
                 if (pet.size() == 0 || pet[pet.size() - 1] != context)
                 {
                     pet.emplace_back(context);
                 }
                 return false;
+            }
+            else
+            {
+                contextSets[obj][(uint8_t)priority].emplace_back(context);
+                return true;
             }
         }
 
@@ -661,7 +691,7 @@ public:
         }
     };
 
-    std::array<ContextSet<uint32_t, true>, ABCTypeMap.GetEntries().size()> namespaces;
+    std::array<ContextSet<int, true>, ABCTypeMap.GetEntries().size()> namespaces;
     ContextSet<const void*, false> objects, scripts;
 
     RefBuilder(const ASASM::ASProgram& as) : ASTraitsVisitor(as) {}
@@ -749,7 +779,7 @@ public:
             }
         }
 
-        for (size_t i = 0; i < possibleOrphanPrivateNamespaces.size(); i++)
+        for (int i = 0; i < (int)possibleOrphanPrivateNamespaces.size(); i++)
         {
             if (!namespaces[(uint8_t)ABCType::PrivateNamespace].isAdded(i))
             {
@@ -825,7 +855,7 @@ public:
         popContext();
     }
 
-    std::unordered_map<uint32_t, bool> possibleOrphanPrivateNamespaces;
+    std::unordered_map<int, bool> possibleOrphanPrivateNamespaces;
 
     void visitNamespace(const ASASM::Namespace& ns, ContextPriority priority)
     {

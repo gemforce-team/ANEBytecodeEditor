@@ -1,7 +1,7 @@
 #include "ASASM/ASProgram.hpp"
 #include "ASASM/AStoABC.hpp"
 
-ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
+ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
 {
     ASProgram asp;
 
@@ -69,7 +69,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertNamespace = [&](const ABC::Namespace& ns, int id) {
+    const auto convertNamespace = [&](const SWFABC::Namespace& ns, int id) {
         return Namespace{ns.kind, abc.strings[ns.name], id};
     };
 
@@ -83,7 +83,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertMultiname = [&](const ABC::Multiname& multiname)
+    const auto convertMultiname = [&](const SWFABC::Multiname& multiname)
     {
         Multiname ret;
         ret.kind = multiname.kind;
@@ -120,7 +120,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto postConvertMultiname = [&](const ABC::Multiname& multiname, Multiname& edit)
+    const auto postConvertMultiname = [&](const SWFABC::Multiname& multiname, Multiname& edit)
     {
         if (multiname.kind == ABCType::TypeName)
         {
@@ -135,7 +135,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         }
     };
 
-    const auto convertMethod = [&](const ABC::MethodInfo& method, int id)
+    const auto convertMethod = [&](const SWFABC::MethodInfo& method, int id)
     {
         std::shared_ptr<Method> ret = std::make_shared<Method>();
         ret->paramTypes.reserve(method.paramTypes.size());
@@ -160,7 +160,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertMetadata = [&](const ABC::Metadata& metadata)
+    const auto convertMetadata = [&](const SWFABC::Metadata& metadata)
     {
         Metadata ret;
         ret.name = abc.strings[metadata.name];
@@ -172,7 +172,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertTraits = [&](const std::vector<ABC::TraitsInfo>& traits)
+    const auto convertTraits = [&](const std::vector<SWFABC::TraitsInfo>& traits)
     {
         std::vector<Trait> ret;
         ret.reserve(traits.size());
@@ -217,7 +217,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertInstance = [&](const ABC::Instance& instance)
+    const auto convertInstance = [&](const SWFABC::Instance& instance)
     {
         Instance ret;
         ret.name        = multinames[instance.name];
@@ -234,18 +234,18 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertClass = [&](const ABC::Class& clazz, uint32_t i)
+    const auto convertClass = [&](const SWFABC::Class& clazz, uint32_t i)
     {
         classSet[i] = true;
-        return std::shared_ptr<Class>(
-            new Class(std::move(getMethod(clazz.cinit)), convertTraits(clazz.traits), std::move(instances[i])));
+        return std::shared_ptr<Class>(new Class(std::move(getMethod(clazz.cinit)),
+            convertTraits(clazz.traits), std::move(instances[i])));
     };
 
-    const auto convertScript = [&](const ABC::Script& script) {
+    const auto convertScript = [&](const SWFABC::Script& script) {
         return Script{getMethod(script.sinit), convertTraits(script.traits)};
     };
 
-    const auto convertInstruction = [&](const ABC::Instruction instruction)
+    const auto convertInstruction = [&](const SWFABC::Instruction instruction)
     {
         Instruction ret;
         ret.opcode = instruction.opcode;
@@ -320,7 +320,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertBody = [&](const ABC::MethodBody& body)
+    const auto convertBody = [&](const SWFABC::MethodBody& body)
     {
         MethodBody ret;
         ret.method         = methods[body.method];
@@ -431,7 +431,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const ABC::ABCFile& abc)
     return asp;
 }
 
-ABC::ABCFile ASASM::ASProgram::toABC()
+SWFABC::ABCFile ASASM::ASProgram::toABC()
 {
     return AStoABC(*this).abc;
 }
