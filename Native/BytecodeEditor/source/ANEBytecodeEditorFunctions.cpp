@@ -50,7 +50,7 @@ FREObject GetClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    ASASM::Class* clazz = editor.getClass(name);
+    std::shared_ptr<ASASM::Class> clazz = editor.getClass(name);
 
     if (clazz == nullptr)
     {
@@ -75,11 +75,42 @@ FREObject GetScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    ASASM::Script* script = editor.getScript(name);
+    std::shared_ptr<ASASM::Script> script = editor.getScript(name);
 
     if (script == nullptr)
     {
         FAIL("Script not found");
+    }
+
+    nextObjectContext = ANEFunctionContext{
+        editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{script}};
+
+    FREObject ret;
+    DO_OR_FAIL("Could not build com.cff.anebe.ir.ASScript",
+        ANENewObject("com.cff.anebe.ir.ASScript", 0, nullptr, &ret, nullptr));
+
+    return ret;
+}
+
+FREObject CreateScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+{
+    CHECK_ARGC(1);
+
+    GET_EDITOR();
+
+    std::shared_ptr<ASASM::Script> script;
+
+    try
+    {
+        script = editor.createScript(editor.ConvertMethod(argv[0]));
+    }
+    catch (FREObject o)
+    {
+        return o;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(e.what());
     }
 
     nextObjectContext = ANEFunctionContext{
@@ -100,7 +131,7 @@ FREObject GetROClass(FREContext, void* funcData, uint32_t argc, FREObject argv[]
 
     ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    ASASM::Class* clazz = editor.getClass(name);
+    std::shared_ptr<ASASM::Class> clazz = editor.getClass(name);
 
     if (clazz == nullptr)
     {
@@ -125,7 +156,7 @@ FREObject GetROScript(FREContext, void* funcData, uint32_t argc, FREObject argv[
 
     ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
 
-    ASASM::Script* script = editor.getScript(name);
+    std::shared_ptr<ASASM::Script> script = editor.getScript(name);
 
     if (script == nullptr)
     {

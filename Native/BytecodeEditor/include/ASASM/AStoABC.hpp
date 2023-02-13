@@ -335,7 +335,7 @@ namespace ASASM
         {
             for (const auto& script : as.scripts)
             {
-                visitScript(script);
+                visitScript(*script);
             }
             for (const auto& vclass : as.orphanClasses)
             {
@@ -598,7 +598,7 @@ namespace ASASM
             for (size_t i = 0; i < as.scripts.size(); i++)
             {
                 abc.scripts.emplace_back(
-                    methods.get(as.scripts[i].sinit), convertTraits(as.scripts[i].traits));
+                    methods.get(as.scripts[i]->sinit), convertTraits(as.scripts[i]->traits));
             }
 
             abc.bodies.reserve(bodies.size());

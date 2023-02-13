@@ -18,7 +18,7 @@ namespace ASASM
         {
             for (const auto& v : as.scripts)
             {
-                visitTraits(v.traits);
+                visitTraits(v->traits);
             }
         }
 

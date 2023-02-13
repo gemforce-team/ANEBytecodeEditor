@@ -80,7 +80,7 @@ public:
         for (size_t i = 0; i < as.scripts.size(); i++)
         {
             newInclude(sb, refs.scripts.getFilename(&as.scripts[i], "script"),
-                [this, i](StringBuilder& sb) { dumpScript(sb, as.scripts[i], i); });
+                [this, i](StringBuilder& sb) { dumpScript(sb, *as.scripts[i], i); });
         }
         sb.newLine();
 

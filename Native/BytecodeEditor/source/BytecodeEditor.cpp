@@ -177,8 +177,8 @@ FREObject BytecodeEditor::partialAssemble(
         auto assembled = Assembler::assemble(strings, includeDebugInstructions);
         RefBuilder rb(assembled);
         rb.run();
-        this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
-            std::move(assembled), std::move(rb));
+        this->partialAssembly =
+            std::make_unique<PartialAssembly>(std::move(assembled), std::move(rb));
     }
     catch (const std::exception& e)
     {
@@ -206,8 +206,8 @@ FREObject BytecodeEditor::partialAssembleAsync(
                 auto assembled = Assembler::assemble(strings, includeDebugInstructions);
                 RefBuilder rb(assembled);
                 rb.run();
-                this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
-                    std::move(assembled), std::move(rb));
+                this->partialAssembly =
+                    std::make_unique<PartialAssembly>(std::move(assembled), std::move(rb));
 
                 SUCCEED_ASYNC_WITHMESSAGE("PartialSuccess");
             }
@@ -241,7 +241,7 @@ FREObject BytecodeEditor::finishAssemble()
     try
     {
         std::vector<uint8_t> data =
-            std::move(SWFABC::ABCWriter(partialAssembly->first.toABC()).data());
+            std::move(SWFABC::ABCWriter(partialAssembly->program.toABC()).data());
         partialAssembly = nullptr;
 
         currentSWF->replaceABCData(data.data(), data.size());
@@ -292,7 +292,7 @@ FREObject BytecodeEditor::finishAssembleAsync()
             try
             {
                 std::vector<uint8_t> data =
-                    std::move(SWFABC::ABCWriter(partialAssembly->first.toABC()).data());
+                    std::move(SWFABC::ABCWriter(partialAssembly->program.toABC()).data());
 
                 partialAssembly = nullptr;
 
@@ -330,8 +330,8 @@ FREObject BytecodeEditor::beginIntrospection()
         auto assembled = ASASM::ASProgram::fromABC(SWFABC::ABCReader(currentSWF->abcData()).abc());
         RefBuilder rb(assembled);
         rb.run();
-        this->partialAssembly = std::make_unique<std::pair<ASASM::ASProgram, RefBuilder>>(
-            std::move(assembled), std::move(rb));
+        this->partialAssembly =
+            std::make_unique<PartialAssembly>(std::move(assembled), std::move(rb));
 
         currentSWF = std::nullopt;
     }
@@ -345,15 +345,15 @@ FREObject BytecodeEditor::beginIntrospection()
     return ret;
 }
 
-ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
+std::shared_ptr<ASASM::Class> BytecodeEditor::getClass(const ASASM::Multiname& className) const
 {
-    for (const auto& script : partialAssembly->first.scripts)
+    for (const auto& script : partialAssembly->program.scripts)
     {
-        for (const auto& trait : script.traits)
+        for (const auto& trait : script->traits)
         {
             if (trait.kind == TraitKind::Class && className == trait.name)
             {
-                return trait.vClass().vclass.get();
+                return trait.vClass().vclass;
             }
         }
     }
@@ -361,20 +361,26 @@ ASASM::Class* BytecodeEditor::getClass(const ASASM::Multiname& className) const
     return nullptr;
 }
 
-ASASM::Script* BytecodeEditor::getScript(const ASASM::Multiname& traitName) const
+std::shared_ptr<ASASM::Script> BytecodeEditor::getScript(const ASASM::Multiname& traitName) const
 {
-    for (auto& script : partialAssembly->first.scripts)
+    for (const auto& script : partialAssembly->program.scripts)
     {
-        for (const auto& trait : script.traits)
+        for (const auto& trait : script->traits)
         {
             if (traitName == trait.name)
             {
-                return &script;
+                return script;
             }
         }
     }
 
     return nullptr;
+}
+
+std::shared_ptr<ASASM::Script> BytecodeEditor::createScript(
+    const std::shared_ptr<ASASM::Method>& sinit)
+{
+    return partialAssembly->program.scripts.emplace_back(new ASASM::Script{sinit});
 }
 
 #undef FAIL_RETURN

@@ -5,7 +5,8 @@
 using namespace std::string_view_literals;
 
 #define GET_TYPE(type)                                                                             \
-    type& clazz = *std::get<type*>(static_cast<ANEFunctionContext*>(funcData)->objectData->object)
+    std::shared_ptr<type>& clazz = std::get<std::shared_ptr<type>>(                                \
+        static_cast<ANEFunctionContext*>(funcData)->objectData->object)
 #define GET_EDITOR() BytecodeEditor& editor = *static_cast<ANEFunctionContext*>(funcData)->editor
 
 #define SUCCEED_VOID()                                                                             \
@@ -351,69 +352,72 @@ namespace ASClass
 {
     FREObject GetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return GetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
-            ctx, funcData, argc, argv);
+        return GetTrait<ASASM::Class, [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Class& {
+            return *c;
+        }>(ctx, funcData, argc, argv);
     }
 
     FREObject SetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return SetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
-            ctx, funcData, argc, argv);
+        return SetTrait<ASASM::Class, [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Class& {
+            return *c;
+        }>(ctx, funcData, argc, argv);
     }
 
     FREObject DeleteStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return DeleteTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Class& { return c; }>(
+        return DeleteTrait<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Class& { return *c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject GetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return GetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
-            return c.instance;
-        }>(ctx, funcData, argc, argv);
+        return GetTrait<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Instance& { return c->instance; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject SetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return SetTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
-            return c.instance;
-        }>(ctx, funcData, argc, argv);
+        return SetTrait<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Instance& { return c->instance; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject DeleteInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return DeleteTrait<ASASM::Class, [](ASASM::Class& c) -> ASASM::Instance& {
-            return c.instance;
-        }>(ctx, funcData, argc, argv);
+        return DeleteTrait<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Instance& { return c->instance; }>(
+            ctx, funcData, argc, argv);
     }
 
     FREObject GetStaticConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::GetConstructor<ASASM::Class,
-            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.cinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Class>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->cinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject SetStaticConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::SetConstructor<ASASM::Class,
-            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.cinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Class>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->cinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject GetConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::GetConstructor<ASASM::Class,
-            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.instance.iinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Class>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->instance.iinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject SetConstructor(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::SetConstructor<ASASM::Class,
-            [](ASASM::Class& c) -> std::shared_ptr<ASASM::Method>& { return c.instance.iinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Class>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->instance.iinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject GetInterfaces(FREContext, void* funcData, uint32_t argc, FREObject[])
@@ -429,12 +433,12 @@ namespace ASClass
             DO_OR_FAIL("Couldn't create interface vector",
                 ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &ret, nullptr));
             DO_OR_FAIL("Couldn't set interface vector size",
-                FRESetArrayLength(ret, clazz.instance.interfaces.size()));
-            for (size_t i = 0; i < clazz.instance.interfaces.size(); i++)
+                FRESetArrayLength(ret, clazz->instance.interfaces.size()));
+            for (size_t i = 0; i < clazz->instance.interfaces.size(); i++)
             {
                 DO_OR_FAIL("Couldn't set interface vector entry",
                     FRESetArrayElementAt(
-                        ret, i, editor.ConvertMultiname(clazz.instance.interfaces[i])));
+                        ret, i, editor.ConvertMultiname(clazz->instance.interfaces[i])));
             }
             return ret;
         }
@@ -476,7 +480,7 @@ namespace ASClass
                 newMultinames.emplace_back(editor.ConvertMultiname(mname));
             }
 
-            clazz.instance.interfaces = newMultinames;
+            clazz->instance.interfaces = newMultinames;
         }
         catch (FREObject o)
         {
@@ -507,7 +511,7 @@ namespace ASClass
 
         try
         {
-            return editor.ConvertMultiname(clazz.instance.superName);
+            return editor.ConvertMultiname(clazz->instance.superName);
         }
         catch (FREObject o)
         {
@@ -536,7 +540,67 @@ namespace ASClass
 
         try
         {
-            clazz.instance.superName = editor.ConvertMultiname(argv[0]);
+            clazz->instance.superName = editor.ConvertMultiname(argv[0]);
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception: ") + e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
+        }
+
+        SUCCEED_VOID();
+    }
+
+    FREObject GetInstanceName(FREContext, void* funcData, uint32_t argc, FREObject[])
+    {
+        CHECK_ARGC(0);
+
+        GET_TYPE(ASASM::Class);
+        GET_EDITOR();
+
+        try
+        {
+            return editor.ConvertMultiname(clazz->instance.name);
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception: ") + e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
+        }
+    }
+
+    FREObject SetInstanceName(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        CHECK_ARGC(1);
+
+        GET_TYPE(ASASM::Class);
+        GET_EDITOR();
+
+        try
+        {
+            clazz->instance.name = editor.ConvertMultiname(argv[0]);
         }
         catch (FREObject o)
         {
@@ -571,7 +635,7 @@ namespace ASClass
                 ANENewObject("Vector.<String>", 0, nullptr, &ret, nullptr));
             for (const auto& flag : InstanceFlagMap.GetEntries())
             {
-                if (clazz.instance.flags & uint8_t(flag.second))
+                if (clazz->instance.flags & uint8_t(flag.second))
                 {
                     uint32_t len;
                     DO_OR_FAIL(
@@ -622,7 +686,7 @@ namespace ASClass
                 flags |= uint8_t(InstanceFlagMap.Find(CHECK_OBJECT<FRE_TYPE_STRING>(flag))->get());
             }
 
-            clazz.instance.flags = flags;
+            clazz->instance.flags = flags;
         }
         catch (FREObject o)
         {
@@ -653,7 +717,7 @@ namespace ASClass
 
         try
         {
-            return editor.ConvertNamespace(clazz.instance.protectedNs);
+            return editor.ConvertNamespace(clazz->instance.protectedNs);
         }
         catch (FREObject o)
         {
@@ -682,7 +746,7 @@ namespace ASClass
 
         try
         {
-            clazz.instance.protectedNs = editor.ConvertNamespace(argv[0]);
+            clazz->instance.protectedNs = editor.ConvertNamespace(argv[0]);
         }
         catch (FREObject o)
         {
@@ -712,7 +776,7 @@ namespace ASClass
         GET_EDITOR();
 
         nextObjectContext = ANEFunctionContext{
-            editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{&clazz}};
+            editor.shared_from_this(), nullptr, ANEFunctionContext::ObjectData{clazz}};
 
         return nullptr;
     }
@@ -723,32 +787,72 @@ namespace ASScript
     FREObject GetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::GetConstructor<ASASM::Script,
-            [](ASASM::Script& c) -> std::shared_ptr<ASASM::Method>& { return c.sinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Script>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->sinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject SetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::SetConstructor<ASASM::Script,
-            [](ASASM::Script& c) -> std::shared_ptr<ASASM::Method>& { return c.sinit; }>(
-            ctx, funcData, argc, argv);
+            [](const std::shared_ptr<ASASM::Script>& c) -> std::shared_ptr<ASASM::Method>&
+            { return c->sinit; }>(ctx, funcData, argc, argv);
     }
 
     FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::GetTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+        return ::GetTrait<ASASM::Script,
+            [](const std::shared_ptr<ASASM::Script>& c) -> ASASM::Script& { return *c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject SetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::SetTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+        return ::SetTrait<ASASM::Script,
+            [](const std::shared_ptr<ASASM::Script>& c) -> ASASM::Script& { return *c; }>(
             ctx, funcData, argc, argv);
     }
 
     FREObject DeleteTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
-        return ::DeleteTrait<ASASM::Script, [](ASASM::Script& c) -> ASASM::Script& { return c; }>(
+        return ::DeleteTrait<ASASM::Script,
+            [](const std::shared_ptr<ASASM::Script>& c) -> ASASM::Script& { return *c; }>(
             ctx, funcData, argc, argv);
+    }
+
+    FREObject CreateClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        CHECK_ARGC(3);
+
+        GET_TYPE(ASASM::Script);
+        GET_EDITOR();
+
+        try
+        {
+            ASASM::Trait& newTrait = clazz->traits.emplace_back();
+            newTrait.kind          = TraitKind::Class;
+            newTrait.name          = editor.ConvertMultiname(argv[0]);
+            newTrait.vClass({0,
+                std::shared_ptr<ASASM::Class>(new ASASM::Class(editor.ConvertMethod(argv[1]), {},
+                    ASASM::Instance{
+                        .name = newTrait.name, .iinit = editor.ConvertMethod(argv[2])}))});
+
+            return editor.ConvertClass(newTrait.vClass().vclass);
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::exception& e)
+        {
+            FAIL(e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
+        }
     }
 }

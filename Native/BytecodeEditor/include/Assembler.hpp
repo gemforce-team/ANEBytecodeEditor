@@ -1147,25 +1147,25 @@ private:
         }
     }
 
-    ASASM::Script readScript()
+    std::shared_ptr<ASASM::Script> readScript()
     {
-        ASASM::Script ret;
+        std::shared_ptr<ASASM::Script> ret(new ASASM::Script);
         while (true)
         {
             std::string word = readWord();
             if (word == "sinit")
             {
-                mustBeNull(ret.sinit);
-                ret.sinit = readMethod();
+                mustBeNull(ret->sinit);
+                ret->sinit = readMethod();
             }
             else if (word == "trait")
             {
-                ret.traits.emplace_back(readTrait());
+                ret->traits.emplace_back(readTrait());
             }
             else if (word == "end")
             {
                 static constexpr char sinit[] = "sinit";
-                mustBeSet("sinit", ret.sinit);
+                mustBeSet("sinit", ret->sinit);
                 return ret;
             }
             else

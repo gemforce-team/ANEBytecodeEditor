@@ -241,8 +241,10 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
             convertTraits(clazz.traits), std::move(instances[i])));
     };
 
-    const auto convertScript = [&](const SWFABC::Script& script) {
-        return Script{getMethod(script.sinit), convertTraits(script.traits)};
+    const auto convertScript = [&](const SWFABC::Script& script)
+    {
+        return std::shared_ptr<Script>(
+            new Script{getMethod(script.sinit), convertTraits(script.traits)});
     };
 
     const auto convertInstruction = [&](const SWFABC::Instruction instruction)

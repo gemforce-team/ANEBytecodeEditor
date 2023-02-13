@@ -9,6 +9,7 @@ package com.cff.anebe
 	import flash.external.ExtensionContext;
 	import flash.utils.ByteArray;
 	import com.cff.anebe.ir.ASScript;
+	import com.cff.anebe.ir.ASMethod;
 
 	/**
 	 * The main interface of this library. Allows editing bytecode of passed in SWF files.
@@ -345,10 +346,37 @@ package com.cff.anebe
 		{
 			if (identifier == null || !(identifier is ASMultiname))
 			{
-				throw new Error("script identifier must be a QName");
+				throw new Error("Script identifier must be a QName");
 			}
 
 			var ret:Object = extContext.call("GetScript", identifier);
+
+			if (ret is String)
+			{
+				throw new Error(ret);
+			}
+			else if (ret == null || !(ret is ASScript))
+			{
+				throw new Error("Unknown error occurred");
+			}
+			else
+			{
+				return ret as ASScript;
+			}
+		}
+
+		/**
+		 * Creates a script and places it into the current partial assembly.
+		 * @param sinit Script initializer method
+		 * @return The script created
+		 */
+		public function CreateAndInsertScript(sinit:ASMethod):ASScript
+		{
+			if (sinit == null)
+			{
+				throw new Error("Scripts must have a script initializer");
+			}
+			var ret:Object = extContext.call("CreateScript", sinit);
 
 			if (ret is String)
 			{

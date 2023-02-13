@@ -11,13 +11,13 @@ std::shared_ptr<ASASM::Class> BytecodeEditor::ConvertClass(FREObject o) const
     DO_OR_FAIL("Could not get class's native pointer",
         ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, nullptr));
 
-    return std::get<ASASM::Class*>(nextObjectContext->objectData->object)->shared_from_this();
+    return std::get<std::shared_ptr<ASASM::Class>>(nextObjectContext->objectData->object);
 }
 
-FREObject BytecodeEditor::ConvertClass(ASASM::Class& clazz) const
+FREObject BytecodeEditor::ConvertClass(const std::shared_ptr<ASASM::Class>& clazz) const
 {
     nextObjectContext = ANEFunctionContext{const_cast<BytecodeEditor*>(this)->shared_from_this(),
-        nullptr, ANEFunctionContext::ObjectData{&clazz}};
+        nullptr, ANEFunctionContext::ObjectData{clazz}};
 
     FREObject ret;
     DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
@@ -35,7 +35,7 @@ ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
     FREObjectType objType;
     DO_OR_FAIL("Could not get multiname type", FREGetObjectType(disambiguatorObj, &objType));
 
-    auto homonyms = partialAssembly->second.getHomonyms(ret);
+    auto homonyms = partialAssembly->namespaceResolver.getHomonyms(ret);
 
     if (objType == FRE_TYPE_NULL)
     {
@@ -52,12 +52,26 @@ ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
     {
         for (const auto& homonym : homonyms->get())
         {
-            if (partialAssembly->second.namespaces[(uint8_t)homonym.kind].getName(homonym.id) ==
-                disambiguator)
+            if (partialAssembly->namespaceResolver.namespaces[(uint8_t)homonym.kind].getName(
+                    homonym.id) == disambiguator)
             {
                 ret.id = homonym.id;
                 break;
             }
+        }
+    }
+    else
+    {
+        if (auto found = std::find(partialAssembly->extraNamespaceData.begin(),
+                partialAssembly->extraNamespaceData.end(), disambiguator);
+            found != partialAssembly->extraNamespaceData.end())
+        {
+            ret.id = std::distance(partialAssembly->extraNamespaceData.begin(), found) + 1;
+        }
+        else
+        {
+            partialAssembly->extraNamespaceData.emplace_back(disambiguator);
+            ret.id = partialAssembly->extraNamespaceData.size();
         }
     }
 
@@ -69,10 +83,10 @@ FREObject BytecodeEditor::ConvertNamespace(const ASASM::Namespace& n) const
     FREObject name          = FREString(n.name);
     FREObject kind          = FREString(ABCTypeMap.ReverseFind(n.kind)->get());
     FREObject disambiguator = nullptr;
-    if (partialAssembly->second.hasHomonyms(n))
+    if (partialAssembly->namespaceResolver.hasHomonyms(n))
     {
         disambiguator =
-            FREString(partialAssembly->second.namespaces[(uint8_t)n.kind].getName(n.id));
+            FREString(partialAssembly->namespaceResolver.namespaces[(uint8_t)n.kind].getName(n.id));
     }
 
     FREObject args[] = {kind, name, disambiguator};
@@ -351,7 +365,7 @@ FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
         case TraitKind::Class:
             DO_OR_FAIL("Could not create slot ID number",
                 FRENewObjectFromUint32(t.vClass().slotId, &slotId));
-            clazz = ConvertClass(*t.vClass().vclass);
+            clazz = ConvertClass(t.vClass().vclass);
             break;
         case TraitKind::Method:
         case TraitKind::Getter:
@@ -1133,7 +1147,7 @@ std::pair<FREObject, bool> BytecodeEditor::ConvertInstruction(const ASASM::Instr
 
             case Class:
             {
-                arg = ConvertClass(*instr.arguments[i].classv());
+                arg = ConvertClass(instr.arguments[i].classv());
             }
             break;
 

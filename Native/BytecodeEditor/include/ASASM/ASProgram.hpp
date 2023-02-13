@@ -24,7 +24,7 @@ namespace ASASM
     public:
         uint16_t minorVersion, majorVersion;
 
-        std::vector<Script> scripts;
+        std::vector<std::shared_ptr<Script>> scripts;
         // Pointers to the below
         std::vector<std::shared_ptr<Class>> orphanClasses;
         std::vector<std::shared_ptr<Method>> orphanMethods;

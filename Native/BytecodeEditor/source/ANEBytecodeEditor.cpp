@@ -38,10 +38,11 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             {(const uint8_t*)"Cleanup",              context, &Cleanup                            },
             {(const uint8_t*)"GetClass",             context, &GetClass                           },
             {(const uint8_t*)"GetScript",            context, &GetScript                          },
+            {(const uint8_t*)"CreateScript",         context, &CreateScript                       },
         });
 
         *functions    = context->functions.get();
-        *numFunctions = 13;
+        *numFunctions = 14;
     }
     else if (ctxType == "SWFIntrospector"sv)
     {
@@ -73,6 +74,8 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             {(const uint8_t*)"SetInterfaces",         context, &CAV<&ASClass::SetInterfaces>       },
             {(const uint8_t*)"GetSuperclass",         context, &CAV<&ASClass::GetSuperclass>       },
             {(const uint8_t*)"SetSuperclass",         context, &CAV<&ASClass::SetSuperclass>       },
+            {(const uint8_t*)"GetInstanceName",       context, &CAV<&ASClass::GetInstanceName>     },
+            {(const uint8_t*)"SetInstanceName",       context, &CAV<&ASClass::SetInstanceName>     },
             {(const uint8_t*)"GetFlags",              context, &CAV<&ASClass::GetFlags>            },
             {(const uint8_t*)"SetFlags",              context, &CAV<&ASClass::SetFlags>            },
             {(const uint8_t*)"GetProtectedNamespace", context,
@@ -97,12 +100,13 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             {(const uint8_t*)"DeleteTrait",    context, &CAV<&ASScript::DeleteTrait>   },
             {(const uint8_t*)"GetInitializer", context, &CAV<&ASScript::GetInitializer>},
             {(const uint8_t*)"SetInitializer", context, &CAV<&ASScript::SetInitializer>},
+            {(const uint8_t*)"CreateClass",    context, &CAV<&ASScript::CreateClass>   },
         });
         context->objectData = {
             nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
         nextObjectContext = std::nullopt;
         *functions        = context->functions.get();
-        *numFunctions     = 5;
+        *numFunctions     = 6;
         FRESetContextNativeData(ctx, context);
     }
     FRESetContextNativeData(ctx, context);

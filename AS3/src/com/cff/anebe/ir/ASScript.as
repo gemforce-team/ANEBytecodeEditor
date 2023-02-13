@@ -7,7 +7,7 @@ package com.cff.anebe.ir
     public class ASScript extends ASReadOnlyScript
     {
         /**
-         * This function should not be called by any user of this library. It will be automatically called by GetScript.
+         * This function should not be called by any user of this library. It will be automatically called by GetScript or CreateAndInsertScript.
          */
         public function ASScript()
         {
@@ -91,6 +91,36 @@ package com.cff.anebe.ir
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
+            }
+        }
+
+        /**
+         * Creates a class trait by the name given and a class within it
+         * @param name Class and trait name
+         * @param cinit Static constructor for the class
+         * @param iinit Instance constructor for the class
+         * @return The class
+         */
+        public function CreateAndInsertClass(name:ASMultiname, cinit:ASMethod, iinit:ASMethod):ASClass
+        {
+            if (cinit == null || iinit == null)
+            {
+                throw new Error("Classes must have both a static constructor and an instance constructor");
+            }
+
+            var ret:Object = context.call("CreateClass", name, cinit, iinit);
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (ret == null || !(ret is ASClass))
+            {
+                throw new Error("Unknown error occurred");
+            }
+            else
+            {
+                return ret as ASClass;
             }
         }
     }

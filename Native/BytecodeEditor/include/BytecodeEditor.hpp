@@ -30,7 +30,14 @@ private:
         m_taskResult;
 
 public:
-    std::unique_ptr<std::pair<ASASM::ASProgram, RefBuilder>> partialAssembly;
+    struct PartialAssembly
+    {
+        ASASM::ASProgram program;
+        RefBuilder namespaceResolver;
+        std::vector<std::string> extraNamespaceData;
+    };
+
+    std::unique_ptr<PartialAssembly> partialAssembly;
 
     BytecodeEditor(FREContext ctx) noexcept : ctx(ctx) {}
 
@@ -59,8 +66,10 @@ public:
 
     FREObject beginIntrospection();
 
-    ASASM::Class* getClass(const ASASM::Multiname& className) const;
-    ASASM::Script* getScript(const ASASM::Multiname& trait) const;
+    std::shared_ptr<ASASM::Class> getClass(const ASASM::Multiname& className) const;
+    std::shared_ptr<ASASM::Script> getScript(const ASASM::Multiname& trait) const;
+
+    std::shared_ptr<ASASM::Script> createScript(const std::shared_ptr<ASASM::Method>& sinit);
 
     void setSWF(SWF::SWFFile&& file) { currentSWF = std::move(file); }
 
@@ -78,7 +87,7 @@ public:
     FREObject taskResult();
 
     std::shared_ptr<ASASM::Class> ConvertClass(FREObject o) const;
-    FREObject ConvertClass(ASASM::Class& c) const;
+    FREObject ConvertClass(const std::shared_ptr<ASASM::Class>& c) const;
     ASASM::Namespace ConvertNamespace(FREObject o) const;
     FREObject ConvertNamespace(const ASASM::Namespace& o) const;
     ASASM::Multiname ConvertMultiname(FREObject o) const;

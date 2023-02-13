@@ -29,6 +29,8 @@ FREObject GetScript(FREContext ctx, void* funcData, uint32_t argc, FREObject arg
 FREObject GetROClass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 FREObject GetROScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 
+FREObject CreateScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+
 namespace ASClass
 {
     // traits
@@ -51,6 +53,9 @@ namespace ASClass
     // instance.superName
     FREObject GetSuperclass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetSuperclass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    // instance.name
+    FREObject GetInstanceName(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject SetInstanceName(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     // instance.flags
     FREObject GetFlags(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetFlags(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
@@ -73,4 +78,6 @@ namespace ASScript
     FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject DeleteTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    // Adding classes
+    FREObject CreateClass(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 }

@@ -15,8 +15,8 @@ struct ANEFunctionContext
 
     struct ObjectData
     {
-        std::variant<ASASM::Class*, ASASM::Script*> object;
-        std::pair<ASASM::ASProgram, RefBuilder>* program;
+        std::variant<std::shared_ptr<ASASM::Class>, std::shared_ptr<ASASM::Script>> object;
+        BytecodeEditor::PartialAssembly* program;
     };
 
     std::optional<ObjectData> objectData;

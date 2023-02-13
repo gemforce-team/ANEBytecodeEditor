@@ -7,12 +7,47 @@ package com.cff.anebe.ir
     public class ASClass extends ASReadOnlyClass
     {
         /**
-         * This function should not be called by any user of this library. It will be automatically called by GetClass.
-         * This library does not support creating new classes in the SWF.
+         * This function should not be called by any user of this library. It will be automatically called by GetClass or CreateAndInsertClass.
          */
         public function ASClass()
         {
             super();
+        }
+
+        /**
+         * Sets the name of this class's superclass
+         * @param superClass The new superclass name
+         */
+        public function setSuperClass(superClass:ASMultiname):void
+        {
+            var ret:Object = context.call("SetSuperclass", superClass);
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            if (!(ret is Boolean) || !ret)
+            {
+                throw new Error("An unspecified error occurred");
+            }
+        }
+
+        /**
+         * Sets the instance name of this class
+         * @param name The new instance name
+         */
+        public function setInstanceName(name:ASMultiname):void
+        {
+            var ret:Object = context.call("SetInstanceName", name);
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            if (!(ret is Boolean) || !ret)
+            {
+                throw new Error("An unspecified error occurred");
+            }
         }
 
         /**

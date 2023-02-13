@@ -719,7 +719,7 @@ public:
         {
             std::vector<ContextItem> classContexts;
 
-            for (const auto& trait : as.scripts[i].traits)
+            for (const auto& trait : as.scripts[i]->traits)
             {
                 if (trait.name.kind == ABCType::QName &&
                     trait.name.qname().ns.kind != ABCType::PrivateNamespace)
@@ -730,7 +730,7 @@ public:
 
             if (classContexts.empty())
             {
-                for (const auto& trait : as.scripts[i].traits)
+                for (const auto& trait : as.scripts[i]->traits)
                 {
                     classContexts.emplace_back(trait.name);
                 }
@@ -741,7 +741,7 @@ public:
             };
             scripts.add(&as.scripts[i], context, ContextPriority::declaration);
             pushContext("init", true);
-            addMethod(as.scripts[i].sinit, ContextPriority::declaration);
+            addMethod(as.scripts[i]->sinit, ContextPriority::declaration);
             context.clear();
         }
 
@@ -768,7 +768,7 @@ public:
 
         for (const auto& script : as.scripts)
         {
-            for (const auto& trait : script.traits)
+            for (const auto& trait : script->traits)
             {
                 if (trait.name.kind == ABCType::QName)
                 {

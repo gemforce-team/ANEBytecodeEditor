@@ -24,11 +24,48 @@ package com.cff.anebe.ir
 
         /**
          * This function should not be called by any user of this library. It will be automatically called by GetClass.
-         * This library does not support creating new classes in the SWF.
          */
         public function ASReadOnlyClass()
         {
             this.context = ExtensionContext.createExtensionContext("com.cff.anebe.ANEBytecodeEditor", "Class");
+        }
+
+        /**
+         * Gets the name of this class's superclass
+         * @return The superclass name
+         */
+        public function getSuperClass():ASMultiname
+        {
+            var ret:Object = context.call("GetSuperclass");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            if (!(ret is ASMultiname))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+            return ret as ASMultiname;
+        }
+
+        /**
+         * Gets the instance name of this class
+         * @return The instance name
+         */
+        public function getInstanceName():ASMultiname
+        {
+            var ret:Object = context.call("GetInstanceName");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            if (!(ret is ASMultiname))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+            return ret as ASMultiname;
         }
 
         /**
