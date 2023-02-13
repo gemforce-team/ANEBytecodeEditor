@@ -295,6 +295,30 @@ package com.cff.anebe.ir
             }
         }
 
+        /**
+         * If this instruction is a debug instruction, returns true. Otherwise false.
+         */
+        public function isDebug():Boolean
+        {
+            return opcode == ASInstruction.OP_debug || opcode == ASInstruction.OP_debugfile || opcode == ASInstruction.OP_debugline;
+        }
+
+        /**
+         * If this instruction is a getlocal instruction, returns true. Otherwise false.
+         */
+        public function isGetLocal():Boolean
+        {
+            return opcode == OP_getlocal || opcode == OP_getlocal0 || opcode == OP_getlocal1 || opcode == OP_getlocal2 || opcode == OP_getlocal3;
+        }
+
+        /**
+         * If this instruction is a setlocal instruction, returns true. Otherwise false.
+         */
+        public function isSetLocal():Boolean
+        {
+            return opcode == OP_setlocal || opcode == OP_setlocal0 || opcode == OP_setlocal1 || opcode == OP_setlocal2 || opcode == OP_setlocal3;
+        }
+
         public static function Raw(v:uint):ASInstruction
         {
             return new ASInstruction(OP_raw, [v]);

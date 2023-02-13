@@ -31,6 +31,16 @@ package com.cff.anebe.ir
         public var errors:Vector.<ASError>;
 
         /**
+         * Builds an InstructionStream to modify this method body's instructions.
+         * @param reverse Whether to start the stream in reverse or forwards mode
+         * @return The built stream
+         */
+        public function streamInstructions(reverse:Boolean = false):InstructionStream
+        {
+            return new InstructionStream(instructions, reverse);
+        }
+
+        /**
          * Creates an ASMethodBody from scratch
          * @param maxStack Maximum stack depth that can be reached
          * @param localCount Number of local variables
