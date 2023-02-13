@@ -34,6 +34,14 @@ public:
 
     BytecodeEditor(FREContext ctx) noexcept : ctx(ctx) {}
 
+    ~BytecodeEditor() noexcept
+    {
+        if (runningTask.joinable())
+        {
+            runningTask.join();
+        }
+    }
+
     FREObject disassemble();
     FREObject disassembleAsync();
 
