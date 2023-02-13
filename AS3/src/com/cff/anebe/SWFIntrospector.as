@@ -53,7 +53,7 @@ package com.cff.anebe
 
         public function SWFIntrospector(swf:ByteArray)
         {
-            extContext = ExtensionContext.createExtensionContext("com.cff.anebe.ANEBytecodeEditor", "BytecodeEditor");
+            extContext = ExtensionContext.createExtensionContext("com.cff.anebe.ANEBytecodeEditor", "SWFIntrospector");
 
             setSWF(Utils.decompressSWF(swf));
 

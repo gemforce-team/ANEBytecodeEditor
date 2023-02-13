@@ -657,7 +657,7 @@ public:
             return names.at(obj);
         }
 
-        static inline std::unordered_map<std::string, std::string> filenameMappings;
+        std::unordered_map<std::string, std::string> filenameMappings;
 
         std::string getFilename(T obj, std::string_view suffix)
         {
