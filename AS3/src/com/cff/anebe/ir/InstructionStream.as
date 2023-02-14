@@ -354,7 +354,7 @@ package com.cff.anebe.ir
          * @param ignoreDebug Whether or not to ignore debug instructions while advance
          * @return this (for chaining)
          */
-        public function advance(amount:uint, ignoreDebug:Boolean = true):InstructionStream
+        public function advance(amount:uint = 1, ignoreDebug:Boolean = true):InstructionStream
         {
             // Fix count if ignoring debug instructions
             if (ignoreDebug)
@@ -393,7 +393,7 @@ package com.cff.anebe.ir
          * @param ignoreDebug Whether or not to ignore debug instructions while advance
          * @return this (for chaining)
          */
-        public function backtrack(amount:uint, ignoreDebug:Boolean = true):InstructionStream
+        public function backtrack(amount:uint = 1, ignoreDebug:Boolean = true):InstructionStream
         {
             // Fix count if ignoring debug instructions
             if (ignoreDebug)
