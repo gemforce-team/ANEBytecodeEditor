@@ -41,6 +41,33 @@ package com.cff.anebe.ir
         }
 
         /**
+         * Edits all instructions that jump to a given instruction to jump to a different instruction
+         * @param originalTarget The original jump target
+         * @param newTarget The jump target to replace the original with
+         */
+        public function redirectJumps(originalTarget:ASInstruction, newTarget:ASInstruction):void
+        {
+            for each (var instr:ASInstruction in instructions)
+            {
+                if (instr.isJump() && instr.args[0] == originalTarget)
+                {
+                    instr.args[0] = newTarget;
+                }
+                if (instr.opcode == ASInstruction.OP_lookupswitch)
+                {
+                    var switchTargets:Vector.<ASInstruction> = instr.args[1];
+                    for (var i:int = 0; i < switchTargets.length; i++)
+                    {
+                        if (switchTargets[i] == originalTarget)
+                        {
+                            switchTargets[i] = newTarget;
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
          * Creates an ASMethodBody from scratch
          * @param maxStack Maximum stack depth that can be reached
          * @param localCount Number of local variables

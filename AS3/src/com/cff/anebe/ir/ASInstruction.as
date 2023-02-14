@@ -319,6 +319,17 @@ package com.cff.anebe.ir
             return opcode == OP_setlocal || opcode == OP_setlocal0 || opcode == OP_setlocal1 || opcode == OP_setlocal2 || opcode == OP_setlocal3;
         }
 
+        /**
+         * If this instruction can jump, returns true. Otherwise false.
+         */
+        public function isJump():Boolean
+        {
+            return opcode == OP_ifnlt || opcode == OP_ifnle || opcode == OP_ifngt || opcode == OP_ifnge || opcode == OP_jump ||
+                opcode == OP_iftrue || opcode == OP_iffalse || opcode == OP_ifeq || opcode == OP_ifne || opcode == OP_iflt ||
+                opcode == OP_ifle || opcode == OP_ifgt || opcode == OP_ifge || opcode == OP_ifstricteq || opcode == OP_ifstrictne ||
+                opcode == OP_lookupswitch;
+        }
+
         public static function Raw(v:uint):ASInstruction
         {
             return new ASInstruction(OP_raw, [v]);
