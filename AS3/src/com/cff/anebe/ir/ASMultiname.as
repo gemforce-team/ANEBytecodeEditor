@@ -75,5 +75,31 @@ package com.cff.anebe.ir
             this.typename = typename;
             this.params = params;
         }
+
+        public function toString():String
+        {
+            switch (type)
+            {
+                case TYPE_QNAME:
+                case TYPE_QNAMEA:
+                    return type + "(" + ns + ", \"" + name + "\")";
+                case TYPE_RTQNAME:
+                case TYPE_RTQNAMEA:
+                    return type + "(\"" + name + "\")";
+                case TYPE_RTQNAMEL:
+                case TYPE_RTQNAMELA:
+                    return type + "()";
+                case TYPE_MULTINAME:
+                case TYPE_MULTINAMEA:
+                    return type + "(\"" + name + "\", [" + nsSet.join(", ") + "])";
+                case TYPE_MULTINAMEL:
+                case TYPE_MULTINAMELA:
+                    return type + "([" + nsSet.join(", ") + "])";
+                case TYPE_TYPENAME:
+                    return type + "(" + typename + "<" + params.join(", ") + ">)";
+            }
+
+            return "INVALID_MULTINAME";
+        }
     }
 }

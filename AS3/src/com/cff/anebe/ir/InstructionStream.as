@@ -545,7 +545,7 @@ package com.cff.anebe.ir
         public function deleteUntilWindow(ignoreDebug:Boolean, ...filters:Array):InstructionStream
         {
             var prevIndex:int = index;
-            filters.splice(0, 0, ignoreDebug);
+            filters.unshift(ignoreDebug);
             this.findNextWindow.apply(this, filters);
             var newIndex:int = index;
 
@@ -575,13 +575,12 @@ package com.cff.anebe.ir
             // First argument, then delete count to splice
             if (backwards)
             {
-                args.splice(0, 0, index == 0 ? 0 : index - 1);
+                args.unshift((index == 0 ? 0 : index - 1), 0);
             }
             else
             {
-                args.splice(0, 0, index);
+                args.unshift(index, 0);
             }
-            args.splice(1, 0, 0);
 
             instructions.splice.apply(instructions, args);
 
@@ -643,15 +642,12 @@ package com.cff.anebe.ir
             // First argument to splice
             if (backwards)
             {
-                args.splice(0, 0, index - 1 - deleteCount);
+                args.unshift(index - 1 - deleteCount, deleteCount);
             }
             else
             {
-                args.splice(0, 0, index);
+                args.unshift(index, deleteCount);
             }
-
-            // Delete count to splice
-            args.splice(1, 0, deleteCount);
 
             // Actually apply splice
             instructions.splice.apply(instructions, args);

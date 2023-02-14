@@ -48,5 +48,17 @@ package com.cff.anebe.ir
             this.name = name;
             this.secondaryName = secondaryName;
         }
+
+        public function toString():String
+        {
+            if (secondaryName != null)
+            {
+                return type + "(\"" + name + "\", \"" + secondaryName + "\")";
+            }
+            else
+            {
+                return type + "(\"" + name + "\")";
+            }
+        }
     }
 }
