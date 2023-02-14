@@ -520,7 +520,14 @@ package com.cff.anebe.ir
         public function insert(...args:Array):InstructionStream
         {
             // First argument, then delete count to splice
-            args.insertAt(0, index);
+            if (backwards)
+            {
+                args.insertAt(0, index == 0 ? 0 : index - 1);
+            }
+            else
+            {
+                args.insertAt(0, index);
+            }
             args.insertAt(1, 0);
 
             var func:Function = instructions.splice;
