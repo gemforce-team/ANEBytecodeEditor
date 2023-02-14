@@ -460,7 +460,7 @@ package com.cff.anebe.ir
          * @param ignoreDebug Whether deleteCount includes debug instructions. Ignored if -1 is specified there.
          * @return this (for chaining)
          */
-        public function deleteNext(number:int, ignoreDebug:Boolean = true):InstructionStream
+        public function deleteNext(number:int = 1, ignoreDebug:Boolean = true):InstructionStream
         {
             // Get number of instructions to delete
             if (number == -1)
