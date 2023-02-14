@@ -3,7 +3,7 @@ package com.cff.anebe.ir
     /**
      * Represents the instructions of a method as a stream. Shouldn't really be constructed by users.
      */
-    internal class InstructionStream
+    public class InstructionStream
     {
         private var instructions:Vector.<ASInstruction>;
         private var index:int;
