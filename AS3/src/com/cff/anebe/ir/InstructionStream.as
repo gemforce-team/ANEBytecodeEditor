@@ -259,33 +259,25 @@ package com.cff.anebe.ir
             if (backwards)
             {
                 boundary = 0;
-                while (i < number)
+                while (i < number && newIndex != boundary)
                 {
                     if (!instructions[newIndex - 1].isDebug())
                     {
                         i++;
                     }
                     newIndex--;
-                    if (newIndex == boundary)
-                    {
-                        break;
-                    }
                 }
             }
             else
             {
                 boundary = instructions.length;
-                while (i < number)
+                while (i < number && newIndex != boundary)
                 {
                     if (!instructions[newIndex].isDebug())
                     {
                         i++;
                     }
                     newIndex++;
-                    if (newIndex == boundary)
-                    {
-                        break;
-                    }
                 }
             }
 
@@ -300,34 +292,34 @@ package com.cff.anebe.ir
             var newIndex:uint = index;
             if (backwards)
             {
+                if (newIndex == 0)
+                {
+                    newIndex++;
+                }
                 boundary = instructions.length;
-                while (i < number)
+                while (i < number && newIndex != boundary)
                 {
                     if (!instructions[newIndex - 1].isDebug())
                     {
                         i++;
                     }
                     newIndex++;
-                    if (newIndex == boundary)
-                    {
-                        break;
-                    }
                 }
             }
             else
             {
+                if (newIndex == instructions.length)
+                {
+                    newIndex--;
+                }
                 boundary = 0;
-                while (i < number)
+                while (i < number && newIndex != boundary)
                 {
                     if (!instructions[newIndex].isDebug())
                     {
                         i++;
                     }
                     newIndex--;
-                    if (newIndex == boundary)
-                    {
-                        break;
-                    }
                 }
             }
 
@@ -553,7 +545,7 @@ package com.cff.anebe.ir
         public function deleteUntilWindow(ignoreDebug:Boolean, ...filters:Array):InstructionStream
         {
             var prevIndex:int = index;
-            filters.insertAt(0, ignoreDebug);
+            filters.splice(0, 0, ignoreDebug);
             this.findNextWindow.apply(this, filters);
             var newIndex:int = index;
 
@@ -583,16 +575,15 @@ package com.cff.anebe.ir
             // First argument, then delete count to splice
             if (backwards)
             {
-                args.insertAt(0, index == 0 ? 0 : index - 1);
+                args.splice(0, 0, index == 0 ? 0 : index - 1);
             }
             else
             {
-                args.insertAt(0, index);
+                args.splice(0, 0, index);
             }
-            args.insertAt(1, 0);
+            args.splice(1, 0, 0);
 
-            var func:Function = instructions.splice;
-            func.apply(instructions, args);
+            instructions.splice.apply(instructions, args);
 
             // Advance index to proper index
             if (!backwards)
@@ -652,19 +643,18 @@ package com.cff.anebe.ir
             // First argument to splice
             if (backwards)
             {
-                args.insertAt(0, index - 1 - deleteCount);
+                args.splice(0, 0, index - 1 - deleteCount);
             }
             else
             {
-                args.insertAt(0, index);
+                args.splice(0, 0, index);
             }
 
             // Delete count to splice
-            args.insertAt(1, deleteCount);
+            args.splice(1, 0, deleteCount);
 
             // Actually apply splice
-            var func:Function = instructions.splice;
-            func.apply(instructions, args);
+            instructions.splice.apply(instructions, args);
 
             // Advance index to proper index
             if (backwards)
