@@ -58,7 +58,8 @@ package com.cff.anebe.ir
         }
 
         /**
-         * Traverses the stream until it finds an instruction that matches the filter.
+         * Traverses the stream, starting with the current instruction, until it finds an instruction that matches the filter.
+         * That instruction is then the current instruction.
          * @param filter Function to apply to the instructions. Should take an ASInstruction and return a Boolean
          * @return this (for chaining)
          * @throws Error Instruction not found
@@ -299,7 +300,7 @@ package com.cff.anebe.ir
             var newIndex:uint = index;
             if (backwards)
             {
-                boundary = 0;
+                boundary = instructions.length;
                 while (i < number)
                 {
                     if (!instructions[newIndex - 1].isDebug())
@@ -315,7 +316,7 @@ package com.cff.anebe.ir
             }
             else
             {
-                boundary = instructions.length;
+                boundary = 0;
                 while (i < number)
                 {
                     if (!instructions[newIndex].isDebug())
