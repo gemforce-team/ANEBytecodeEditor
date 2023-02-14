@@ -21,6 +21,18 @@ package com.cff.anebe.ir
             this.index = !backwards ? 0 : instructions.length;
         }
 
+        public function get currentIndex():int
+        {
+            if (backwards)
+            {
+                return index == 0 ? 0 : index - 1;
+            }
+            else
+            {
+                return index;
+            }
+        }
+
         /**
          * Reverses the stream, so that advance goes in the opposite direction from what it originally was.
          * Current instruction stays the current instruction.
@@ -505,6 +517,54 @@ package com.cff.anebe.ir
             }
 
             // Return this for chaining
+            return this;
+        }
+
+        /**
+         * Deletes instructions until a filter is true.
+         * @param filter Function to apply to the instructions. Should take an ASInstruction and return a Boolean
+         * @return this (for chaining)
+         */
+        public function deleteUntil(filter:Function):InstructionStream
+        {
+            var prevIndex:int = index;
+            findNext(filter);
+            var newIndex:int = index;
+
+            var deleteMe:int = newIndex - prevIndex;
+            if (deleteMe < 0)
+            {
+                deleteMe = -deleteMe;
+            }
+
+            backtrack(deleteMe);
+            deleteNext(deleteMe, false);
+
+            return this;
+        }
+
+        /**
+         * Deletes instructions until a filter window is true.
+         * @param ignoreDebug Whether to pass debug instructions to the filters or ignore them.
+         * @param ...filters Array of functions to apply to the instructions. Each should take an ASInstruction and return a Boolean.
+         * @return this (for chaining)
+         */
+        public function deleteUntilWindow(ignoreDebug:Boolean, ...filters:Array):InstructionStream
+        {
+            var prevIndex:int = index;
+            filters.insertAt(0, ignoreDebug);
+            this.findNextWindow.apply(this, filters);
+            var newIndex:int = index;
+
+            var deleteMe:int = newIndex - prevIndex;
+            if (deleteMe < 0)
+            {
+                deleteMe = -deleteMe;
+            }
+
+            backtrack(deleteMe);
+            deleteNext(deleteMe, false);
+
             return this;
         }
 
