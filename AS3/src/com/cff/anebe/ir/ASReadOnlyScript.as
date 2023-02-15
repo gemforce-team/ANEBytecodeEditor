@@ -47,6 +47,26 @@ package com.cff.anebe.ir
         }
 
         /**
+         * Gets a list of all traits' names
+         * @return The list of trait names
+         */
+        public function listTraits():Vector.<ASMultiname>
+        {
+            var ret:Object = context.call("ListTraits");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (!(ret is Vector.<ASMultiname>))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+
+            return ret as Vector.<ASMultiname>;
+        }
+
+        /**
          * Gets the initializer for a script.
          * Will be run either on program start (for the main script) or when "an entity exported from that script is first referenced by the program during property lookup".
          * @return The ASMethod that represents the script initializer

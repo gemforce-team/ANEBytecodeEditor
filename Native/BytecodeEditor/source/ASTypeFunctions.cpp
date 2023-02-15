@@ -95,6 +95,49 @@ namespace
     }
 
     template <typename T, auto accessor>
+    FREObject ListTraits(FREContext, void* funcData, uint32_t argc, FREObject[])
+    {
+        CHECK_ARGC(0);
+
+        GET_TYPE(T);
+        GET_EDITOR();
+
+        try
+        {
+            const auto& traits = std::invoke(accessor, clazz).traits;
+
+            FREObject ret;
+            DO_OR_FAIL("Couldn't create trait name vector",
+                ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &ret, nullptr));
+            DO_OR_FAIL(
+                "Couldn't set trait name vector size", FRESetArrayLength(ret, traits.size()));
+            for (size_t i = 0; i < traits.size(); i++)
+            {
+                DO_OR_FAIL("Couldn't set trait name vector entry",
+                    FRESetArrayElementAt(ret, i, editor.ConvertMultiname(traits[i].name)));
+            }
+
+            return ret;
+        }
+        catch (FREObject o)
+        {
+            return o;
+        }
+        catch (std::nullptr_t)
+        {
+            FAIL("nullptr caught");
+        }
+        catch (std::exception& e)
+        {
+            FAIL(std::string("Exception: ") + e.what());
+        }
+        catch (...)
+        {
+            FAIL("Some weird thing caught");
+        }
+    }
+
+    template <typename T, auto accessor>
     FREObject SetTrait(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     {
         CHECK_ARGC(1);
@@ -357,6 +400,13 @@ namespace ASClass
         }>(ctx, funcData, argc, argv);
     }
 
+    FREObject ListStaticTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ListTraits<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Class& { return *c; }>(
+            ctx, funcData, argc, argv);
+    }
+
     FREObject SetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return SetTrait<ASASM::Class, [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Class& {
@@ -374,6 +424,13 @@ namespace ASClass
     FREObject GetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return GetTrait<ASASM::Class,
+            [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Instance& { return c->instance; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject ListInstanceTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ListTraits<ASASM::Class,
             [](const std::shared_ptr<ASASM::Class>& c) -> ASASM::Instance& { return c->instance; }>(
             ctx, funcData, argc, argv);
     }
@@ -801,6 +858,13 @@ namespace ASScript
     FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
     {
         return ::GetTrait<ASASM::Script,
+            [](const std::shared_ptr<ASASM::Script>& c) -> ASASM::Script& { return *c; }>(
+            ctx, funcData, argc, argv);
+    }
+
+    FREObject ListTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[])
+    {
+        return ::ListTraits<ASASM::Script,
             [](const std::shared_ptr<ASASM::Script>& c) -> ASASM::Script& { return *c; }>(
             ctx, funcData, argc, argv);
     }

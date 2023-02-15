@@ -61,9 +61,11 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
         context->editor     = nextObjectContext->editor;
         context->functions  = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
             {(const uint8_t*)"GetStaticTrait",        context, &CAV<&ASClass::GetStaticTrait>      },
+            {(const uint8_t*)"ListStaticTraits",      context, &CAV<&ASClass::ListStaticTraits>    },
             {(const uint8_t*)"SetStaticTrait",        context, &CAV<&ASClass::SetStaticTrait>      },
             {(const uint8_t*)"DeleteStaticTrait",     context, &CAV<&ASClass::DeleteStaticTrait>   },
             {(const uint8_t*)"GetInstanceTrait",      context, &CAV<&ASClass::GetInstanceTrait>    },
+            {(const uint8_t*)"ListInstanceTraits",    context, &CAV<&ASClass::ListInstanceTraits>  },
             {(const uint8_t*)"SetInstanceTrait",      context, &CAV<&ASClass::SetInstanceTrait>    },
             {(const uint8_t*)"DeleteInstanceTrait",   context, &CAV<&ASClass::DeleteInstanceTrait> },
             {(const uint8_t*)"GetStaticConstructor",  context, &CAV<&ASClass::GetStaticConstructor>},
@@ -88,7 +90,7 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
         nextObjectContext = std::nullopt;
         *functions        = context->functions.get();
-        *numFunctions     = 19;
+        *numFunctions     = 21;
         FRESetContextNativeData(ctx, context);
     }
     else if (ctxType == "Script"sv)
@@ -96,6 +98,7 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
         context->editor     = nextObjectContext->editor;
         context->functions  = std::unique_ptr<FRENamedFunction[]>(new FRENamedFunction[]{
             {(const uint8_t*)"GetTrait",       context, &CAV<&ASScript::GetTrait>      },
+            {(const uint8_t*)"ListTraits",     context, &CAV<&ASScript::ListTraits>    },
             {(const uint8_t*)"SetTrait",       context, &CAV<&ASScript::SetTrait>      },
             {(const uint8_t*)"DeleteTrait",    context, &CAV<&ASScript::DeleteTrait>   },
             {(const uint8_t*)"GetInitializer", context, &CAV<&ASScript::GetInitializer>},
@@ -106,7 +109,7 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
         nextObjectContext = std::nullopt;
         *functions        = context->functions.get();
-        *numFunctions     = 6;
+        *numFunctions     = 7;
         FRESetContextNativeData(ctx, context);
     }
     FRESetContextNativeData(ctx, context);

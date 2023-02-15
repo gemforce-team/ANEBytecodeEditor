@@ -35,10 +35,12 @@ namespace ASClass
 {
     // traits
     FREObject GetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject ListStaticTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject DeleteStaticTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     // instance.traits
     FREObject GetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject ListInstanceTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject DeleteInstanceTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     // cinit
@@ -76,6 +78,7 @@ namespace ASScript
     FREObject SetInitializer(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     // traits
     FREObject GetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+    FREObject ListTraits(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject SetTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     FREObject DeleteTrait(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
     // Adding classes

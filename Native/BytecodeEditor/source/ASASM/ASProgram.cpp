@@ -247,7 +247,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
             new Script{getMethod(script.sinit), convertTraits(script.traits)});
     };
 
-    const auto convertInstruction = [&](const SWFABC::Instruction instruction)
+    const auto convertInstruction = [&](const SWFABC::Instruction& instruction)
     {
         Instruction ret;
         ret.opcode = instruction.opcode;

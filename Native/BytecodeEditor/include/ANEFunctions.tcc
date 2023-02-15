@@ -71,7 +71,9 @@ FREObject Assemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     return (editor.*Assembler)(std::move(strings), includeDebugInstructions);
 }
 
-template <FREObject (BytecodeEditor::*Function)()>
+template <auto Function>
+    requires std::same_as<decltype(Function), FREObject (BytecodeEditor::*)()> ||
+             std::same_as<decltype(Function), FREObject (BytecodeEditor::*)() const>
 FREObject TransparentZeroArg(FREContext, void* funcData, uint32_t argc, FREObject[])
 {
     CHECK_ARGC(0);

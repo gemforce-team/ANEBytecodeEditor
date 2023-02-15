@@ -345,8 +345,76 @@ FREObject BytecodeEditor::beginIntrospection()
     return ret;
 }
 
+FREObject BytecodeEditor::listClasses() const
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+    if (!partialAssembly)
+    {
+        FAIL("No partial assembly found");
+    }
+
+    FREObject ret;
+    DO_OR_FAIL("Couldn't create class name vector",
+        ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &ret, nullptr));
+    DO_OR_FAIL("Couldn't set class name vector size to nominal",
+        FRESetArrayLength(ret, partialAssembly->program.scripts.size()));
+    size_t index = 0;
+    for (const auto& script : partialAssembly->program.scripts)
+    {
+        for (const auto& trait : script->traits)
+        {
+            if (trait.kind == TraitKind::Class)
+            {
+                DO_OR_FAIL("Couldn't set class name vector entry",
+                    FRESetArrayElementAt(ret, index++, ConvertMultiname(trait.name)));
+            }
+        }
+    }
+    DO_OR_FAIL("Couldn't shrink class name vector size to actual", FRESetArrayLength(ret, index));
+
+    return ret;
+}
+
+FREObject BytecodeEditor::listScripts() const
+{
+    if (runningTask.joinable())
+    {
+        FAIL("Already running a task");
+    }
+    if (!partialAssembly)
+    {
+        FAIL("No partial assembly found");
+    }
+
+    FREObject ret;
+    DO_OR_FAIL("Couldn't create script name vector",
+        ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &ret, nullptr));
+    DO_OR_FAIL("Couldn't set script name vector size to nominal",
+        FRESetArrayLength(ret, partialAssembly->program.scripts.size()));
+    size_t index = 0;
+    for (const auto& script : partialAssembly->program.scripts)
+    {
+        if (script->traits.size() > 0)
+        {
+            DO_OR_FAIL("Couldn't set script name vector entry",
+                FRESetArrayElementAt(ret, index++, ConvertMultiname(script->traits[0].name)));
+        }
+    }
+    DO_OR_FAIL("Couldn't shrink script name vector size to actual", FRESetArrayLength(ret, index));
+
+    return ret;
+}
+
 std::shared_ptr<ASASM::Class> BytecodeEditor::getClass(const ASASM::Multiname& className) const
 {
+    if (!partialAssembly)
+    {
+        return nullptr;
+    }
+
     for (const auto& script : partialAssembly->program.scripts)
     {
         for (const auto& trait : script->traits)
@@ -363,6 +431,11 @@ std::shared_ptr<ASASM::Class> BytecodeEditor::getClass(const ASASM::Multiname& c
 
 std::shared_ptr<ASASM::Script> BytecodeEditor::getScript(const ASASM::Multiname& traitName) const
 {
+    if (!partialAssembly)
+    {
+        return nullptr;
+    }
+
     for (const auto& script : partialAssembly->program.scripts)
     {
         for (const auto& trait : script->traits)

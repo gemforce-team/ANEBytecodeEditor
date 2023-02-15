@@ -66,6 +66,9 @@ public:
 
     FREObject beginIntrospection();
 
+    FREObject listScripts() const;
+    FREObject listClasses() const;
+
     std::shared_ptr<ASASM::Class> getClass(const ASASM::Multiname& className) const;
     std::shared_ptr<ASASM::Script> getScript(const ASASM::Multiname& trait) const;
 

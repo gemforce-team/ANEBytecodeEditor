@@ -97,6 +97,26 @@ package com.cff.anebe.ir
         }
 
         /**
+         * Gets a list of all static traits' names
+         * @return The list of trait names
+         */
+        public function listStaticTraits():Vector.<ASMultiname>
+        {
+            var ret:Object = context.call("ListStaticTraits");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (!(ret is Vector.<ASMultiname>))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+
+            return ret as Vector.<ASMultiname>;
+        }
+
+        /**
          * Gets an instance trait present in the class
          * @param name Name of the trait to retrieve
          * @param favorSetter If this name refers to both a getter and a setter, true will retrieve the getter, while false will retrieve the setter. If it is neither or only one exists, has no effect.
@@ -122,6 +142,26 @@ package com.cff.anebe.ir
             }
 
             return ret as ASTrait;
+        }
+
+        /**
+         * Gets a list of all instance traits' names
+         * @return The list of trait names
+         */
+        public function listInstanceTraits():Vector.<ASMultiname>
+        {
+            var ret:Object = context.call("ListInstanceTraits");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (!(ret is Vector.<ASMultiname>))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+
+            return ret as Vector.<ASMultiname>;
         }
 
         /**
