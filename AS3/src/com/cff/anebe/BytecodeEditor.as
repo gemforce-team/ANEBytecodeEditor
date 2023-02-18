@@ -18,10 +18,16 @@ package com.cff.anebe
 	public class BytecodeEditor extends EventDispatcher
 	{
 		private var extContext:ExtensionContext;
+		private var currentSWF:ByteArray;
 
 		private function setSWF(replaceSWF:ByteArray):void
 		{
-			var ret:Object = extContext.call("SetCurrentSWF", replaceSWF);
+			currentSWF = replaceSWF;
+		}
+
+		private function insertABC(abc:ByteArray):void
+		{
+			var ret:Object = extContext.call("InsertABCToSWF", currentSWF, abc);
 
 			if (ret is String)
 			{
@@ -29,11 +35,11 @@ package com.cff.anebe
 			}
 			else if (ret == null || !(ret is Boolean))
 			{
-				throw new Error("Unknown error occurred while setting SWF");
+				throw new Error("Unknown error occurred during RemoveABCAndEndTags");
 			}
 			else if (!(ret as Boolean))
 			{
-				throw new Error("SetCurrentSWF returned false somehow");
+				throw new Error("RemoveABCAndEndTags returned false somehow");
 			}
 		}
 
@@ -52,7 +58,7 @@ package com.cff.anebe
 		{
 			setSWF(Utils.decompressSWF(swf));
 
-			var ret:Object = extContext.call("Disassemble");
+			var ret:Object = extContext.call("Disassemble", currentSWF);
 
 			if (ret is String)
 			{
@@ -81,10 +87,13 @@ package com.cff.anebe
 			{
 				throw new Error("Cannot assemble null strings");
 			}
-
 			if (replaceSWF != null)
 			{
 				setSWF(Utils.decompressSWF(replaceSWF));
+			}
+			if (currentSWF == null)
+			{
+				throw new Error("Cannot assemble without an SWF");
 			}
 
 			var vec:Vector.<String> = new <String>[];
@@ -105,7 +114,8 @@ package com.cff.anebe
 			}
 			else
 			{
-				return ret as ByteArray;
+				insertABC(ret as ByteArray);
+				return currentSWF;
 			}
 		}
 
@@ -117,7 +127,7 @@ package com.cff.anebe
 		{
 			setSWF(Utils.decompressSWF(swf));
 
-			var ret:Object = extContext.call("DisassembleAsync");
+			var ret:Object = extContext.call("DisassembleAsync", currentSWF);
 
 			if (ret is String)
 			{
@@ -131,7 +141,6 @@ package com.cff.anebe
 			{
 				throw new Error("DisassembleAsync returned false somehow");
 			}
-
 		}
 
 		/**
@@ -149,6 +158,10 @@ package com.cff.anebe
 			if (replaceSWF != null)
 			{
 				setSWF(Utils.decompressSWF(replaceSWF));
+			}
+			if (currentSWF == null)
+			{
+				throw new Error("Cannot assemble without an SWF");
 			}
 
 			var vec:Vector.<String> = new <String>[];
@@ -179,6 +192,7 @@ package com.cff.anebe
 		public function Cleanup():void
 		{
 			extContext.call("Cleanup");
+			currentSWF = null;
 		}
 
 		/**
@@ -263,10 +277,20 @@ package com.cff.anebe
 
 		/**
 		 * Finishes assembly started by PartialAssemble or PartialAssembleAsync.
+		 * @param replaceSWF SWF data to replace the DoABC2 tag within, or null to use last disassembled.
 		 * @return The modified SWF data.
 		 */
-		public function FinishAssemble():ByteArray
+		public function FinishAssemble(replaceSWF:ByteArray = null):ByteArray
 		{
+			if (replaceSWF != null)
+			{
+				setSWF(Utils.decompressSWF(replaceSWF));
+			}
+			if (currentSWF == null)
+			{
+				throw new Error("Cannot finish assembly without an SWF");
+			}
+
 			var ret:Object = extContext.call("FinishAssemble");
 
 			if (ret is String)
@@ -279,15 +303,26 @@ package com.cff.anebe
 			}
 			else
 			{
-				return ret as ByteArray;
+				insertABC(ret as ByteArray);
+				return currentSWF;
 			}
 		}
 
 		/**
 		 * Finishes assembly started by PartialAssemble or PartialAssembleAsync. To retrieve the data, subscribe to the ASSEMBLY_DONE event.
+		 * @param replaceSWF SWF data to replace the DoABC2 tag within, or null to use last disassembled.
 		 */
-		public function FinishAssembleAsync():void
+		public function FinishAssembleAsync(replaceSWF:ByteArray = null):void
 		{
+			if (replaceSWF != null)
+			{
+				setSWF(Utils.decompressSWF(replaceSWF));
+			}
+			if (currentSWF == null)
+			{
+				throw new Error("Cannot finish assembly without an SWF");
+			}
+
 			var ret:Object = extContext.call("FinishAssembleAsync");
 
 			if (ret is String)
@@ -461,7 +496,8 @@ package com.cff.anebe
 
 				if (data is ByteArray)
 				{
-					this.dispatchEvent(new AssemblyDoneEvent(data as ByteArray));
+					insertABC(data as ByteArray);
+					this.dispatchEvent(new AssemblyDoneEvent(currentSWF));
 				}
 				else
 				{

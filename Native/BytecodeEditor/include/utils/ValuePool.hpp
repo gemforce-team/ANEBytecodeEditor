@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <bit>
 #include <cassert>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <stdint.h>
@@ -47,8 +48,8 @@ private:
     using Key = ValuePoolBase<T, haveNull>::Key;
     using ValuePoolBase<T, haveNull>::toKey;
 
-    template <typename T>
-    constexpr bool isNull(T v)
+    template <typename V>
+    static constexpr bool isNull(V v)
     {
         using comp = std::remove_cvref_t<decltype(v)>;
         static_assert(std::is_same_v<comp, uint64_t> || std::is_same_v<comp, int64_t> ||

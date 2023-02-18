@@ -24,6 +24,7 @@ package com.cff.anebe.ir
 
         /**
          * This function should not be called by any user of this library. It will be automatically called by GetClass.
+         * I would make it private if I could.
          */
         public function ASReadOnlyClass()
         {
@@ -259,6 +260,12 @@ package com.cff.anebe.ir
                 throw new Error("An unspecified error occurred");
             }
             return ret as ASNamespace;
+        }
+
+        /** Used internally */
+        public function setNativePointerForConversion():void
+        {
+            context.call("ConvertClassHelper");
         }
     }
 }

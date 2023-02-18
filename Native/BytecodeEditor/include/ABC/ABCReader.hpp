@@ -57,6 +57,8 @@ namespace SWFABC
 
         const ABCFile& abc() const { return _abc; }
 
+        ABCReader(std::span<const uint8_t> d) : ABCReader(d.data(), d.size()) {}
+
         ABCReader(std::pair<const uint8_t*, size_t> d) : ABCReader(d.first, d.second) {}
 
         ABCReader(const uint8_t* data, size_t len) : buf(data), len(len), pos(0)
@@ -434,6 +436,12 @@ namespace SWFABC
             std::vector<TraceState> traceState(methodLen, TraceState::unexplored);
             std::vector<Instruction> instructions(methodLen);
 
+            constexpr auto stopsSequentialExecution = [](OPCode op)
+            {
+                return op == OPCode::OP_returnvalue || op == OPCode::OP_returnvoid ||
+                       op == OPCode::OP_throw || op == OPCode::OP_jump;
+            };
+
             const auto offset = [&] { return pos - start; };
 
             bool done = false;
@@ -609,8 +617,10 @@ namespace SWFABC
                                     traceState[i] = TraceState::instructionBody;
                                 }
 
-                                // if (stopsExecution[instruction.opcode])
-                                //   break;
+                                if (stopsSequentialExecution(instruction.opcode))
+                                {
+                                    break;
+                                }
                             }
                         }
                         catch (std::exception& e)
@@ -629,31 +639,39 @@ namespace SWFABC
                 }
             }
 
-            std::vector<size_t> instructionOffsets;
             std::vector<uint32_t> instructionAtOffset(methodLen, UINT32_MAX);
 
             const auto addInstruction = [&](const Instruction& i, size_t offset)
             {
                 instructionAtOffset[offset] = ret.instructions.size();
                 ret.instructions.emplace_back(i);
-                instructionOffsets.emplace_back(offset);
             };
 
-            for (size_t currentOffset = 0; currentOffset < traceState.size(); currentOffset++)
+            for (size_t currentOffset = 0; currentOffset < methodLen; currentOffset++)
             {
                 assert(traceState[currentOffset] != TraceState::pending);
                 if (traceState[currentOffset] == TraceState::instruction)
                 {
                     addInstruction(instructions[currentOffset], currentOffset);
                 }
-                else if (traceState[currentOffset] == TraceState::unexplored ||
-                         traceState[currentOffset] == TraceState::error)
+                else if (traceState[currentOffset] == TraceState::error)
                 {
                     Instruction instruction;
                     instruction.opcode = OPCode::OP_raw;
                     instruction.arguments.resize(1);
                     instruction.arguments[0].ubytev(buf[start + currentOffset]);
                     addInstruction(instruction, currentOffset);
+                }
+                else if (traceState[currentOffset] == TraceState::unexplored)
+                {
+                    Instruction instruction;
+                    instruction.opcode = OPCode::OP_raw;
+                    instruction.arguments.resize(1);
+                    instruction.arguments[0].ubytev(buf[start + currentOffset]);
+                    addInstruction(instruction, currentOffset);
+
+                    Label loc{.absoluteOffset = (ptrdiff_t)currentOffset};
+                    ret.errors.emplace_back(loc, "Unreachable instruction");
                 }
                 else
                 {

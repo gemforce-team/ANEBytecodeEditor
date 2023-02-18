@@ -25,10 +25,11 @@
 #define FAIL_RESULT(message, result)                                                               \
     do                                                                                             \
     {                                                                                              \
-        std::source_location current = std::source_location::current();                            \
-        FAIL_RETURN(FREStringForError(                                                             \
-            std::to_string(int32_t(result)) + ": " + message + "\nAt: " + current.file_name() +    \
-            "(" + std::to_string(current.line()) + ") " + current.function_name()));               \
+        std::source_location fail_result_current = std::source_location::current();                \
+        FAIL_RETURN(FREStringForError(std::to_string(int32_t(result)) + ": " + message +           \
+                                      "\nAt: " + fail_result_current.file_name() + "(" +           \
+                                      std::to_string(fail_result_current.line()) + ") " +          \
+                                      fail_result_current.function_name()));                       \
     }                                                                                              \
     while (false)
 
@@ -42,9 +43,9 @@
 #define DO_OR_FAIL(message, x)                                                                     \
     do                                                                                             \
     {                                                                                              \
-        if (FREResult res = x; res != FRE_OK)                                                      \
+        if (FREResult do_or_fail_res = x; do_or_fail_res != FRE_OK)                                \
         {                                                                                          \
-            FAIL_RESULT(message, res);                                                             \
+            FAIL_RESULT(message, do_or_fail_res);                                                  \
         }                                                                                          \
     }                                                                                              \
     while (false)
@@ -160,7 +161,7 @@ inline FREResult ANESetObjectProperty(FREObject o, const char* m, FREObject v, F
 }
 
 inline FREResult ANECallObjectMethod(
-    FREObject o, const char* m, int32_t c, FREObject v[], FREObject* r, FREObject* e)
+    FREObject o, const char* m, uint32_t c, FREObject v[], FREObject* r, FREObject* e)
 {
     return FRECallObjectMethod(o, (const uint8_t*)m, c, v, r, e);
 }

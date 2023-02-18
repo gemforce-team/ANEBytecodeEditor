@@ -21,8 +21,6 @@ class BytecodeEditor : public std::enable_shared_from_this<BytecodeEditor>
 private:
     FREContext ctx;
 
-    std::optional<SWF::SWFFile> currentSWF;
-
     std::jthread runningTask;
 
     std::variant<std::monostate, std::string, std::unordered_map<std::string, std::string>,
@@ -49,8 +47,8 @@ public:
         }
     }
 
-    FREObject disassemble();
-    FREObject disassembleAsync();
+    FREObject disassemble(std::span<const uint8_t> swf);
+    FREObject disassembleAsync(std::span<const uint8_t> swf);
 
     FREObject assemble(
         std::unordered_map<std::string, std::string>&& data, bool includeDebugInstructions);
@@ -64,7 +62,7 @@ public:
     FREObject finishAssemble();
     FREObject finishAssembleAsync();
 
-    FREObject beginIntrospection();
+    FREObject beginIntrospection(std::span<const uint8_t> swf);
 
     FREObject listScripts() const;
     FREObject listClasses() const;
@@ -74,15 +72,12 @@ public:
 
     std::shared_ptr<ASASM::Script> createScript(const std::shared_ptr<ASASM::Method>& sinit);
 
-    void setSWF(SWF::SWFFile&& file) { currentSWF = std::move(file); }
-
     void cleanup()
     {
         if (runningTask.joinable())
         {
             runningTask.join();
         }
-        currentSWF      = std::nullopt;
         partialAssembly = nullptr;
         m_taskResult    = std::monostate{};
     }

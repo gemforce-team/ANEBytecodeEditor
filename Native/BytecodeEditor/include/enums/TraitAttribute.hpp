@@ -10,5 +10,5 @@ enum class TraitAttribute : uint8_t
     Metadata = 4
 };
 
-constexpr inline BidirectionalMap TraitAttributeMap = {"FINAL", TraitAttribute::Final, "OVERRIDE",
+inline constexpr BidirectionalMap TraitAttributeMap = {"FINAL", TraitAttribute::Final, "OVERRIDE",
     TraitAttribute::Override, "METADATA", TraitAttribute::Metadata};

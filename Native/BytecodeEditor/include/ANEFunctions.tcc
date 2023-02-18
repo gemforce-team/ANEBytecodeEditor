@@ -22,23 +22,6 @@ FREObject Assemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     CHECK_OBJECT<FRE_TYPE_VECTOR>(argv[1]);
     bool includeDebugInstructions = CHECK_OBJECT<FRE_TYPE_BOOLEAN>(argv[2]);
 
-    FREObjectType type;
-    DO_OR_FAIL("Failed to get argv[0] type", FREGetObjectType(argv[0], &type));
-    if (type != FRE_TYPE_OBJECT)
-    {
-        FAIL("argv[0] is not an object");
-    }
-    DO_OR_FAIL("Failed to get argv[1] type", FREGetObjectType(argv[1], &type));
-    if (type != FRE_TYPE_VECTOR)
-    {
-        FAIL("argv[1] is not a vector");
-    }
-    DO_OR_FAIL("Failed to get argv[2] type", FREGetObjectType(argv[2], &type));
-    if (type != FRE_TYPE_BOOLEAN)
-    {
-        FAIL("argv[2] is not a boolean");
-    }
-
     uint32_t vecSize;
     DO_OR_FAIL("Failed to get argv[1] size", FREGetArrayLength(argv[1], &vecSize));
 
@@ -69,6 +52,25 @@ FREObject Assemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
     }
 
     return (editor.*Assembler)(std::move(strings), includeDebugInstructions);
+}
+
+template <FREObject (BytecodeEditor::*Disassembler)(std::span<const uint8_t>)>
+FREObject Disassemble(FREContext, void* funcData, uint32_t argc, FREObject argv[])
+{
+    CHECK_ARGC(1);
+
+    GET_EDITOR();
+
+    CHECK_OBJECT<FRE_TYPE_BYTEARRAY>(argv[0]);
+
+    FREByteArray ba;
+    DO_OR_FAIL("Could not acquire SWF byte data", FREAcquireByteArray(argv[0], &ba));
+
+    FREObject ret = (editor.*Disassembler)({ba.bytes, ba.length});
+
+    DO_OR_FAIL("Could not release SWF byte data", FREReleaseByteArray(argv[0]));
+
+    return ret;
 }
 
 template <auto Function>

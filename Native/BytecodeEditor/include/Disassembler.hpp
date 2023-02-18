@@ -21,6 +21,7 @@
 
 #include <climits>
 #include <cmath>
+#include <cstring>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -798,14 +799,14 @@ public:
                 sb.newLine();
             }
 
-            if (instruction.opcode == OPCode::OP_raw)
-            {
-                // if (dumpRaw)
-                //  sb << std::ios::hex << "; " << instruction.arguments[0].ubytev() <<
-                //  std::ios::dec;
-                // sb.newLine();
-                continue;
-            }
+            // if (instruction.opcode == OPCode::OP_raw)
+            // {
+            //     // if (dumpRaw)
+            //     //  sb << std::ios::hex << "; " << instruction.arguments[0].ubytev() <<
+            //     //  std::ios::dec;
+            //     // sb.newLine();
+            //     continue;
+            // }
 
             sb << OPCode_Info[(uint8_t)instruction.opcode].first;
 

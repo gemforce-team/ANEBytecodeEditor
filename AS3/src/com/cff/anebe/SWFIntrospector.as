@@ -15,27 +15,9 @@ package com.cff.anebe
     {
         private var extContext:ExtensionContext;
 
-        private function setSWF(replaceSWF:ByteArray):void
+        private function beginIntrospection(swf:ByteArray):void
         {
-            var ret:Object = extContext.call("SetCurrentSWF", replaceSWF);
-
-            if (ret is String)
-            {
-                throw new Error(ret);
-            }
-            else if (ret == null || !(ret is Boolean))
-            {
-                throw new Error("Unknown error occurred while setting SWF");
-            }
-            else if (!(ret as Boolean))
-            {
-                throw new Error("SetCurrentSWF returned false somehow");
-            }
-        }
-
-        private function beginIntrospection():void
-        {
-            var ret:Object = extContext.call("BeginIntrospection");
+            var ret:Object = extContext.call("BeginIntrospection", swf);
 
             if (ret is String)
             {
@@ -55,9 +37,7 @@ package com.cff.anebe
         {
             extContext = ExtensionContext.createExtensionContext("com.cff.anebe.ANEBytecodeEditor", "SWFIntrospector");
 
-            setSWF(Utils.decompressSWF(swf));
-
-            beginIntrospection();
+            beginIntrospection(Utils.decompressSWF(swf));
         }
 
         /**
@@ -90,6 +70,26 @@ package com.cff.anebe
         }
 
         /**
+         * Gets a list of all classes' names
+         * @return The list of class names
+         */
+        public function ListClasses():Vector.<ASMultiname>
+        {
+            var ret:Object = extContext.call("ListClasses");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (!(ret is Vector.<ASMultiname>))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+
+            return ret as Vector.<ASMultiname>;
+        }
+
+        /**
          * Gets a script after partial assembly.
          * Scripts are the top-level building block of AS3 programs, but are never referenced in-engine.
          * They can contain functions, classes, and variables, and have a single initializer method that sets them up.
@@ -119,6 +119,26 @@ package com.cff.anebe
             {
                 return ret as ASReadOnlyScript;
             }
+        }
+
+        /**
+         * Gets a list of all scripts' names
+         * @return The list of script names
+         */
+        public function ListScripts():Vector.<ASMultiname>
+        {
+            var ret:Object = extContext.call("ListScripts");
+
+            if (ret is String)
+            {
+                throw new Error(ret);
+            }
+            else if (!(ret is Vector.<ASMultiname>))
+            {
+                throw new Error("An unspecified error occurred");
+            }
+
+            return ret as Vector.<ASMultiname>;
         }
     }
 }

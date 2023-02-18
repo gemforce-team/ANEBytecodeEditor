@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <ctype.h>
+#include <list>
 #include <stdio.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -126,7 +127,10 @@ public:
 
         std::vector<ContextItem> reduceGroup(const RefBuilder& refs) const
         {
-            assert(type == Type::Group);
+            if (type != Type::Group)
+            {
+                throw StringException("Type should be group in reduceGroup");
+            }
 
             std::vector<std::vector<ContextItem>> contexts;
             for (const auto& ctx : std::get<GroupData>(data).group)
@@ -157,7 +161,11 @@ public:
                 case Type::Multiname:
                 {
                     const ASASM::Multiname& multiname = std::get<ASASM::Multiname>(data);
-                    assert(multiname.kind == ABCType::QName);
+
+                    if (multiname.kind != ABCType::QName)
+                    {
+                        throw StringException("Multiname kind in toSegments should be QName");
+                    }
 
                     const auto& ns     = multiname.qname().ns;
                     const auto& nsName = ns.name;
@@ -229,16 +237,32 @@ public:
                 switch (type)
                 {
                     case Type::String:
-                        assert(false);
+                        throw StringException("Unreachable area in ContextItem::expand");
                     case Type::Multiname:
-                        return {*this};
+                    {
+                        throw StringException("Not sure this can be handled properly: expand got "
+                                              "an expanding multiname");
+                    }
                     case Type::Group:
                         return {ContextItem(std::get<GroupData>(data).groupFallback)};
                 }
             }
 
-            assert(!expanding);
-            expanding = true;
+            if (expanding)
+            {
+                throw StringException("Somehow here while expanding?");
+            }
+
+            struct ExpandingScopeGuard
+            {
+                bool& expanding;
+
+                ExpandingScopeGuard(bool& expanding) : expanding(expanding) { expanding = true; }
+
+                ~ExpandingScopeGuard() { expanding = false; }
+            };
+
+            ExpandingScopeGuard esg = {expanding};
 
             switch (type)
             {
@@ -258,32 +282,26 @@ public:
                                 {
                                     ctx.emplace_back(multiname.qname().name);
                                 }
-                                expanding = false;
                                 return ctx;
                             }
                         }
                         break;
                         case ABCType::Multiname:
-                            expanding = false;
                             return !multiname.multiname().name.empty()
                                      ? std::vector<ContextItem>{ContextItem(
                                            multiname.multiname().name)}
                                      : std::vector<ContextItem>{};
                         default:
-#ifndef NDEBUG
-                            assert(false);
-#else
-                            break;
-#endif
+                            throw StringException("Incorrect multiname kind in expand");
                     }
                 }
 
                 case Type::String:
                     break;
                 case Type::Group:
-                    expanding = false;
                     return reduceGroup(refs);
             }
+            // This copy needs to be not expanding
             expanding = false;
             return {*this};
         }
@@ -291,6 +309,11 @@ public:
         ContextItem(const ASASM::Multiname& m) : type(Type::Multiname), data(m) {}
 
         ContextItem(const std::string& s, bool filenameSuffix = false)
+            : type(Type::String), data(StrData{s, filenameSuffix})
+        {
+        }
+
+        ContextItem(const char* const s, bool filenameSuffix = false)
             : type(Type::String), data(StrData{s, filenameSuffix})
         {
         }
@@ -314,8 +337,11 @@ public:
                 case Type::String:
                     return std::get<StrData>(l.data).str == std::get<StrData>(r.data).str;
                 case Type::Multiname:
-                    assert(std::get<ASASM::Multiname>(l.data).kind == ABCType::QName &&
-                           std::get<ASASM::Multiname>(r.data).kind == ABCType::QName);
+                    if (std::get<ASASM::Multiname>(l.data).kind != ABCType::QName ||
+                        std::get<ASASM::Multiname>(r.data).kind != ABCType::QName)
+                    {
+                        throw StringException("Incorrect multiname context item types in similar");
+                    }
                     if (std::get<ASASM::Multiname>(l.data).qname().name !=
                         std::get<ASASM::Multiname>(r.data).qname().name)
                     {
@@ -389,10 +415,13 @@ public:
             {
                 if (nsSimilar(ns1, ns2))
                 {
-                    assert(name1 != name2);
+                    if (name1 == name2)
+                    {
+                        throw StringException("Already handled truncate case");
+                    }
                     if constexpr (truncate)
                     {
-                        assert(false);
+                        throw StringException("Also already handled truncate case");
                     }
                     else
                     {
@@ -443,12 +472,13 @@ public:
         {
             constexpr auto uninteresting = [](const std::vector<ContextItem>& c)
             {
-#ifndef NDEBUG
                 for (const auto& cc : c)
                 {
-                    assert(cc.type != Type::Group);
+                    if (cc.type == Type::Group)
+                    {
+                        throw StringException("Group in context root");
+                    }
                 }
-#endif
 
                 if (c.size() != 1)
                 {
@@ -478,7 +508,10 @@ public:
             while (c.size() < c1.size() && c.size() < c2.size())
             {
                 auto root = commonRoot(c1[c.size()], c2[c.size()]);
-                assert(root.size() <= 1);
+                if (root.size() > 1)
+                {
+                    throw StringException("Common root too big");
+                }
                 if (!root.empty())
                 {
                     c.emplace_back(std::move(root[0]));
@@ -595,7 +628,7 @@ public:
                 }
                 names.insert({obj.first, bname + suffix});
                 filenames.insert({obj.first, bfilename + suffix});
-                collisionCounter.insert({bname, counter + 1});
+                collisionCounter.insert_or_assign(bname, counter + 1);
             }
 
 #ifndef NDEBUG

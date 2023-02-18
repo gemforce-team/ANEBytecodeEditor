@@ -12,6 +12,7 @@ package com.cff.anebe.ir
 
         /**
          * This function should not be called by any user of this library. It will be automatically called by GetScript.
+         * I would make it private if I could.
          */
         public function ASReadOnlyScript()
         {

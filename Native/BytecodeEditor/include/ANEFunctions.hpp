@@ -31,6 +31,8 @@ FREObject GetROScript(FREContext ctx, void* funcData, uint32_t argc, FREObject a
 
 FREObject CreateScript(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
 
+FREObject InsertABCToSWF(FREContext ctx, void* funcData, uint32_t argc, FREObject argv[]);
+
 namespace ASClass
 {
     // traits

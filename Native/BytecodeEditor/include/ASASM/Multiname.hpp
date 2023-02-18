@@ -200,38 +200,7 @@ namespace ASASM
             }
         }
 
-        std::strong_ordering operator<=>(const Multiname& m) const noexcept
-        {
-            if (auto cmp = (data.valueless_by_exception() <=> m.data.valueless_by_exception());
-                cmp != 0)
-            {
-                return cmp;
-            }
-            if (auto cmp = (data.index() <=> m.data.index()); cmp != 0)
-            {
-                return cmp;
-            }
-
-            switch (data.index())
-            {
-                // default should be unreachable
-                default:
-                case 0:
-                    return std::strong_ordering::equal;
-                case 1:
-                    return std::get<1>(data) <=> std::get<1>(m.data);
-                case 2:
-                    return std::get<2>(data) <=> std::get<2>(m.data);
-                case 3:
-                    return std::get<3>(data) <=> std::get<3>(m.data);
-                case 4:
-                    return std::get<4>(data) <=> std::get<4>(m.data);
-                case 5:
-                    return std::get<5>(data) <=> std::get<5>(m.data);
-                case 6:
-                    return std::get<6>(data) <=> std::get<6>(m.data);
-            }
-        }
+        std::strong_ordering operator<=>(const Multiname& m) const noexcept = default;
 
         bool operator==(const Multiname&) const noexcept = default;
 

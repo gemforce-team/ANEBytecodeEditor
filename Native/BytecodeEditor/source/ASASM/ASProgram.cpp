@@ -1,5 +1,27 @@
 #include "ASASM/ASProgram.hpp"
 #include "ASASM/AStoABC.hpp"
+#include <queue>
+
+namespace
+{
+    constexpr size_t calcTypenameDepth(
+        const std::vector<SWFABC::Multiname> multinames, const SWFABC::Multiname& m)
+    {
+        if (m.kind != ABCType::TypeName)
+        {
+            return 0;
+        }
+
+        size_t ret = 1 + calcTypenameDepth(multinames, multinames[m.Typename().name]);
+
+        for (size_t param : m.Typename().params)
+        {
+            ret = std::max(ret, 1 + calcTypenameDepth(multinames, multinames[param]));
+        }
+
+        return ret;
+    }
+}
 
 ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
 {
@@ -20,7 +42,18 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
     // Whether or not the class has already been converted
     std::vector<bool> classSet;
 
-    const auto getMethod = [&](uint32_t index) -> std::shared_ptr<Method>&
+    std::vector<uint32_t> typenameQueue;
+
+    const auto comparator = [&abc](uint32_t a, uint32_t b)
+    {
+        return calcTypenameDepth(abc.multinames, abc.multinames[a]) <
+               calcTypenameDepth(abc.multinames, abc.multinames[b]);
+    };
+
+    // std::priority_queue<uint32_t, std::vector<uint32_t>, decltype(comparator)> typenameQueue(
+    //     comparator);
+
+    auto getMethod = [&](uint32_t index) -> std::shared_ptr<Method>&
     {
         methodAdded[index] = true;
         return methods[index];
@@ -83,7 +116,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
         return ret;
     };
 
-    const auto convertMultiname = [&](const SWFABC::Multiname& multiname)
+    const auto convertMultiname = [&](const SWFABC::Multiname& multiname, uint32_t index)
     {
         Multiname ret;
         ret.kind = multiname.kind;
@@ -113,6 +146,9 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
             case ABCType::TypeName:
                 // handled in postConvertMultiname; needs the sub-multinames to be processed
                 // first
+                typenameQueue.push_back(index);
+                std::inplace_merge(typenameQueue.begin(), typenameQueue.end() - 1,
+                    typenameQueue.end(), comparator);
                 break;
             default:
                 throw StringException("Unknown Multiname kind");
@@ -377,11 +413,11 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
     multinames.emplace_back();
     for (size_t i = 1; i < abc.multinames.size(); i++)
     {
-        multinames.emplace_back(convertMultiname(abc.multinames[i]));
+        multinames.emplace_back(convertMultiname(abc.multinames[i], i));
     }
-    for (size_t i = 1; i < abc.multinames.size(); i++)
+    for (uint32_t idx : typenameQueue)
     {
-        postConvertMultiname(abc.multinames[i], multinames[i]);
+        postConvertMultiname(abc.multinames[idx], multinames[idx]);
     }
 
     for (size_t i = 0; i < abc.methods.size(); i++)

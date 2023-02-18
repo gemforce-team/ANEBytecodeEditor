@@ -6,7 +6,7 @@ class StringBuilder : public std::stringstream
 {
 public:
     bool indented = false;
-    int indent = 0;
+    int indent    = 0;
     std::string linePrefix;
 
     template <typename T>

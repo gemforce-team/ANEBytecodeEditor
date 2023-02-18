@@ -49,7 +49,7 @@ namespace ASASM
         };
 
         Multiname name;
-        TraitKind kind = TraitKind::Slot;
+        TraitKind kind     = TraitKind::Slot;
         uint8_t attributes = 0;
 
         std::vector<Metadata> metadata;

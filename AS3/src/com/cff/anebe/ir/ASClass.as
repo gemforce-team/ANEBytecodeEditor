@@ -8,6 +8,7 @@ package com.cff.anebe.ir
     {
         /**
          * This function should not be called by any user of this library. It will be automatically called by GetClass or CreateAndInsertClass.
+         * I would make it private if I could.
          */
         public function ASClass()
         {
@@ -273,12 +274,6 @@ package com.cff.anebe.ir
             {
                 throw new Error("An unspecified error occurred");
             }
-        }
-
-        /** Used internally */
-        public function setNativePointerForConversion():void
-        {
-            context.call("ConvertClassHelper");
         }
     }
 }

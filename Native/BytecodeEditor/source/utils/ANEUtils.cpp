@@ -8,8 +8,18 @@
 std::shared_ptr<ASASM::Class> BytecodeEditor::ConvertClass(FREObject o) const
 {
     FREObject dummy;
-    DO_OR_FAIL("Could not get class's native pointer",
-        ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, nullptr));
+    FREObject exception;
+    FREResult res =
+        ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, &exception);
+
+    if (res == FRE_ACTIONSCRIPT_ERROR)
+    {
+        throw exception;
+    }
+    else
+    {
+        DO_OR_FAIL("Could not get class's native pointer", res);
+    }
 
     return std::get<std::shared_ptr<ASASM::Class>>(nextObjectContext->objectData->object);
 }
@@ -640,7 +650,7 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
     std::vector<std::size_t> fixups;
     for (size_t i = 0; i < b.instructions.size(); i++)
     {
-        auto [instr, requiresFixup] = ConvertInstruction(b.instructions[i]);
+        const auto [instr, requiresFixup] = ConvertInstruction(b.instructions[i]);
         FREInstructions.emplace_back(instr);
         if (requiresFixup)
         {
@@ -655,10 +665,7 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
         const auto& instr    = b.instructions[fixup];
         const auto& argTypes = OPCode_Info[uint8_t(instr.opcode)].second;
 
-        FREObject FREInstr;
-        DO_OR_FAIL("Could not get instruction from vector to set its labels",
-            FREGetArrayElementAt(instructions, fixup, &FREInstr));
-
+        FREObject FREInstr     = FREInstructions[fixup];
         FREObject FREInstrArgs = CheckMember<FRE_TYPE_ARRAY>(FREInstr, "args");
 
         for (size_t i = 0; i < argTypes.size(); i++)
@@ -672,9 +679,16 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
                 case SwitchDefaultTarget:
                 {
                     const auto& target = instr.arguments[i].jumpTarget();
+                    if (target.index >= FREInstructions.size())
+                    {
+                        FAIL("Target too large: " + std::to_string(target.index));
+                    }
+                    if (FREInstructions[target.index] == nullptr)
+                    {
+                        FAIL("Instruction " + std::to_string(target.index) + " was null?????");
+                    }
                     DO_OR_FAIL("Could not set instruction label",
-                        FRESetArrayElementAt(
-                            FREInstrArgs, i, FREInstructions[target.index + target.offset]));
+                        FRESetArrayElementAt(FREInstrArgs, i, FREInstructions[target.index]));
                 }
                 break;
                 case SwitchTargets:
@@ -691,8 +705,7 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
                     {
                         DO_OR_FAIL(
                             "Could not set instruction label vector element " + std::to_string(j),
-                            FRESetArrayElementAt(FRETargets, j,
-                                FREInstructions[targets[j].index + targets[j].offset]));
+                            FRESetArrayElementAt(FRETargets, j, FREInstructions[targets[j].index]));
                     }
 
                     DO_OR_FAIL("Could not set instruction labels",
