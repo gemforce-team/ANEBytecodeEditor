@@ -1,25 +1,40 @@
 #include "ASASM/ASProgram.hpp"
 #include "ASASM/AStoABC.hpp"
 #include <queue>
+#include <unordered_set>
 
 namespace
 {
-    constexpr size_t calcTypenameDepth(
-        const std::vector<SWFABC::Multiname> multinames, const SWFABC::Multiname& m)
+    size_t calcTypenameDepthHelper(const std::vector<SWFABC::Multiname>& multinames, uint32_t index,
+        std::unordered_set<uint32_t>& seen)
     {
-        if (m.kind != ABCType::TypeName)
+        if (multinames[index].kind != ABCType::TypeName)
         {
             return 0;
         }
 
-        size_t ret = 1 + calcTypenameDepth(multinames, multinames[m.Typename().name]);
+        auto [it, inserted] = seen.insert(index);
 
-        for (size_t param : m.Typename().params)
+        if (!inserted)
         {
-            ret = std::max(ret, 1 + calcTypenameDepth(multinames, multinames[param]));
+            throw StringException("Self-referential typename");
+        }
+
+        size_t ret =
+            1 + calcTypenameDepthHelper(multinames, multinames[index].Typename().name, seen);
+
+        for (uint32_t param : multinames[index].Typename().params)
+        {
+            ret = std::max(ret, 1 + calcTypenameDepthHelper(multinames, param, seen));
         }
 
         return ret;
+    }
+
+    size_t calcTypenameDepth(const std::vector<SWFABC::Multiname>& multinames, uint32_t index)
+    {
+        std::unordered_set<uint32_t> seen;
+        return calcTypenameDepthHelper(multinames, index, seen);
     }
 }
 
@@ -42,13 +57,10 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
     // Whether or not the class has already been converted
     std::vector<bool> classSet;
 
-    std::vector<uint32_t> typenameQueue;
+    std::vector<std::pair<uint32_t, uint32_t>> typenameQueue;
 
-    const auto comparator = [&abc](uint32_t a, uint32_t b)
-    {
-        return calcTypenameDepth(abc.multinames, abc.multinames[a]) <
-               calcTypenameDepth(abc.multinames, abc.multinames[b]);
-    };
+    const auto comparator = [&abc](std::pair<uint32_t, uint32_t> a, std::pair<uint32_t, uint32_t> b)
+    { return a.second < b.second; };
 
     // std::priority_queue<uint32_t, std::vector<uint32_t>, decltype(comparator)> typenameQueue(
     //     comparator);
@@ -146,7 +158,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
             case ABCType::TypeName:
                 // handled in postConvertMultiname; needs the sub-multinames to be processed
                 // first
-                typenameQueue.push_back(index);
+                typenameQueue.emplace_back(index, calcTypenameDepth(abc.multinames, index));
                 std::inplace_merge(typenameQueue.begin(), typenameQueue.end() - 1,
                     typenameQueue.end(), comparator);
                 break;
@@ -415,7 +427,7 @@ ASASM::ASProgram ASASM::ASProgram::fromABC(const SWFABC::ABCFile& abc)
     {
         multinames.emplace_back(convertMultiname(abc.multinames[i], i));
     }
-    for (uint32_t idx : typenameQueue)
+    for (auto [idx, depth] : typenameQueue)
     {
         postConvertMultiname(abc.multinames[idx], multinames[idx]);
     }
