@@ -84,16 +84,18 @@ namespace SWF
                     {
                         return;
                     }
-                    it = std::copy_backward(reinterpret_cast<const uint8_t*>(in),
-                        reinterpret_cast<const uint8_t*>(in) + writeSize, it);
+                    std::copy_backward(reinterpret_cast<const uint8_t*>(in),
+                        reinterpret_cast<const uint8_t*>(in) + writeSize, it + writeSize);
+                    it = it + writeSize;
                 };
                 uint16_t rawTagData = uint16_t(type) << 6;
                 if (patchData != nullptr)
                 {
                     std::copy_backward(data, data + patchOffset,
-                        it + ((length >= 0x3F || forceLongLength) ? 6 : 2));
-                    std::copy_backward(patchData, patchData + patchLength,
                         it + patchOffset + ((length >= 0x3F || forceLongLength) ? 6 : 2));
+                    std::copy_backward(patchData, patchData + patchLength,
+                        it + patchLength + patchOffset +
+                            ((length >= 0x3F || forceLongLength) ? 6 : 2));
                     const uint32_t finalLength = patchLength + patchOffset;
                     if (finalLength >= 0x3F)
                     {
@@ -109,8 +111,8 @@ namespace SWF
                 }
                 else
                 {
-                    std::copy_backward(
-                        data, data + length, it + ((length >= 0x3F || forceLongLength) ? 6 : 2));
+                    std::copy_backward(data, data + length,
+                        it + length + ((length >= 0x3F || forceLongLength) ? 6 : 2));
 
                     if (length >= 0x3F || forceLongLength)
                     {

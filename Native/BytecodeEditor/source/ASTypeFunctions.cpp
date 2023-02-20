@@ -7,12 +7,13 @@ using namespace std::string_view_literals;
 #define GET_TYPE(type)                                                                             \
     std::shared_ptr<type>& clazz = std::get<std::shared_ptr<type>>(                                \
         static_cast<ANEFunctionContext*>(funcData)->objectData->object)
+
 #define GET_EDITOR() BytecodeEditor& editor = *static_cast<ANEFunctionContext*>(funcData)->editor
 
 #define SUCCEED_VOID()                                                                             \
-    FREObject ret;                                                                                 \
-    DO_OR_FAIL("Could not create success boolean", FRENewObjectFromBool(true, &ret));              \
-    return ret;
+    FREObject succeed_void_ret;                                                                    \
+    DO_OR_FAIL("Could not create success boolean", FRENewObjectFromBool(true, &succeed_void_ret)); \
+    return succeed_void_ret;
 
 namespace
 {

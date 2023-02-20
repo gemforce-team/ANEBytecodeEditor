@@ -9,17 +9,8 @@ std::shared_ptr<ASASM::Class> BytecodeEditor::ConvertClass(FREObject o) const
 {
     FREObject dummy;
     FREObject exception;
-    FREResult res =
-        ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, &exception);
-
-    if (res == FRE_ACTIONSCRIPT_ERROR)
-    {
-        throw exception;
-    }
-    else
-    {
-        DO_OR_FAIL("Could not get class's native pointer", res);
-    }
+    DO_OR_FAIL_EXCEPTION("Could not get class's native pointer", exception,
+        ANECallObjectMethod(o, "setNativePointerForConversion", 0, nullptr, &dummy, &exception));
 
     return std::get<std::shared_ptr<ASASM::Class>>(nextObjectContext->objectData->object);
 }
@@ -30,16 +21,29 @@ FREObject BytecodeEditor::ConvertClass(const std::shared_ptr<ASASM::Class>& claz
         nullptr, ANEFunctionContext::ObjectData{clazz}};
 
     FREObject ret;
-    DO_OR_FAIL("Could not build com.cff.anebe.ir.ASClass",
-        ANENewObject("com.cff.anebe.ir.ASClass", 0, nullptr, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not build com.cff.anebe.ir.ASClass", exception,
+        ANENewObject("com.cff.anebe.ir.ASClass", 0, nullptr, &ret, &exception));
 
     return ret;
 }
 
 ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
 {
-    ASASM::Namespace ret{ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type"))->get(),
-        std::string(CheckMember<FRE_TYPE_STRING>(o, "name"))};
+    ASASM::Namespace ret;
+    if (auto found = ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type")); found)
+    {
+        ret.kind = found->get();
+    }
+
+    if (ret.kind != ABCType::Namespace && ret.kind != ABCType::ExplicitNamespace &&
+        ret.kind != ABCType::PackageNamespace && ret.kind != ABCType::PrivateNamespace &&
+        ret.kind != ABCType::ProtectedNamespace && ret.kind != ABCType::PackageInternalNs &&
+        ret.kind != ABCType::StaticProtectedNs)
+    {
+        FAIL("Invalid namespace type: " + std::string(CheckMember<FRE_TYPE_STRING>(o, "type")));
+    }
+    ret.name = std::string(CheckMember<FRE_TYPE_STRING>(o, "name"));
 
     FREObject disambiguatorObj = GetMember(o, "secondaryName");
     FREObjectType objType;
@@ -102,8 +106,9 @@ FREObject BytecodeEditor::ConvertNamespace(const ASASM::Namespace& n) const
     FREObject args[] = {kind, name, disambiguator};
 
     FREObject ret;
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASNamespace",
-        ANENewObject("com.cff.anebe.ir.ASNamespace", 3, args, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASNamespace", exception,
+        ANENewObject("com.cff.anebe.ir.ASNamespace", 3, args, &ret, &exception));
 
     return ret;
 }
@@ -209,7 +214,7 @@ ASASM::Multiname BytecodeEditor::ConvertMultiname(FREObject o) const
         break;
         // Unreachable
         default:
-            break;
+            FAIL("Invalid multiname kind: " + std::string(ABCTypeMap.ReverseFind(ret.kind)->get()));
     }
 
     return ret;
@@ -223,27 +228,28 @@ FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
     }
 
     FREObject ret;
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASMultiname",
-        ANENewObject("com.cff.anebe.ir.ASMultiname", 0, nullptr, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASMultiname", exception,
+        ANENewObject("com.cff.anebe.ir.ASMultiname", 0, nullptr, &ret, &exception));
 
-    DO_OR_FAIL("Could not set ASMultiname type",
+    DO_OR_FAIL_EXCEPTION("Could not set ASMultiname type", exception,
         ANESetObjectProperty(
-            ret, "type", FREString(ABCTypeMap.ReverseFind(m.kind)->get()), nullptr));
+            ret, "type", FREString(ABCTypeMap.ReverseFind(m.kind)->get()), &exception));
 
     switch (m.kind)
     {
         using enum ABCType;
         case QName:
         case QNameA:
-            DO_OR_FAIL("Could not set ASMultiname name",
-                ANESetObjectProperty(ret, "name", FREString(m.qname().name), nullptr));
-            DO_OR_FAIL("Could not set ASMultiname namespace",
-                ANESetObjectProperty(ret, "ns", ConvertNamespace(m.qname().ns), nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname name", exception,
+                ANESetObjectProperty(ret, "name", FREString(m.qname().name), &exception));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname namespace", exception,
+                ANESetObjectProperty(ret, "ns", ConvertNamespace(m.qname().ns), &exception));
             break;
         case RTQName:
         case RTQNameA:
-            DO_OR_FAIL("Could not set ASMultiname name",
-                ANESetObjectProperty(ret, "name", FREString(m.rtqname().name), nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname name", exception,
+                ANESetObjectProperty(ret, "name", FREString(m.rtqname().name), &exception));
             break;
         case RTQNameL:
         case RTQNameLA:
@@ -252,12 +258,13 @@ FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
         case Multiname:
         case MultinameA:
         {
-            DO_OR_FAIL("Could not set ASMultiname name",
-                ANESetObjectProperty(ret, "name", FREString(m.multiname().name), nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname name", exception,
+                ANESetObjectProperty(ret, "name", FREString(m.multiname().name), &exception));
 
             FREObject vec;
-            DO_OR_FAIL("Could not create ASMultiname nsSet vector",
-                ANENewObject("Vector.<com.cff.anebe.ir.ASNamespace>", 0, nullptr, &vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not create ASMultiname nsSet vector", exception,
+                ANENewObject(
+                    "Vector.<com.cff.anebe.ir.ASNamespace>", 0, nullptr, &vec, &exception));
             DO_OR_FAIL("Could not set ASMultiname nsSet vector size",
                 FRESetArrayLength(vec, m.multiname().nsSet.size()));
             for (size_t i = 0; i < m.multiname().nsSet.size(); i++)
@@ -265,16 +272,17 @@ FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
                 DO_OR_FAIL("Could not add ASNamespace to ASMultiname nsSet",
                     FRESetArrayElementAt(vec, i, ConvertNamespace(m.multiname().nsSet[i])));
             }
-            DO_OR_FAIL("Could not set ASMultiname nsSet",
-                ANESetObjectProperty(ret, "nsSet", vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname nsSet", exception,
+                ANESetObjectProperty(ret, "nsSet", vec, &exception));
         }
         break;
         case MultinameL:
         case MultinameLA:
         {
             FREObject vec;
-            DO_OR_FAIL("Could not create ASMultiname nsSet vector",
-                ANENewObject("Vector.<com.cff.anebe.ir.ASNamespace>", 0, nullptr, &vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not create ASMultiname nsSet vector", exception,
+                ANENewObject(
+                    "Vector.<com.cff.anebe.ir.ASNamespace>", 0, nullptr, &vec, &exception));
             DO_OR_FAIL("Could not set ASMultiname nsSet vector size",
                 FRESetArrayLength(vec, m.multinamel().nsSet.size()));
             for (size_t i = 0; i < m.multinamel().nsSet.size(); i++)
@@ -282,18 +290,19 @@ FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
                 DO_OR_FAIL("Could not add ASNamespace to ASMultiname nsSet",
                     FRESetArrayElementAt(vec, i, ConvertNamespace(m.multinamel().nsSet[i])));
             }
-            DO_OR_FAIL("Could not set ASMultiname nsSet",
-                ANESetObjectProperty(ret, "nsSet", vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname nsSet", exception,
+                ANESetObjectProperty(ret, "nsSet", vec, &exception));
         }
         break;
         case TypeName:
         {
-            DO_OR_FAIL("Could not set ASMultiname typename",
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname typename", exception,
                 ANESetObjectProperty(
-                    ret, "typename", ConvertMultiname(m.Typename().name()), nullptr));
+                    ret, "typename", ConvertMultiname(m.Typename().name()), &exception));
             FREObject vec;
-            DO_OR_FAIL("Could not create ASMultiname params vector",
-                ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not create ASMultiname params vector", exception,
+                ANENewObject(
+                    "Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &vec, &exception));
             DO_OR_FAIL("Could not set ASMultiname params vector size",
                 FRESetArrayLength(vec, m.Typename().params().size()));
             for (size_t i = 0; i < m.Typename().params().size(); i++)
@@ -301,8 +310,8 @@ FREObject BytecodeEditor::ConvertMultiname(const ASASM::Multiname& m) const
                 DO_OR_FAIL("Could not add ASNamespace to ASMultiname params",
                     FRESetArrayElementAt(vec, i, ConvertMultiname(m.Typename().params()[i])));
             }
-            DO_OR_FAIL("Could not set ASMultiname params",
-                ANESetObjectProperty(ret, "params", vec, nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not set ASMultiname params", exception,
+                ANESetObjectProperty(ret, "params", vec, &exception));
         }
         break;
     }
@@ -315,8 +324,9 @@ FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
     FREObject kind      = FREString(TraitKindMap.ReverseFind(t.kind)->get());
     FREObject traitName = ConvertMultiname(t.name);
     FREObject attributes;
-    DO_OR_FAIL("Could not create attributes array",
-        ANENewObject("Vector.<String>", 0, nullptr, &attributes, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create attributes array", exception,
+        ANENewObject("Vector.<String>", 0, nullptr, &attributes, &exception));
     for (const auto& attribute : TraitAttributeMap.GetEntries())
     {
         if (t.attributes & uint8_t(attribute.second))
@@ -331,33 +341,34 @@ FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
         }
     }
     FREObject metadatas;
-    DO_OR_FAIL("Could not create metadatas array",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASMetadata>", 0, nullptr, &metadatas, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create metadatas array", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASMetadata>", 0, nullptr, &metadatas, &exception));
     for (const auto& metadata : t.metadata)
     {
         FREObject name = FREString(metadata.name);
         FREObject metadataEntries;
-        DO_OR_FAIL("Could not create metadata entry vector",
+        DO_OR_FAIL_EXCEPTION("Could not create metadata entry vector", exception,
             ANENewObject("Vector.<com.cff.anebe.ir.ASMetadataEntry>", 0, nullptr, &metadataEntries,
-                nullptr));
+                &exception));
         DO_OR_FAIL("Could not set metadata entry vector size",
             FRESetArrayLength(metadataEntries, metadata.data.size()));
         for (size_t i = 0; i < metadata.data.size(); i++)
         {
             FREObject data;
-            DO_OR_FAIL("Could not create metadata data object",
-                ANENewObject("com.cff.anebe.ir.ASMetadataEntry", 0, nullptr, &data, nullptr));
-            DO_OR_FAIL("Could not set metadata entry",
-                ANESetObjectProperty(data, "key", FREString(metadata.data[i].first), nullptr));
-            DO_OR_FAIL("Could not set metadata entry",
-                ANESetObjectProperty(data, "value", FREString(metadata.data[i].second), nullptr));
+            DO_OR_FAIL_EXCEPTION("Could not create metadata data object", exception,
+                ANENewObject("com.cff.anebe.ir.ASMetadataEntry", 0, nullptr, &data, &exception));
+            DO_OR_FAIL_EXCEPTION("Could not set metadata entry", exception,
+                ANESetObjectProperty(data, "key", FREString(metadata.data[i].first), &exception));
+            DO_OR_FAIL_EXCEPTION("Could not set metadata entry", exception,
+                ANESetObjectProperty(
+                    data, "value", FREString(metadata.data[i].second), &exception));
             DO_OR_FAIL(
                 "Could not assign metadata entry", FRESetArrayElementAt(metadataEntries, i, data));
         }
         FREObject newmeta;
         FREObject args[2] = {name, metadataEntries};
-        DO_OR_FAIL("Could not make metadata",
-            ANENewObject("com.cff.anebe.ir.ASMetadata", 2, args, &newmeta, nullptr));
+        DO_OR_FAIL_EXCEPTION("Could not make metadata", exception,
+            ANENewObject("com.cff.anebe.ir.ASMetadata", 2, args, &newmeta, &exception));
 
         uint32_t len;
         DO_OR_FAIL("Could not get metadatas array length", FREGetArrayLength(metadatas, &len));
@@ -400,8 +411,8 @@ FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
     FREObject ret;
     FREObject args[] = {
         kind, attributes, slotId, traitName, type, metadatas, value, funcOrMethod, clazz};
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASTrait",
-        ANENewObject("com.cff.anebe.ir.ASTrait", 9, args, &ret, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASTrait", exception,
+        ANENewObject("com.cff.anebe.ir.ASTrait", 9, args, &ret, &exception));
 
     return ret;
 }
@@ -500,8 +511,9 @@ ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
 FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
 {
     FREObject paramTypes;
-    DO_OR_FAIL("Could not create method paramTypes array",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &paramTypes, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create method paramTypes array", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASMultiname>", 0, nullptr, &paramTypes, &exception));
     DO_OR_FAIL("Could not set paramTypes size", FRESetArrayLength(paramTypes, m.paramTypes.size()));
     for (size_t i = 0; i < m.paramTypes.size(); i++)
     {
@@ -512,8 +524,8 @@ FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
     FREObject returnType = ConvertMultiname(m.returnType);
     FREObject name       = FREString(m.name);
     FREObject flags;
-    DO_OR_FAIL("Could not create method flags array",
-        ANENewObject("Vector.<String>", 0, nullptr, &flags, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create method flags array", exception,
+        ANENewObject("Vector.<String>", 0, nullptr, &flags, &exception));
     for (const auto& flag : MethodFlagMap.GetEntries())
     {
         if (m.flags & uint8_t(flag.second))
@@ -527,8 +539,8 @@ FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
     }
 
     FREObject options;
-    DO_OR_FAIL("Could not create options array",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASValue>", 0, nullptr, &options, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create options array", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASValue>", 0, nullptr, &options, &exception));
     DO_OR_FAIL("Could not set options size", FRESetArrayLength(options, m.options.size()));
     for (size_t i = 0; i < m.options.size(); i++)
     {
@@ -536,8 +548,8 @@ FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
     }
 
     FREObject paramNames;
-    DO_OR_FAIL("Could not create paramNames array",
-        ANENewObject("Vector.<String>", 0, nullptr, &paramNames, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create paramNames array", exception,
+        ANENewObject("Vector.<String>", 0, nullptr, &paramNames, &exception));
     DO_OR_FAIL("Could not set paramNames size", FRESetArrayLength(paramNames, m.paramNames.size()));
     for (size_t i = 0; i < m.paramNames.size(); i++)
     {
@@ -550,8 +562,8 @@ FREObject BytecodeEditor::ConvertMethod(const ASASM::Method& m) const
     FREObject args[] = {paramTypes, returnType, name, flags, options, paramNames, body};
 
     FREObject ret;
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASMethod",
-        ANENewObject("com.cff.anebe.ir.ASMethod", 7, args, &ret, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASMethod", exception,
+        ANENewObject("com.cff.anebe.ir.ASMethod", 7, args, &ret, &exception));
     return ret;
 }
 
@@ -582,10 +594,16 @@ std::shared_ptr<ASASM::Method> BytecodeEditor::ConvertMethod(FREObject o) const
     {
         FREObject flag;
         DO_OR_FAIL("Could not get flag entry", FREGetArrayElementAt(array, i, &flag));
-        ret->flags |= uint8_t(
-            MethodFlagMap
-                .Find(CHECK_OBJECT<FRE_TYPE_STRING>(flag, "flags[" + std::to_string(i) + "]"))
-                ->get());
+        if (auto found = MethodFlagMap.Find(
+                CHECK_OBJECT<FRE_TYPE_STRING>(flag, "flags[" + std::to_string(i) + "]"));
+            found)
+        {
+            ret->flags |= uint8_t(found.value().get());
+        }
+        else
+        {
+            FAIL("Invalid method flag" + std::string(CHECK_OBJECT<FRE_TYPE_STRING>(flag)));
+        }
     }
 
     array = CheckMember<FRE_TYPE_VECTOR>(o, "options");
@@ -639,9 +657,10 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
         FRENewObjectFromUint32(b.maxScopeDepth, &maxScopeDepth));
 
     FREObject instructions;
-    DO_OR_FAIL("Could not create body instruction vector",
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create body instruction vector", exception,
         ANENewObject(
-            "Vector.<com.cff.anebe.ir.ASInstruction>", 0, nullptr, &instructions, nullptr));
+            "Vector.<com.cff.anebe.ir.ASInstruction>", 0, nullptr, &instructions, &exception));
     DO_OR_FAIL(
         "Could not set instruction size", FRESetArrayLength(instructions, b.instructions.size()));
 
@@ -695,9 +714,9 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
                 {
                     const auto& targets = instr.arguments[i].switchTargets();
                     FREObject FRETargets;
-                    DO_OR_FAIL("Couldn't create switch target array",
+                    DO_OR_FAIL_EXCEPTION("Couldn't create switch target array", exception,
                         ANENewObject("Vector.<com.cff.anebe.ir.ASInstruction>", 0, nullptr,
-                            &FRETargets, nullptr));
+                            &FRETargets, &exception));
                     DO_OR_FAIL("Couldn't set switch target array size",
                         FRESetArrayLength(FRETargets, targets.size()));
 
@@ -717,8 +736,8 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
     }
 
     FREObject exceptions;
-    DO_OR_FAIL("Could not create body exception vector",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASException>", 0, nullptr, &exceptions, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create body exception vector", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASException>", 0, nullptr, &exceptions, &exception));
     DO_OR_FAIL("Could not set exception size", FRESetArrayLength(exceptions, b.exceptions.size()));
     for (size_t i = 0; i < b.exceptions.size(); i++)
     {
@@ -728,8 +747,8 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
     }
 
     FREObject traits;
-    DO_OR_FAIL("Could not create body trait vector",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASTrait>", 0, nullptr, &traits, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create body trait vector", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASTrait>", 0, nullptr, &traits, &exception));
     DO_OR_FAIL("Could not set trait size", FRESetArrayLength(traits, b.traits.size()));
     for (size_t i = 0; i < b.traits.size(); i++)
     {
@@ -738,8 +757,8 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
     }
 
     FREObject errors;
-    DO_OR_FAIL("Could not create body error vector",
-        ANENewObject("Vector.<com.cff.anebe.ir.ASError>", 0, nullptr, &errors, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create body error vector", exception,
+        ANENewObject("Vector.<com.cff.anebe.ir.ASError>", 0, nullptr, &errors, &exception));
     DO_OR_FAIL("Could not set error size", FRESetArrayLength(errors, b.errors.size()));
     for (size_t i = 0; i < b.errors.size(); i++)
     {
@@ -751,8 +770,8 @@ FREObject BytecodeEditor::ConvertMethodBody(const ASASM::MethodBody& b) const
         exceptions, traits, errors};
 
     FREObject ret;
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASMethodBody",
-        ANENewObject("com.cff.anebe.ir.ASMethodBody", 8, args, &ret, nullptr));
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASMethodBody", exception,
+        ANENewObject("com.cff.anebe.ir.ASMethodBody", 8, args, &ret, &exception));
     return ret;
 }
 
@@ -829,8 +848,9 @@ FREObject BytecodeEditor::ConvertException(
     FREObject args[] = {from, to, target, exceptionType, exceptionName};
 
     FREObject ret;
-    DO_OR_FAIL("Could not create com.cff.anebe.ir.ASException",
-        ANENewObject("com.cff.anebe.ir.ASException", 5, args, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create com.cff.anebe.ir.ASException", exception,
+        ANENewObject("com.cff.anebe.ir.ASException", 5, args, &ret, &exception));
     return ret;
 }
 
@@ -850,8 +870,9 @@ FREObject BytecodeEditor::ConvertError(
     FREObject args[] = {ConvertLabel(e.loc, allInstrs), FREString(e.message)};
 
     FREObject ret;
-    DO_OR_FAIL("Couldn't make com.cff.anebe.ir.ASError",
-        ANENewObject("com.cff.anebe.ir.ASError", 2, args, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Couldn't make com.cff.anebe.ir.ASError", exception,
+        ANENewObject("com.cff.anebe.ir.ASError", 2, args, &ret, &exception));
     return ret;
 }
 
@@ -1089,8 +1110,9 @@ std::pair<FREObject, bool> BytecodeEditor::ConvertInstruction(const ASASM::Instr
 
     FREObject opcode = FREString(OPCodeMap.ReverseFind(instr.opcode)->get());
     FREObject arguments;
-    DO_OR_FAIL("Could not create instruction arguments array",
-        ANENewObject("Array", 0, nullptr, &arguments, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not create instruction arguments array", exception,
+        ANENewObject("Array", 0, nullptr, &arguments, &exception));
 
     const auto& argTypes = OPCode_Info[uint8_t(instr.opcode)].second;
 
@@ -1205,8 +1227,8 @@ std::pair<FREObject, bool> BytecodeEditor::ConvertInstruction(const ASASM::Instr
     FREObject args[] = {opcode, arguments};
 
     FREObject ret;
-    DO_OR_FAIL("Couldn't make com.cff.anebe.ir.ASInstruction",
-        ANENewObject("com.cff.anebe.ir.ASInstruction", 2, args, &ret, nullptr));
+    DO_OR_FAIL_EXCEPTION("Couldn't make com.cff.anebe.ir.ASInstruction", exception,
+        ANENewObject("com.cff.anebe.ir.ASInstruction", 2, args, &ret, &exception));
     return {ret, requiresFixup};
 }
 
@@ -1255,8 +1277,9 @@ FREObject BytecodeEditor::ConvertValue(const ASASM::Value& v) const
     }
 
     FREObject ret;
-    DO_OR_FAIL("Couldn't create com.cff.anebe.ir.ASValue",
-        ANENewObject("com.cff.anebe.ir.ASValue", 1, &value, &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Couldn't create com.cff.anebe.ir.ASValue", exception,
+        ANENewObject("com.cff.anebe.ir.ASValue", 1, &value, &ret, &exception));
     return ret;
 }
 

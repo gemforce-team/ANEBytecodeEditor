@@ -23,6 +23,10 @@ package com.cff.anebe
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             else if (ret == null || !(ret is Boolean))
             {
                 throw new Error("Unknown error occurred while setting SWF");
@@ -59,6 +63,10 @@ package com.cff.anebe
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             else if (ret == null || !(ret is ASReadOnlyClass))
             {
                 throw new Error("Unknown error occurred");
@@ -80,6 +88,10 @@ package com.cff.anebe
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             else if (!(ret is Vector.<ASMultiname>))
             {
@@ -111,6 +123,10 @@ package com.cff.anebe
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             else if (ret == null || !(ret is ASReadOnlyScript))
             {
                 throw new Error("Unknown error occurred");
@@ -132,6 +148,10 @@ package com.cff.anebe
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             else if (!(ret is Vector.<ASMultiname>))
             {

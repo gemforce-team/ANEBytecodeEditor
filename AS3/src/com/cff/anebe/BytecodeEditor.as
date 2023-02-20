@@ -33,6 +33,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is Boolean))
 			{
 				throw new Error("Unknown error occurred during RemoveABCAndEndTags");
@@ -63,6 +67,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (ret == null)
 			{
@@ -108,6 +116,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is ByteArray))
 			{
 				throw new Error("Unknown error occurred");
@@ -132,6 +144,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (ret == null || !(ret is Boolean))
 			{
@@ -175,6 +191,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (ret == null || !(ret is Boolean))
 			{
@@ -225,6 +245,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is Boolean))
 			{
 				throw new Error("Unknown error occurred");
@@ -265,6 +289,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is Boolean))
 			{
 				throw new Error("Unknown error occurred");
@@ -296,6 +324,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (ret == null || !(ret is ByteArray))
 			{
@@ -329,6 +361,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is Boolean))
 			{
 				throw new Error("Unknown error occurred");
@@ -358,6 +394,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is ASClass))
 			{
 				throw new Error("Unknown error occurred");
@@ -379,6 +419,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (!(ret is Vector.<ASMultiname>))
 			{
@@ -410,6 +454,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is ASScript))
 			{
 				throw new Error("Unknown error occurred");
@@ -431,6 +479,10 @@ package com.cff.anebe
 			if (ret is String)
 			{
 				throw new Error(ret);
+			}
+			else if (ret is NestedError)
+			{
+				throw ret;
 			}
 			else if (!(ret is Vector.<ASMultiname>))
 			{
@@ -457,6 +509,10 @@ package com.cff.anebe
 			{
 				throw new Error(ret);
 			}
+			else if (ret is NestedError)
+			{
+				throw ret;
+			}
 			else if (ret == null || !(ret is ASScript))
 			{
 				throw new Error("Unknown error occurred");
@@ -476,6 +532,10 @@ package com.cff.anebe
 				{
 					throw new Error(error);
 				}
+				else if (error is NestedError)
+				{
+					throw error;
+				}
 				else
 				{
 					throw new Error("Unknown error occurred while performing an ANEByteCodeEditor async task");
@@ -488,6 +548,10 @@ package com.cff.anebe
 				if (data is String)
 				{
 					throw new Error(data);
+				}
+				else if (data is NestedError)
+				{
+					throw data;
 				}
 				else if (data == null)
 				{

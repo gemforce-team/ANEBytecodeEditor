@@ -1,6 +1,7 @@
 package com.cff.anebe.ir
 {
     import flash.external.ExtensionContext;
+    import com.cff.anebe.NestedError;
 
     /**
      * A representation of an AS3 class, readable at a high level.
@@ -43,6 +44,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is ASMultiname))
             {
                 throw new Error("An unspecified error occurred");
@@ -61,6 +66,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is ASMultiname))
             {
@@ -93,6 +102,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
 
             return ret as ASTrait;
         }
@@ -108,6 +121,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             else if (!(ret is Vector.<ASMultiname>))
             {
@@ -141,6 +158,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
 
             return ret as ASTrait;
         }
@@ -156,6 +177,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             else if (!(ret is Vector.<ASMultiname>))
             {
@@ -178,6 +203,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is ASMethod))
             {
                 throw new Error("An unspecified error occurred");
@@ -197,6 +226,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is ASMethod))
             {
@@ -218,6 +251,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Vector.<ASMultiname>))
             {
                 throw new Error("An unspecified error occurred");
@@ -237,6 +274,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Vector.<String>))
             {
                 throw new Error("An unspecified error occurred");
@@ -255,6 +296,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is ASNamespace))
             {
                 throw new Error("An unspecified error occurred");
@@ -265,7 +310,11 @@ package com.cff.anebe.ir
         /** Used internally */
         public function setNativePointerForConversion():void
         {
-            context.call("ConvertClassHelper");
+            var ret:Object = context.call("ConvertClassHelper");
+            if (ret is NestedError)
+            {
+                throw ret;
+            }
         }
     }
 }

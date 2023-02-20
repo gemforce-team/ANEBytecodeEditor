@@ -1,6 +1,7 @@
 package com.cff.anebe.ir
 {
     import flash.external.ExtensionContext;
+    import com.cff.anebe.NestedError;
 
     /**
      * A representation of an AS3 script, editable at a high level.
@@ -43,6 +44,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
 
             return ret as ASTrait;
         }
@@ -58,6 +63,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             else if (!(ret is Vector.<ASMultiname>))
             {
@@ -79,6 +88,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is ASMethod))
             {

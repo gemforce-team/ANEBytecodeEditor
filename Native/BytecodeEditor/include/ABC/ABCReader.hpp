@@ -110,11 +110,17 @@ namespace SWFABC
             return buf[pos++];
         }
 
-        uint16_t readU16() { return readU8() | (readU8() << 8); }
+        uint16_t readU16()
+        {
+            uint16_t ret = readU8();
+            ret          |= uint16_t(readU8()) << 8;
+            return ret;
+        }
 
         int32_t readS24()
         {
-            uint32_t val = readU8() | (readU8() << 8) | (readU8() << 16);
+            uint32_t val = readU16();
+            val          |= uint32_t(readU8()) << 16;
             if (val & 0x00800000)
             {
                 val |= 0xFF000000;

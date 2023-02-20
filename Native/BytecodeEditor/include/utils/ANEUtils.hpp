@@ -18,10 +18,38 @@
 
 #include <FlashRuntimeExtensions.h>
 
+#if defined(__cpp_lib_stacktrace) && __cpp_lib_stacktrace >= 202011L
+#define ANEBYTECODEEDITOR_HAS_STACKTRACE
+#endif
+
 #define DO_OR_FAIL_NULL(x)                                                                         \
     if (x != FRE_OK)                                                                               \
     FAIL_RETURN(nullptr)
 
+#ifdef ANEBYTECODEEDITOR_HAS_STACKTRACE
+#include <stacktrace>
+#define FAIL_RESULT(message, result)                                                               \
+    do                                                                                             \
+    {                                                                                              \
+        std::source_location fail_result_current = std::source_location::current();                \
+        std::stacktrace fail_result_stack_trace  = std::stacktrace::current(1);                    \
+        FAIL_RETURN(FREStringForError(std::to_string(int32_t(result)) + ": " + message +           \
+                                      "\nAt: " + fail_result_current.file_name() + "(" +           \
+                                      std::to_string(fail_result_current.line()) + ") " +          \
+                                      fail_result_current.function_name() + "Stack trace: \n" +    \
+                                      std::to_string(fail_result_stack_trace)));                   \
+    }                                                                                              \
+    while (false)
+
+#define FAIL(message)                                                                              \
+    do                                                                                             \
+    {                                                                                              \
+        std::stacktrace fail_result_stack_trace = std::stacktrace::current(1);                     \
+        FAIL_RETURN(FREStringForError(                                                             \
+            message + ("\nStack trace: " + std::to_string(fail_result_stack_trace))));             \
+    }                                                                                              \
+    while (false)
+#else
 #define FAIL_RESULT(message, result)                                                               \
     do                                                                                             \
     {                                                                                              \
@@ -36,9 +64,14 @@
 #define FAIL(message)                                                                              \
     do                                                                                             \
     {                                                                                              \
-        FAIL_RETURN(FREStringForError(message));                                                   \
+        std::source_location fail_result_current = std::source_location::current();                \
+        FAIL_RETURN(FREStringForError(                                                             \
+            message + ("\nAt: " + (fail_result_current.file_name() +                               \
+                                      ("(" + std::to_string(fail_result_current.line()) + ") ") +  \
+                                      fail_result_current.function_name()))));                     \
     }                                                                                              \
     while (false)
+#endif
 
 #define DO_OR_FAIL(message, x)                                                                     \
     do                                                                                             \
@@ -46,6 +79,28 @@
         if (FREResult do_or_fail_res = x; do_or_fail_res != FRE_OK)                                \
         {                                                                                          \
             FAIL_RESULT(message, do_or_fail_res);                                                  \
+        }                                                                                          \
+    }                                                                                              \
+    while (false)
+
+#define DO_OR_FAIL_EXCEPTION(message, exceptionVar, x)                                             \
+    do                                                                                             \
+    {                                                                                              \
+        FREResult do_or_fail_exception_res = x;                                                    \
+        if (do_or_fail_exception_res == FRE_ACTIONSCRIPT_ERROR)                                    \
+        {                                                                                          \
+            FREObject do_or_fail_exception_message    = FREStringForError(message);                \
+            FREObject do_or_fail_exception_ret_args[] = {                                          \
+                do_or_fail_exception_message, exceptionVar};                                       \
+            FREObject do_or_fail_exception_ret;                                                    \
+            DO_OR_FAIL("Could not build nested error",                                             \
+                FRENewObject((const uint8_t*)"com.cff.anebe.NestedError", 2,                       \
+                    do_or_fail_exception_ret_args, &do_or_fail_exception_ret, nullptr));           \
+            FAIL_RETURN(do_or_fail_exception_ret);                                                 \
+        }                                                                                          \
+        else if (do_or_fail_exception_res != FRE_OK)                                               \
+        {                                                                                          \
+            FAIL_RESULT(message, do_or_fail_exception_res);                                        \
         }                                                                                          \
     }                                                                                              \
     while (false)
@@ -129,13 +184,33 @@ inline auto CHECK_OBJECT(
     }
 }
 
+#ifdef ANEBYTECODEEDITOR_HAS_STACKTRACE
+inline FREObject GetMember(FREObject o, std::string_view member)
+{
+    FREObject ret;
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not get object property " + std::string(member), exception,
+        FREGetObjectProperty(o, (const uint8_t*)member.data(), &ret, &exception));
+    return ret;
+}
+
+template <FREObjectType Type, typename NumberType = double>
+    requires std::same_as<NumberType, uint32_t> || std::same_as<NumberType, int32_t> ||
+             std::same_as<NumberType, uint8_t> || std::same_as<NumberType, int8_t> ||
+             std::same_as<NumberType, double>
+inline auto CheckMember(FREObject o, std::string_view member)
+{
+    return CHECK_OBJECT<Type, NumberType>(GetMember(o, member), std::string(member));
+}
+#else
 inline FREObject GetMember(FREObject o, std::string_view member,
     std::source_location loc = std::source_location::current())
 {
     FREObject ret;
-    DO_OR_FAIL("Could not get object property " + std::string(member) + " during " +
-                   loc.function_name() + " at " + std::to_string(loc.line()),
-        FREGetObjectProperty(o, (const uint8_t*)member.data(), &ret, nullptr));
+    FREObject exception;
+    DO_OR_FAIL_EXCEPTION("Could not get object property " + std::string(member) + " during " +
+                             loc.function_name() + " at " + std::to_string(loc.line()),
+        exception, FREGetObjectProperty(o, (const uint8_t*)member.data(), &ret, &exception));
     return ret;
 }
 
@@ -148,6 +223,7 @@ inline auto CheckMember(FREObject o, std::string_view member,
 {
     return CHECK_OBJECT<Type, NumberType>(GetMember(o, member), std::string(member), loc);
 }
+#endif
 
 inline FREResult ANENewObject(
     const char* v, uint32_t argc, FREObject argv[], FREObject* object, FREObject* thrownException)

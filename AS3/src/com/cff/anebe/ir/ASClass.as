@@ -1,5 +1,7 @@
 package com.cff.anebe.ir
 {
+    import com.cff.anebe.NestedError;
+
     /**
      * A representation of an AS3 class, editable at a high level.
      * @author Chris
@@ -27,6 +29,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -44,6 +50,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is Boolean) || !ret)
             {
@@ -78,6 +88,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -101,6 +115,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is Boolean) || !ret)
             {
@@ -135,6 +153,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -159,6 +181,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -182,6 +208,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -203,6 +233,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is Boolean) || !ret)
             {
@@ -226,6 +260,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -248,6 +286,10 @@ package com.cff.anebe.ir
             {
                 throw new Error(ret);
             }
+            else if (ret is NestedError)
+            {
+                throw ret;
+            }
             if (!(ret is Boolean) || !ret)
             {
                 throw new Error("An unspecified error occurred");
@@ -269,6 +311,10 @@ package com.cff.anebe.ir
             if (ret is String)
             {
                 throw new Error(ret);
+            }
+            else if (ret is NestedError)
+            {
+                throw ret;
             }
             if (!(ret is Boolean) || !ret)
             {

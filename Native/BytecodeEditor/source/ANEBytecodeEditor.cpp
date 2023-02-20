@@ -93,8 +93,7 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
             nextObjectContext->objectData->object, context->editor->partialAssembly.get()};
         nextObjectContext = std::nullopt;
         *functions        = context->functions.get();
-        *numFunctions     = 21;
-        FRESetContextNativeData(ctx, context);
+        *numFunctions     = 23;
     }
     else if (ctxType == "Script"sv)
     {
@@ -113,7 +112,6 @@ void ContextInitializer(void*, const uint8_t* ctxTypeRaw, FREContext ctx, uint32
         nextObjectContext = std::nullopt;
         *functions        = context->functions.get();
         *numFunctions     = 7;
-        FRESetContextNativeData(ctx, context);
     }
     FRESetContextNativeData(ctx, context);
 }
