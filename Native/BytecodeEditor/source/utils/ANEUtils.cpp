@@ -786,6 +786,10 @@ ASASM::MethodBody BytecodeEditor::ConvertMethodBody(FREObject o) const
     FREObject array = CheckMember<FRE_TYPE_VECTOR>(o, "instructions");
     uint32_t arrLen;
     DO_OR_FAIL("Couldn't get instruction vector size", FREGetArrayLength(array, &arrLen));
+    if (arrLen == 0)
+    {
+        FAIL("Method body must contain instructions");
+    }
     std::vector<FREObject> FREInstructions;
     FREInstructions.reserve(arrLen);
     for (uint32_t i = 0; i < arrLen; i++)
