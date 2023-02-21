@@ -893,21 +893,13 @@ namespace ASScript
 
         try
         {
-            ASASM::Multiname superName;
-            superName.kind = ABCType::QName;
-            superName.qname({
-                ASASM::Namespace{.kind = ABCType::PackageNamespace, .name = ""},
-                "Object"
-            });
-
             ASASM::Trait& newTrait = clazz->traits.emplace_back();
             newTrait.kind          = TraitKind::Class;
             newTrait.name          = editor.ConvertMultiname(argv[0]);
             newTrait.vClass({0,
                 std::shared_ptr<ASASM::Class>(new ASASM::Class(editor.ConvertMethod(argv[1]), {},
-                    ASASM::Instance{.name = newTrait.name,
-                        .superName        = superName,
-                        .iinit            = editor.ConvertMethod(argv[2])}))});
+                    ASASM::Instance{
+                        .name = newTrait.name, .iinit = editor.ConvertMethod(argv[2])}))});
 
             return editor.ConvertClass(newTrait.vClass().vclass);
         }
