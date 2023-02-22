@@ -44,14 +44,25 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
                 }
             });
 
-        FREObject lengthObj;
-        DO_OR_FAIL("Failed to create length object", FRENewObjectFromUint32(finalSize, &lengthObj));
+        if (finalSize > swfLength)
+        {
+            FREObject lengthObj;
+            DO_OR_FAIL(
+                "Failed to create length object", FRENewObjectFromUint32(finalSize, &lengthObj));
 
-        DO_OR_FAIL(
-            "Failed to expand bytearray", ANESetObjectProperty(swf, "length", lengthObj, nullptr));
+            FREObject exception;
+            DO_OR_FAIL_EXCEPTION("Failed to expand bytearray", exception,
+                ANESetObjectProperty(swf, "length", lengthObj, &exception));
+        }
 
         DO_OR_FAIL("Failed to acquire SWF bytearray", FREAcquireByteArray(swf, &swfData));
         tags = SWF::SWFFile::getTagsFrom({swfData.bytes, swfLength});
+
+        static_assert(std::endian::native == std::endian::little);
+        swfData.bytes[4] = uint8_t(finalSize);
+        swfData.bytes[5] = uint8_t(finalSize >> 8);
+        swfData.bytes[6] = uint8_t(finalSize >> 16);
+        swfData.bytes[7] = uint8_t(finalSize >> 24);
 
         FREByteArray abcData;
         DO_OR_FAIL("Failed to acquire ABC bytearray", FREAcquireByteArray(abc, &abcData));
@@ -153,6 +164,17 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
 
         DO_OR_FAIL("Failed to release swf bytearray", FREReleaseByteArray(swf));
         DO_OR_FAIL("Failed to release abc bytearray", FREReleaseByteArray(abc));
+
+        if (finalSize < swfLength)
+        {
+            FREObject lengthObj;
+            DO_OR_FAIL(
+                "Failed to create length object", FRENewObjectFromUint32(finalSize, &lengthObj));
+
+            FREObject exception;
+            DO_OR_FAIL_EXCEPTION("Failed to shrink bytearray", exception,
+                ANESetObjectProperty(swf, "length", lengthObj, &exception));
+        }
     }
     catch (std::exception& e)
     {
