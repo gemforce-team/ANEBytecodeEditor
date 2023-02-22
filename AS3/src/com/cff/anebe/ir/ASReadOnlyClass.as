@@ -34,11 +34,16 @@ package com.cff.anebe.ir
 
         /**
          * Gets the name of this class's superclass
-         * @return The superclass name
+         * @return The superclass name, or null if there is no superclass
          */
         public function getSuperClass():ASMultiname
         {
             var ret:Object = context.call("GetSuperclass");
+
+            if (ret == null)
+            {
+                return null;
+            }
 
             if (ret is String)
             {

@@ -19,7 +19,7 @@ package com.cff.anebe.ir
 
         /**
          * Sets the name of this class's superclass
-         * @param superClass The new superclass name
+         * @param superClass The new superclass name, or null if there is no superclass
          */
         public function setSuperClass(superClass:ASMultiname):void
         {
