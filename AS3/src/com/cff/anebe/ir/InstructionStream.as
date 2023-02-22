@@ -659,7 +659,7 @@ package com.cff.anebe.ir
             }
             else
             {
-                index += args.length - 2 - deleteCount;
+                index += args.length - 2;
             }
 
             // Return this for chaining
