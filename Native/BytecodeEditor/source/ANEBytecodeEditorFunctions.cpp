@@ -58,7 +58,6 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
         DO_OR_FAIL("Failed to acquire SWF bytearray", FREAcquireByteArray(swf, &swfData));
         tags = SWF::SWFFile::getTagsFrom({swfData.bytes, swfLength});
 
-        static_assert(std::endian::native == std::endian::little);
         swfData.bytes[4] = uint8_t(finalSize);
         swfData.bytes[5] = uint8_t(finalSize >> 8);
         swfData.bytes[6] = uint8_t(finalSize >> 16);
@@ -67,10 +66,76 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
         FREByteArray abcData;
         DO_OR_FAIL("Failed to acquire ABC bytearray", FREAcquireByteArray(abc, &abcData));
 
-        size_t currentTag = 0;
-        while (currentTag < tags.size() && tags[currentTag].type != TagType::DoABC2 &&
-               tags[currentTag].type != TagType::End)
+        auto shiftTags = [&tags, &swfData](size_t currentTag, ptrdiff_t shiftBy,
+                             std::optional<TagType> excludeType = std::nullopt)
         {
+            std::vector<ptrdiff_t> localOffsets(tags.size());
+
+            // Get the offsets for all the tags we need to copy
+            for (size_t i = currentTag; i < tags.size(); i++)
+            {
+                localOffsets[i] = shiftBy;
+                if (tags[i].type == excludeType)
+                {
+                    shiftBy -= getTagTotalSize(tags[i]);
+                }
+            }
+
+            // Then copy them, forwards if they go backwards and backwards if they go forwards
+            // - This ensures that you don't copy copied data
+            for (size_t i = currentTag; i < tags.size(); i++)
+            {
+                auto& tag = tags[i];
+                if (localOffsets[i] < 0)
+                {
+                    if (tag.type != excludeType)
+                    {
+                        tag.writeTo(
+                            swfData.bytes +
+                            std::distance((const uint8_t*)swfData.bytes, getTagOrigStart(tag)) +
+                            localOffsets[i]);
+                        tag.data += localOffsets[i];
+                    }
+                }
+            }
+            for (size_t i = tags.size(); i > currentTag; i--)
+            {
+                auto& tag = tags[i - 1];
+                if (localOffsets[i - 1] > 0)
+                {
+                    if (tag.type != excludeType)
+                    {
+                        tag.writeToBackwards(
+                            swfData.bytes +
+                            std::distance((const uint8_t*)swfData.bytes, getTagOrigStart(tag)) +
+                            localOffsets[i - 1]);
+                        tag.data += localOffsets[i - 1];
+                    }
+                }
+            }
+        };
+
+        auto overwriteData = [&](FREByteArray copyIn, ptrdiff_t offset)
+        {
+            // And add the actual new data in
+            std::copy(copyIn.bytes, copyIn.bytes + copyIn.length, swfData.bytes + offset);
+        };
+
+        bool doneABC        = false;
+        int doneSymbolClass = 0;
+
+        size_t currentTag = 0;
+        while (currentTag < tags.size() && tags[currentTag].type != TagType::End)
+        {
+            if (!doneABC && tags[currentTag].type == TagType::DoABC2)
+            {
+                shiftTags(currentTag + 1,
+                    ptrdiff_t(abcLength) - ptrdiff_t(getTagTotalSize(tags[currentTag])),
+                    TagType::DoABC2);
+                overwriteData(abcData, std::distance((const uint8_t*)swfData.bytes,
+                                           getTagOrigStart(tags[currentTag])));
+                doneABC = true;
+            }
             currentTag++;
         }
 
@@ -78,89 +143,18 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
         {
             DO_OR_FAIL("Failed to release swf bytearray", FREReleaseByteArray(swf));
             DO_OR_FAIL("Failed to release abc bytearray", FREReleaseByteArray(abc));
-            FAIL("No ABC or end tag in this SWF. Is it really an SWF?");
+            FAIL("No end tag in this SWF. Is it really an SWF?");
         }
 
-        if (tags[currentTag].type == TagType::End)
-        {
-            std::copy(abcData.bytes, abcData.bytes + abcData.length,
-                swfData.bytes + std::distance((const uint8_t*)swfData.bytes,
-                                    getTagOrigStart(tags[currentTag])));
-
-            swfData.bytes[finalSize - 2] = 0;
-            swfData.bytes[finalSize - 1] = 0;
-        }
-        else if (currentTag < tags.size() - 1)
-        {
-            std::vector<ptrdiff_t> localOffsets(tags.size() - currentTag - 1);
-            {
-                ptrdiff_t globalOffset = std::distance((const uint8_t*)swfData.bytes,
-                                             getTagOrigStart(tags[currentTag])) +
-                                         abcLength;
-
-                // Get the offsets for all the tags we need to copy
-                for (size_t i = currentTag + 1; i < tags.size(); i++)
-                {
-                    localOffsets[i - currentTag - 1] =
-                        globalOffset -
-                        std::distance((const uint8_t*)swfData.bytes, getTagOrigStart(tags[i]));
-                    if (tags[i].type != TagType::DoABC2)
-                    {
-                        globalOffset += getTagTotalSize(tags[i]);
-                    }
-                }
-            }
-
-            // Then copy them, forwards if they go backwards and backwards if they go forwards
-            // - This ensures that you don't copy copied data
-            for (size_t i = 0; i < localOffsets.size(); i++)
-            {
-                const auto& tag = tags[currentTag + 1 + i];
-                if (localOffsets[i] < 0)
-                {
-                    if (tag.type != TagType::DoABC2)
-                    {
-                        tag.writeTo(
-                            swfData.bytes +
-                            std::distance((const uint8_t*)swfData.bytes, getTagOrigStart(tag)) +
-                            localOffsets[i]);
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-            for (size_t i = localOffsets.size(); i > 0; i--)
-            {
-                const auto& tag = tags[currentTag + 1 + i - 1];
-                if (localOffsets[i - 1] > 0)
-                {
-                    if (tag.type != TagType::DoABC2)
-                    {
-                        tag.writeToBackwards(
-                            swfData.bytes +
-                            std::distance((const uint8_t*)swfData.bytes, getTagOrigStart(tag)) +
-                            localOffsets[i - 1]);
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // And add the actual new ABC data in
-            std::copy(abcData.bytes, abcData.bytes + abcLength,
-                swfData.bytes + std::distance((const uint8_t*)swfData.bytes,
-                                    getTagOrigStart(tags[currentTag])));
-        }
-        else
+        if (!doneABC)
         {
             DO_OR_FAIL("Failed to release swf bytearray", FREReleaseByteArray(swf));
             DO_OR_FAIL("Failed to release abc bytearray", FREReleaseByteArray(abc));
-            FAIL("End tag is missing");
+            FAIL("No ABC tag present in this SWF.");
         }
+
+        swfData.bytes[finalSize - 2] = 0;
+        swfData.bytes[finalSize - 1] = 0;
 
         DO_OR_FAIL("Failed to release swf bytearray", FREReleaseByteArray(swf));
         DO_OR_FAIL("Failed to release abc bytearray", FREReleaseByteArray(abc));
