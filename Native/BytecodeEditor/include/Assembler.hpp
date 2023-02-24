@@ -1404,7 +1404,7 @@ private:
             catch (std::exception& e)
             {
                 setFile(f.where.load());
-                throw e;
+                throw;
             }
         }
 
@@ -1417,7 +1417,7 @@ private:
             catch (std::exception& e)
             {
                 setFile(f.where.load());
-                throw e;
+                throw;
             }
         }
 
@@ -1446,7 +1446,7 @@ private:
             catch (std::exception& e)
             {
                 backpedal(word.size());
-                throw e;
+                throw;
             }
         };
 
