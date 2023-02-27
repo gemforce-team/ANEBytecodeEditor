@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdint.h>
 #include <variant>
 #include <vector>
@@ -17,7 +18,7 @@ namespace ASASM
         struct _QName
         {
             Namespace ns;
-            std::string name;
+            std::optional<std::string> name;
 
             auto operator<=>(const _QName&) const noexcept = default;
             bool operator==(const _QName&) const noexcept  = default;
@@ -25,7 +26,7 @@ namespace ASASM
 
         struct _RTQName
         {
-            std::string name;
+            std::optional<std::string> name;
             auto operator<=>(const _RTQName&) const noexcept = default;
             bool operator==(const _RTQName&) const noexcept  = default;
         };
@@ -38,7 +39,7 @@ namespace ASASM
 
         struct _Multiname
         {
-            std::string name;
+            std::optional<std::string> name;
             std::vector<Namespace> nsSet;
             auto operator<=>(const _Multiname&) const noexcept = default;
             bool operator==(const _Multiname&) const noexcept  = default;

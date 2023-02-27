@@ -29,7 +29,7 @@ private:
     }
 
     std::list<std::unordered_set<ASASM::Namespace>> homonymData;
-    std::array<std::unordered_map<std::string,
+    std::array<std::unordered_map<std::optional<std::string>,
                    std::reference_wrapper<std::unordered_set<ASASM::Namespace>>>,
         ABCTypeMap.GetEntries().size()>
         homonyms;
@@ -172,23 +172,23 @@ public:
 
                     // if (refs.hasHomonyms(ns))
                     //     nsName += "#" + std::to_string(ns.id);
-                    if (!nsName.empty())
+                    if (nsName)
                     {
-                        if (!multiname.qname().name.empty())
+                        if (multiname.qname().name)
                         {
-                            return {Segment('/', nsName),
-                                Segment(filename ? '/' : ':', multiname.qname().name)};
+                            return {Segment('/', *nsName),
+                                Segment(filename ? '/' : ':', *multiname.qname().name)};
                         }
                         else
                         {
-                            return {Segment('/', nsName)};
+                            return {Segment('/', *nsName)};
                         }
                     }
                     else
                     {
-                        if (!multiname.qname().name.empty())
+                        if (multiname.qname().name)
                         {
-                            return {Segment('/', multiname.qname().name)};
+                            return {Segment('/', *multiname.qname().name)};
                         }
                         else
                         {
@@ -278,18 +278,18 @@ public:
                             {
                                 auto ctx =
                                     refs.namespaces[(uint8_t)ns.kind].getContext(refs, ns.id);
-                                if (!multiname.qname().name.empty())
+                                if (multiname.qname().name)
                                 {
-                                    ctx.emplace_back(multiname.qname().name);
+                                    ctx.emplace_back(*multiname.qname().name);
                                 }
                                 return ctx;
                             }
                         }
                         break;
                         case ABCType::Multiname:
-                            return !multiname.multiname().name.empty()
+                            return multiname.multiname().name
                                      ? std::vector<ContextItem>{ContextItem(
-                                           multiname.multiname().name)}
+                                           *multiname.multiname().name)}
                                      : std::vector<ContextItem>{};
                         default:
                             throw StringException("Incorrect multiname kind in expand");
@@ -380,7 +380,7 @@ public:
 
             if constexpr (truncate)
             {
-                if (nsSimilar(ns1, ns2) && !ns1.name.empty())
+                if (nsSimilar(ns1, ns2) && ns1.name)
                 {
                     ASASM::Multiname m;
                     m.kind = ABCType::QName;
@@ -388,7 +388,7 @@ public:
                     return {ContextItem{m}};
                 }
 
-                if (!name1.empty() && name2.empty())
+                if (name1 && !name2)
                 {
                     std::swap(c1, c2);
                     std::swap(ns1, ns2);
@@ -396,7 +396,7 @@ public:
                 }
             }
 
-            if (!name1.empty() && name2.empty() && nsSimilar(ns1, ns2))
+            if (!name1 && name2 && nsSimilar(ns1, ns2))
             {
                 if constexpr (truncate)
                 {
@@ -411,7 +411,7 @@ public:
                 }
             }
 
-            if (!ns1.name.empty() && !ns2.name.empty())
+            if (ns1.name && ns2.name)
             {
                 if (nsSimilar(ns1, ns2))
                 {
@@ -425,9 +425,9 @@ public:
                     }
                     else
                     {
-                        if (!name2.empty())
+                        if (name2)
                         {
-                            return {c1, ContextItem(name2)};
+                            return {c1, ContextItem(*name2)};
                         }
                         else
                         {
@@ -438,7 +438,7 @@ public:
 
                 if constexpr (truncate)
                 {
-                    if (ns1.name.size() > ns2.name.size())
+                    if (ns1.name->size() > ns2.name->size())
                     {
                         std::swap(c1, c2);
                         std::swap(ns1, ns2);
@@ -446,8 +446,8 @@ public:
                     }
                 }
 
-                std::string fullName1 = ns1.name + (!name1.empty() ? ":" + name1 : "");
-                std::string fullName2 = ns2.name + (!name2.empty() ? ":" + name2 : "");
+                std::string fullName1 = *ns1.name + (name1 ? ":" + *name1 : "");
+                std::string fullName2 = *ns2.name + (name2 ? ":" + *name2 : "");
                 if (fullName2.starts_with(fullName1 + ":"))
                 {
                     return {truncate ? c1 : c2};

@@ -206,16 +206,25 @@ public:
         }
     }
 
-    void dumpString(StringBuilder& sb, std::string_view str, bool emptyIsNull = false)
+    void dumpString(StringBuilder& sb, const std::optional<std::string>& str)
     {
-        if (emptyIsNull && (str.size() == 0 || str == ""))
+        if (!str)
         {
             sb << "null";
-            return;
         }
-        // if (str is null)
-        //   sb ~= "null";
+        else
+        {
+            return dumpString(sb, *str);
+        }
+    }
 
+    void dumpString(StringBuilder& sb, const std::string& str)
+    {
+        return dumpString(sb, (std::string_view)str);
+    }
+
+    void dumpString(StringBuilder& sb, std::string_view str)
+    {
         static constexpr std::array<char, 16> hexDigits{
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -580,7 +589,7 @@ public:
         for (const auto& s : method.paramNames)
         {
             sb << "paramname ";
-            dumpString(sb, s, true);
+            dumpString(sb, s);
             sb.newLine();
         }
         if (method.vbody)

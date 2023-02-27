@@ -11,7 +11,7 @@ namespace ASASM
     struct Namespace
     {
         ABCType kind = ABCType::Void;
-        std::string name;
+        std::optional<std::string> name;
 
         int id = 0;
 

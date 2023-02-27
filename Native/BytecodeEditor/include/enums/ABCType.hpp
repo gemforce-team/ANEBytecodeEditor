@@ -35,7 +35,8 @@ enum class ABCType : uint8_t
     StaticProtectedNs  = 0x1A,
     MultinameL         = 0x1B,
     MultinameLA        = 0x1C,
-    TypeName           = 0x1D
+    TypeName           = 0x1D,
+    Float4             = 0x1E
 };
 
 inline constexpr BidirectionalMap ABCTypeMap = {"Void", ABCType::Void, "Utf8", ABCType::Utf8,

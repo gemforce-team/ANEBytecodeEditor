@@ -31,7 +31,7 @@ FREObject BytecodeEditor::ConvertClass(const std::shared_ptr<ASASM::Class>& claz
 ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
 {
     ASASM::Namespace ret;
-    if (auto found = ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type")); found)
+    if (auto found = ABCTypeMap.Find(CheckMemberString<false>(o, "type")); found)
     {
         ret.kind = found->get();
     }
@@ -41,9 +41,9 @@ ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
         ret.kind != ABCType::ProtectedNamespace && ret.kind != ABCType::PackageInternalNs &&
         ret.kind != ABCType::StaticProtectedNs)
     {
-        FAIL("Invalid namespace type: " + std::string(CheckMember<FRE_TYPE_STRING>(o, "type")));
+        FAIL("Invalid namespace type: " + CheckMemberString<false>(o, "type"));
     }
-    ret.name = std::string(CheckMember<FRE_TYPE_STRING>(o, "name"));
+    ret.name = CheckMemberString<true>(o, "name");
 
     FREObject disambiguatorObj = GetMember(o, "secondaryName");
     FREObjectType objType;
@@ -60,7 +60,7 @@ ASASM::Namespace BytecodeEditor::ConvertNamespace(FREObject o) const
         return ret;
     }
 
-    std::string_view disambiguator = CheckMember<FRE_TYPE_STRING>(o, "secondaryName");
+    std::string disambiguator = CheckMemberString<false>(o, "secondaryName");
 
     if (homonyms)
     {
@@ -125,7 +125,7 @@ ASASM::Multiname BytecodeEditor::ConvertMultiname(FREObject o) const
         return ret;
     }
 
-    if (auto found = ABCTypeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "type")); found)
+    if (auto found = ABCTypeMap.Find(CheckMemberString<false>(o, "type")); found)
     {
         ret.kind = found->get();
     }
@@ -138,11 +138,11 @@ ASASM::Multiname BytecodeEditor::ConvertMultiname(FREObject o) const
         case ABCType::QName:
         case ABCType::QNameA:
             ret.qname({ConvertNamespace(CheckMember<FRE_TYPE_OBJECT>(o, "ns")),
-                std::string(CheckMember<FRE_TYPE_STRING>(o, "name"))});
+                CheckMemberString<true>(o, "name")});
             break;
         case ABCType::RTQName:
         case ABCType::RTQNameA:
-            ret.rtqname({std::string(CheckMember<FRE_TYPE_STRING>(o, "name"))});
+            ret.rtqname({CheckMemberString<true>(o, "name")});
             break;
         case ABCType::RTQNameL:
         case ABCType::RTQNameLA:
@@ -152,7 +152,7 @@ ASASM::Multiname BytecodeEditor::ConvertMultiname(FREObject o) const
         case ABCType::MultinameA:
         {
             std::vector<ASASM::Namespace> nsEs;
-            std::string name{CheckMember<FRE_TYPE_STRING>(o, "name")};
+            std::optional<std::string> name{CheckMemberString<true>(o, "name")};
             FREObject vec = CheckMember<FRE_TYPE_VECTOR>(o, "nsSet");
             uint32_t size;
             DO_OR_FAIL("Could not get multiname vector's size", FREGetArrayLength(vec, &size));
@@ -420,7 +420,7 @@ FREObject BytecodeEditor::ConvertTrait(const ASASM::Trait& t) const
 ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
 {
     TraitKind kind;
-    if (auto found = TraitKindMap.Find(CheckMember<FRE_TYPE_STRING>(o, "kind")); found)
+    if (auto found = TraitKindMap.Find(CheckMemberString<false>(o, "kind")); found)
     {
         kind = found->get();
     }
@@ -439,10 +439,15 @@ ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
         FREObject currentAttr;
         DO_OR_FAIL("Could not read attribute vector element",
             FREGetArrayElementAt(attributesVec, i, &currentAttr));
-        attributes |= uint8_t(TraitAttributeMap
-                                  .Find(CHECK_OBJECT<FRE_TYPE_STRING>(
-                                      currentAttr, "attributes[" + std::to_string(i) + "]"))
-                                  ->get());
+        auto found = TraitAttributeMap.Find(
+            CHECK_STRING<false>(currentAttr, "attributes[" + std::to_string(i) + "]")
+            );
+        if (!found)
+        {
+            FAIL("Unknown trait attribute \'" +
+                 CHECK_STRING<false>(currentAttr, "attributes[" + std::to_string(i) + "]") + "\'");
+        }
+        attributes |= uint8_t(found->get());
     }
 
     ASASM::Trait ret;
@@ -460,7 +465,7 @@ ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
         DO_OR_FAIL("Could not get current metadata element",
             FREGetArrayElementAt(metadatas, i, &currentMetadata));
         ASASM::Metadata md;
-        md.name = CheckMember<FRE_TYPE_STRING>(currentMetadata, "name");
+        md.name = CheckMemberString<true>(currentMetadata, "name");
 
         FREObject currentMetadataVec = CheckMember<FRE_TYPE_VECTOR>(currentMetadata, "data");
 
@@ -472,8 +477,8 @@ ASASM::Trait BytecodeEditor::ConvertTrait(FREObject o) const
             FREObject currentData;
             DO_OR_FAIL("Could not get current metadata element subvalue",
                 FREGetArrayElementAt(currentMetadataVec, j, &currentData));
-            md.data.emplace_back(std::string(CheckMember<FRE_TYPE_STRING>(currentData, "key")),
-                std::string(CheckMember<FRE_TYPE_STRING>(currentData, "value")));
+            md.data.emplace_back(CheckMemberString<true>(currentData, "key"),
+                CheckMemberString<true>(currentData, "value"));
         }
 
         ret.metadata.emplace_back(std::move(md));
@@ -585,7 +590,7 @@ std::shared_ptr<ASASM::Method> BytecodeEditor::ConvertMethod(FREObject o) const
 
     ret->returnType = ConvertMultiname(GetMember(o, "returnType"));
 
-    ret->name = CheckMember<FRE_TYPE_STRING>(o, "name");
+    ret->name = CheckMemberString<true>(o, "name");
 
     array = CheckMember<FRE_TYPE_VECTOR>(o, "flags");
 
@@ -595,14 +600,15 @@ std::shared_ptr<ASASM::Method> BytecodeEditor::ConvertMethod(FREObject o) const
         FREObject flag;
         DO_OR_FAIL("Could not get flag entry", FREGetArrayElementAt(array, i, &flag));
         if (auto found = MethodFlagMap.Find(
-                CHECK_OBJECT<FRE_TYPE_STRING>(flag, "flags[" + std::to_string(i) + "]"));
+                CHECK_STRING<false>(flag, "flags[" + std::to_string(i) + "]"));
             found)
         {
             ret->flags |= uint8_t(found.value().get());
         }
         else
         {
-            FAIL("Invalid method flag" + std::string(CHECK_OBJECT<FRE_TYPE_STRING>(flag)));
+            FAIL("Invalid method flag" +
+                 CHECK_STRING<false>(flag, "flags[" + std::to_string(i) + "]"));
         }
     }
 
@@ -626,8 +632,8 @@ std::shared_ptr<ASASM::Method> BytecodeEditor::ConvertMethod(FREObject o) const
     {
         FREObject pname;
         DO_OR_FAIL("Could not get param name value", FREGetArrayElementAt(array, i, &pname));
-        ret->paramNames.emplace_back(std::string(
-            CHECK_OBJECT<FRE_TYPE_STRING>(pname, "paramNames[" + std::to_string(i) + "]")));
+        ret->paramNames.emplace_back(
+            CHECK_STRING<true>(pname, "paramNames[" + std::to_string(i) + "]"));
     }
 
     FREObjectType type;
@@ -884,7 +890,7 @@ SWFABC::Error BytecodeEditor::ConvertError(
     FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     return {ConvertLabel(CheckMember<FRE_TYPE_OBJECT>(o, "loc"), allInstrs),
-        std::string(CheckMember<FRE_TYPE_STRING>(o, "message"))};
+        CheckMemberString<false>(o, "message")};
 }
 
 FREObject BytecodeEditor::ConvertLabel(
@@ -912,14 +918,14 @@ ASASM::Instruction BytecodeEditor::ConvertInstruction(
     FREObject o, const std::vector<FREObject>& allInstrs) const
 {
     ASASM::Instruction ret;
-    if (auto found = OPCodeMap.Find(CheckMember<FRE_TYPE_STRING>(o, "opcode")); found)
+    if (auto found = OPCodeMap.Find(CheckMemberString<false>(o, "opcode")); found)
     {
         ret.opcode = found->get();
     }
     else
     {
         FAIL("Invalid OPCode for instruction: " +
-             std::string(CheckMember<FRE_TYPE_STRING>(o, "opcode")));
+             std::string(CheckMemberString<false>(o, "opcode")));
     }
 
     const auto& argTypes = OPCode_Info[uint8_t(ret.opcode)].second;
@@ -1051,8 +1057,8 @@ ASASM::Instruction BytecodeEditor::ConvertInstruction(
                 break;
 
             case String:
-                arg.stringv(std::string(
-                    CHECK_OBJECT<FRE_TYPE_STRING>(argO, "args[" + std::to_string(i) + "]")));
+                arg.stringv(
+                    CHECK_STRING<true>(argO, "args[" + std::to_string(i) + "]"));
                 break;
 
             case Namespace:
@@ -1299,7 +1305,7 @@ ASASM::Value BytecodeEditor::ConvertValue(FREObject o) const
         return ret;
     }
 
-    std::string_view valType = CheckMember<FRE_TYPE_STRING>(o, "type");
+    std::string valType = CheckMemberString<false>(o, "type");
 
     if (valType == "int")
     {
@@ -1319,7 +1325,7 @@ ASASM::Value BytecodeEditor::ConvertValue(FREObject o) const
     else if (valType == "String")
     {
         ret.vkind = ABCType::Utf8;
-        ret.vstring(std::string(CheckMember<FRE_TYPE_STRING>(o, "value")));
+        ret.vstring(CheckMemberString<true>(o, "value"));
     }
     else if (valType == "Namespace")
     {

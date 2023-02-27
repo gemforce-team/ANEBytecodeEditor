@@ -52,14 +52,14 @@ private:
     static constexpr bool isNull(V v)
     {
         using comp = std::remove_cvref_t<decltype(v)>;
-        static_assert(std::is_same_v<comp, uint64_t> || std::is_same_v<comp, int64_t> ||
-                      std::is_same_v<comp, double> || std::is_same_v<comp, std::string> ||
-                      std::is_same_v<comp, ASASM::Multiname> ||
-                      std::is_same_v<comp, std::vector<ASASM::Namespace>> ||
-                      std::is_same_v<comp, ASASM::Namespace> ||
-                      std::is_same_v<comp, ASASM::Metadata> ||
-                      std::is_same_v<comp, std::shared_ptr<ASASM::Class>> ||
-                      std::is_same_v<comp, std::shared_ptr<ASASM::Method>>);
+        static_assert(
+            std::is_same_v<comp, uint64_t> || std::is_same_v<comp, int64_t> ||
+            std::is_same_v<comp, double> || std::is_same_v<comp, std::optional<std::string>> ||
+            std::is_same_v<comp, ASASM::Multiname> ||
+            std::is_same_v<comp, std::vector<ASASM::Namespace>> ||
+            std::is_same_v<comp, ASASM::Namespace> || std::is_same_v<comp, ASASM::Metadata> ||
+            std::is_same_v<comp, std::shared_ptr<ASASM::Class>> ||
+            std::is_same_v<comp, std::shared_ptr<ASASM::Method>>);
         if constexpr (std::is_same_v<comp, uint64_t>)
         {
             return v == SWFABC::ABCFile::NULL_UINT;
@@ -72,9 +72,9 @@ private:
         {
             return std::isnan(v);
         }
-        else if constexpr (std::is_same_v<comp, std::string>)
+        else if constexpr (std::is_same_v<comp, std::optional<std::string>>)
         {
-            return false;
+            return !v;
         }
         else if constexpr (std::is_same_v<comp, ASASM::Multiname>)
         {
@@ -251,7 +251,7 @@ public:
         return values;
     }
 
-    uint32_t get(T value)
+    uint32_t get(const T& value)
     {
         if constexpr (haveNull)
         {

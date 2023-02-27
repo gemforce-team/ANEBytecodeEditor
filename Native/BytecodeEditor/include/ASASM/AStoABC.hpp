@@ -22,7 +22,7 @@ namespace ASASM
         ValuePool<int64_t> ints;
         ValuePool<uint64_t> uints;
         ValuePool<double> doubles;
-        ValuePool<std::string> strings;
+        ValuePool<std::optional<std::string>> strings;
         ValuePool<ASASM::Namespace> namespaces;
         ValuePool<std::vector<ASASM::Namespace>> namespaceSets;
         ValuePool<ASASM::Multiname> multinames;
@@ -38,7 +38,7 @@ namespace ASASM
 
         void visitDouble(double v) { doubles.add(v); }
 
-        void visitString(const std::string& v) { strings.add(v); }
+        void visitString(const std::optional<std::string>& v) { strings.add(v); }
 
         void visitNamespace(const Namespace& ns)
         {

@@ -3,6 +3,8 @@
 #include "ASASM/Namespace.hpp"
 #include "enums/ABCType.hpp"
 
+#include <optional>
+#include <string>
 #include <variant>
 
 namespace ASASM
@@ -29,11 +31,17 @@ namespace ASASM
 
         void vdouble(const double& v) { data = v; }
 
-        [[nodiscard]] std::string& vstring() { return std::get<std::string>(data); }
+        [[nodiscard]] std::optional<std::string>& vstring()
+        {
+            return std::get<std::optional<std::string>>(data);
+        }
 
-        [[nodiscard]] const std::string& vstring() const { return std::get<std::string>(data); }
+        [[nodiscard]] const std::optional<std::string>& vstring() const
+        {
+            return std::get<std::optional<std::string>>(data);
+        }
 
-        void vstring(const std::string& v) { data = v; }
+        void vstring(const std::optional<std::string>& v) { data = v; }
 
         [[nodiscard]] Namespace& vnamespace() { return std::get<Namespace>(data); }
 
@@ -81,6 +89,8 @@ namespace ASASM
         bool operator==(const Value&) const noexcept = default;
 
     private:
-        std::variant<std::monostate, int64_t, uint64_t, double, std::string, Namespace> data;
+        std::variant<std::monostate, int64_t, uint64_t, double, std::optional<std::string>,
+            Namespace>
+            data;
     };
 }

@@ -132,10 +132,33 @@ inline FREObject FREString(std::string_view v)
     return ret;
 }
 
+inline FREObject FREString(const std::string& v)
+{
+    return FREString(std::string_view(v));
+}
+
+inline FREObject FREString(const char* v)
+{
+    return FREString(std::string_view(v));
+}
+
+inline FREObject FREString(const std::optional<std::string>& v)
+{
+    if (!v)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return FREString((std::string_view)*v);
+    }
+}
+
 template <FREObjectType Type, typename NumberType = double>
-    requires std::same_as<NumberType, uint32_t> || std::same_as<NumberType, int32_t> ||
-             std::same_as<NumberType, uint8_t> || std::same_as<NumberType, int8_t> ||
-             std::same_as<NumberType, double>
+    requires (std::same_as<NumberType, uint32_t> || std::same_as<NumberType, int32_t> ||
+                 std::same_as<NumberType, uint8_t> || std::same_as<NumberType, int8_t> ||
+                 std::same_as<NumberType, double>) &&
+             (Type != FRE_TYPE_STRING)
 inline auto CHECK_OBJECT(
     FREObject o, std::string name = "", std::source_location loc = std::source_location::current())
 {
@@ -168,20 +191,39 @@ inline auto CHECK_OBJECT(
             FREGetObjectAsBool(o, &ret));
         return bool(ret);
     }
-    else if constexpr (Type == FRE_TYPE_STRING)
-    {
-        const uint8_t* data;
-        uint32_t len;
-        DO_OR_FAIL("Failed getting " + name + " as string during " + loc.function_name() + " at " +
-                       std::to_string(loc.line()),
-            FREGetObjectAsUTF8(o, &len, &data));
-
-        return std::string_view((const char*)data, len);
-    }
     else
     {
         return o;
     }
+}
+
+template <bool NullAllowed>
+inline std::conditional_t<NullAllowed, std::optional<std::string>, std::string> CHECK_STRING(
+    FREObject o, std::string name = "", std::source_location loc = std::source_location::current())
+{
+    FREObjectType type;
+    DO_OR_FAIL("Failed getting object type of " + name, FREGetObjectType(o, &type));
+    if constexpr (NullAllowed)
+    {
+        if (type == FRE_TYPE_NULL)
+        {
+            return std::nullopt;
+        }
+    }
+
+    if (type != FRE_TYPE_STRING)
+    {
+        FAIL("Object" + name + " was not a string. Got " + std::to_string(type) + " during " +
+             loc.function_name() + " at " + std::to_string(loc.line()));
+    }
+
+    const uint8_t* data;
+    uint32_t len;
+    DO_OR_FAIL("Failed getting string" + name + " as string during " + loc.function_name() +
+                   " at " + std::to_string(loc.line()),
+        FREGetObjectAsUTF8(o, &len, &data));
+
+    return std::string((const char*)data, len);
 }
 
 #ifdef ANEBYTECODEEDITOR_HAS_STACKTRACE
@@ -195,12 +237,19 @@ inline FREObject GetMember(FREObject o, std::string_view member)
 }
 
 template <FREObjectType Type, typename NumberType = double>
-    requires std::same_as<NumberType, uint32_t> || std::same_as<NumberType, int32_t> ||
-             std::same_as<NumberType, uint8_t> || std::same_as<NumberType, int8_t> ||
-             std::same_as<NumberType, double>
+    requires (std::same_as<NumberType, uint32_t> || std::same_as<NumberType, int32_t> ||
+                 std::same_as<NumberType, uint8_t> || std::same_as<NumberType, int8_t> ||
+                 std::same_as<NumberType, double>) &&
+             (Type != FRE_TYPE_STRING)
 inline auto CheckMember(FREObject o, std::string_view member)
 {
     return CHECK_OBJECT<Type, NumberType>(GetMember(o, member), std::string(member));
+}
+
+template <bool AllowNull>
+inline auto CheckMemberString(FREObject o, std::string_view member)
+{
+    return CHECK_STRING<AllowNull>(GetMember(o, member), std::string(member));
 }
 #else
 inline FREObject GetMember(FREObject o, std::string_view member,
@@ -222,6 +271,13 @@ inline auto CheckMember(FREObject o, std::string_view member,
     std::source_location loc = std::source_location::current())
 {
     return CHECK_OBJECT<Type, NumberType>(GetMember(o, member), std::string(member), loc);
+}
+
+template <bool AllowNull>
+inline auto CheckMemberString(FREObject o, std::string_view member,
+    std::source_location loc = std::source_location::current())
+{
+    return CHECK_STRING<AllowNull>(o, std::string(member), loc);
 }
 #endif
 

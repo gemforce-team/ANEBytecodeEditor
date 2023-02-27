@@ -72,7 +72,7 @@ namespace SWFABC
                 _abc.doubles, [this](auto v) { writeD64(v); }, 1);
             writeU30(oneToZero(_abc.strings.size()));
             writeTable(
-                _abc.strings, [this](auto v) { writeString(v); }, 1);
+                _abc.strings, [this](auto v) { writeString(v.value()); }, 1);
             writeU30(oneToZero(_abc.namespaces.size()));
             writeTable(
                 _abc.namespaces, [this](auto v) { writeNamespace(v); }, 1);

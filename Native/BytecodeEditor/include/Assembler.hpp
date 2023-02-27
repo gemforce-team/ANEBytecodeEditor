@@ -147,27 +147,27 @@ private:
 
         if (word == "mixin")
         {
-            pushFile(std::make_shared<SourceFile>("#mixin", readString()));
+            pushFile(std::make_shared<SourceFile>("#mixin", readRealString()));
         }
         else if (word == "call")
         {
             auto rsLambda = [this] { return readString(); };
-            pushFile(std::make_shared<SourceFile>(
-                "#call", readString(), readList<'(', ')', false>([this] { return readString(); })));
+            pushFile(std::make_shared<SourceFile>("#call", readRealString(),
+                readList<'(', ')', false>([this] { return readRealString(); })));
         }
         else if (word == "include")
         {
-            std::string s = readString();
+            std::string s = readRealString();
             pushFile(std::make_shared<SourceFile>(s, strings.at(s)));
         }
         else if (word == "get")
         {
-            std::string s = readString();
+            std::string s = readRealString();
             pushFile(std::make_shared<SourceFile>(s, toStringLiteral(strings.at(s))));
         }
         else if (word == "set")
         {
-            vars[readWord()] = readString();
+            vars[readWord()] = readRealString();
         }
         else if (word == "unset")
         {
@@ -206,7 +206,7 @@ private:
         bool asStringLiteral = false;
         if (peekChar() == '"')
         {
-            name            = readString();
+            name            = readRealString();
             asStringLiteral = true;
         }
         else
@@ -404,9 +404,9 @@ private:
                 fail();
             }
         }
-        else if constexpr (std::is_same_v<std::string, comp>)
+        else if constexpr (std::is_same_v<std::optional<std::string>, comp>)
         {
-            if (!obj.empty())
+            if (obj)
             {
                 fail();
             }
@@ -647,7 +647,17 @@ private:
         return strtod(w.c_str(), nullptr);
     }
 
-    std::string readString()
+    std::string readRealString()
+    {
+        auto ret = readString();
+        if (!ret)
+        {
+            throw StringException("Null string found where real string expected");
+        }
+        return *ret;
+    }
+
+    std::optional<std::string> readString()
     {
         skipWhitespace();
         char c = readSymbol();
@@ -656,7 +666,7 @@ private:
             std::string word = readWord();
             if (c == 'n' && word == "ull")
             {
-                return {};
+                return std::nullopt;
             }
             else
             {
@@ -714,12 +724,12 @@ private:
 
         ABCType kind = toABCType(word);
         expectSymbol('(');
-        std::string name = readString();
-        int id           = 0;
+        std::optional<std::string> name = readString();
+        int id                          = 0;
         if (peekChar() == ',')
         {
             skipChar();
-            std::string s = readString();
+            std::string s = readRealString();
             auto found    = std::find(namespaceLabels.begin(), namespaceLabels.end(), s);
             if (found != namespaceLabels.end())
             {
@@ -976,7 +986,7 @@ private:
     {
         ASASM::Metadata ret;
         ret.name = readString();
-        std::vector<std::string> items;
+        std::vector<std::optional<std::string>> items;
         while (true)
         {
             std::string word = readWord();
@@ -1025,7 +1035,7 @@ private:
             }
             else if (word == "refid")
             {
-                addUnique<addUniqueMethod>(methodsByID, readString(), ret);
+                addUnique<addUniqueMethod>(methodsByID, readRealString(), ret);
             }
             else if (word == "param")
             {
@@ -1118,7 +1128,7 @@ private:
             std::string word = readWord();
             if (word == "refid")
             {
-                addUnique<addUniqueClass>(classesByID, readString(), ret);
+                addUnique<addUniqueClass>(classesByID, readRealString(), ret);
             }
             else if (word == "instance")
             {
@@ -1341,12 +1351,12 @@ private:
                     case OPCodeArgumentType::Class:
                         instruction.arguments[i].classv({});
                         localClassFixups.emplace_back(
-                            currentFile->position(), ret.size(), i, readString(), 0);
+                            currentFile->position(), ret.size(), i, readRealString(), 0);
                         break;
                     case OPCodeArgumentType::Method:
                         instruction.arguments[i].methodv({});
                         localMethodFixups.emplace_back(
-                            currentFile->position(), ret.size(), i, readString(), 0);
+                            currentFile->position(), ret.size(), i, readRealString(), 0);
                         break;
 
                     case OPCodeArgumentType::JumpTarget:
@@ -1401,7 +1411,7 @@ private:
             {
                 ret[f.ii].arguments[f.ai].jumpTarget(parseLabel(f.name, labels));
             }
-            catch (std::exception& e)
+            catch (std::exception&)
             {
                 setFile(f.where.load());
                 throw;
@@ -1414,7 +1424,7 @@ private:
             {
                 ret[f.ii].arguments[f.ai].switchTargets()[f.si] = parseLabel(f.name, labels);
             }
-            catch (std::exception& e)
+            catch (std::exception&)
             {
                 setFile(f.where.load());
                 throw;
@@ -1443,7 +1453,7 @@ private:
             {
                 return parseLabel(word, labels);
             }
-            catch (std::exception& e)
+            catch (std::exception&)
             {
                 backpedal(word.size());
                 throw;

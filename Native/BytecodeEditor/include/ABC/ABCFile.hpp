@@ -10,6 +10,7 @@
 #include "ABC/Script.hpp"
 #include <algorithm>
 #include <limits>
+#include <optional>
 #include <stdint.h>
 #include <string>
 
@@ -21,7 +22,7 @@ namespace SWFABC
         std::vector<int64_t> ints;
         std::vector<uint64_t> uints;
         std::vector<double> doubles;
-        std::vector<std::string> strings;
+        std::vector<std::optional<std::string>> strings;
         std::vector<Namespace> namespaces;
         std::vector<std::vector<int32_t>> namespaceSets;
         std::vector<Multiname> multinames;
@@ -50,7 +51,7 @@ namespace SWFABC
             uints   = {NULL_UINT};
             doubles = {NULL_DOUBLE};
 
-            strings       = {""};
+            strings       = {std::nullopt};
             namespaces    = {{}};
             namespaceSets = {{}};
             multinames    = {{}};

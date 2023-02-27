@@ -741,7 +741,7 @@ namespace ASClass
                 FREObject flag;
                 DO_OR_FAIL(
                     "Couldn't get flag vector entry", FREGetArrayElementAt(argv[0], i, &flag));
-                flags |= uint8_t(InstanceFlagMap.Find(CHECK_OBJECT<FRE_TYPE_STRING>(flag))->get());
+                flags |= uint8_t(InstanceFlagMap.Find(CHECK_STRING<false>(flag))->get());
             }
 
             clazz->instance.flags = flags;

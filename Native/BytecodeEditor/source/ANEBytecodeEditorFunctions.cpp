@@ -8,11 +8,10 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
 {
     CHECK_ARGC(2);
 
-    FREObject swf = CHECK_OBJECT<FRE_TYPE_BYTEARRAY>(argv[0]);
-    FREObject abc = CHECK_OBJECT<FRE_TYPE_BYTEARRAY>(argv[1]);
-
     try
     {
+        FREObject swf      = CHECK_OBJECT<FRE_TYPE_BYTEARRAY>(argv[0]);
+        FREObject abc      = CHECK_OBJECT<FRE_TYPE_BYTEARRAY>(argv[1]);
         uint32_t swfLength = uint32_t(CHECK_OBJECT<FRE_TYPE_NUMBER>(GetMember(swf, "length")));
         uint32_t abcLength = uint32_t(CHECK_OBJECT<FRE_TYPE_NUMBER>(GetMember(abc, "length")));
 
@@ -121,8 +120,7 @@ FREObject InsertABCToSWF(FREContext, void*, uint32_t argc, FREObject argv[])
             std::copy(copyIn.bytes, copyIn.bytes + copyIn.length, swfData.bytes + offset);
         };
 
-        bool doneABC        = false;
-        int doneSymbolClass = 0;
+        bool doneABC = false;
 
         size_t currentTag = 0;
         while (currentTag < tags.size() && tags[currentTag].type != TagType::End)
@@ -197,7 +195,20 @@ FREObject GetClass(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     GET_EDITOR();
 
-    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
+    ASASM::Multiname name;
+
+    try
+    {
+        name = editor.ConvertMultiname(argv[0]);
+    }
+    catch (FREObject o)
+    {
+        return o;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(e.what());
+    }
 
     std::shared_ptr<ASASM::Class> clazz = editor.getClass(name);
 
@@ -222,7 +233,20 @@ FREObject GetScript(FREContext, void* funcData, uint32_t argc, FREObject argv[])
 
     GET_EDITOR();
 
-    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
+    ASASM::Multiname name;
+
+    try
+    {
+        name = editor.ConvertMultiname(argv[0]);
+    }
+    catch (FREObject o)
+    {
+        return o;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(e.what());
+    }
 
     std::shared_ptr<ASASM::Script> script = editor.getScript(name);
 
@@ -278,7 +302,20 @@ FREObject GetROClass(FREContext, void* funcData, uint32_t argc, FREObject argv[]
 
     GET_EDITOR();
 
-    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
+    ASASM::Multiname name;
+
+    try
+    {
+        name = editor.ConvertMultiname(argv[0]);
+    }
+    catch (FREObject o)
+    {
+        return o;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(e.what());
+    }
 
     std::shared_ptr<ASASM::Class> clazz = editor.getClass(name);
 
@@ -303,7 +340,20 @@ FREObject GetROScript(FREContext, void* funcData, uint32_t argc, FREObject argv[
 
     GET_EDITOR();
 
-    ASASM::Multiname name = editor.ConvertMultiname(argv[0]);
+    ASASM::Multiname name;
+
+    try
+    {
+        name = editor.ConvertMultiname(argv[0]);
+    }
+    catch (FREObject o)
+    {
+        return o;
+    }
+    catch (std::exception& e)
+    {
+        FAIL(e.what());
+    }
 
     std::shared_ptr<ASASM::Script> script = editor.getScript(name);
 

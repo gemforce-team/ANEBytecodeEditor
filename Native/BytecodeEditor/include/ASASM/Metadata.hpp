@@ -8,8 +8,8 @@ namespace ASASM
 {
     struct Metadata
     {
-        std::string name;
-        std::vector<std::pair<std::string, std::string>> data;
+        std::optional<std::string> name;
+        std::vector<std::pair<std::optional<std::string>, std::optional<std::string>>> data;
 
         auto operator<=>(const Metadata&) const noexcept = default;
         bool operator==(const Metadata&) const noexcept  = default;

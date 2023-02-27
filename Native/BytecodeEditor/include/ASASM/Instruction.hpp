@@ -22,9 +22,9 @@ namespace ASASM
         struct Argument
         {
         private:
-            std::variant<std::monostate, int8_t, uint8_t, int64_t, uint64_t, double, std::string,
-                Namespace, Multiname, std::shared_ptr<Class>, std::shared_ptr<Method>,
-                SWFABC::Label, std::vector<SWFABC::Label>>
+            std::variant<std::monostate, int8_t, uint8_t, int64_t, uint64_t, double,
+                std::optional<std::string>, Namespace, Multiname, std::shared_ptr<Class>,
+                std::shared_ptr<Method>, SWFABC::Label, std::vector<SWFABC::Label>>
                 data;
 
         public:
@@ -58,11 +58,17 @@ namespace ASASM
 
             void doublev(const double& v) { data = v; }
 
-            [[nodiscard]] std::string& stringv() { return std::get<std::string>(data); }
+            [[nodiscard]] std::optional<std::string>& stringv()
+            {
+                return std::get<std::optional<std::string>>(data);
+            }
 
-            [[nodiscard]] const std::string& stringv() const { return std::get<std::string>(data); }
+            [[nodiscard]] const std::optional<std::string>& stringv() const
+            {
+                return std::get<std::optional<std::string>>(data);
+            }
 
-            void stringv(const std::string& v) { data = v; }
+            void stringv(const std::optional<std::string>& v) { data = v; }
 
             [[nodiscard]] Namespace& namespacev() { return std::get<Namespace>(data); }
 
